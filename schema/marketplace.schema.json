@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://artyx.ai/schemas/marketplace.schema.json",
+  "type": "object",
+  "required": ["name", "version", "owner", "updatedAt", "plugins"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "const": "artyx-marketplace"
+    },
+    "version": {
+      "type": "integer"
+    },
+    "owner": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      }
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date"
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "summary",
+          "category",
+          "icon",
+          "version",
+          "source",
+          "transport",
+          "auth"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["creative", "dev", "games", "productivity", "other"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "icon": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          },
+          "source": {
+            "type": "string"
+          },
+          "featured": {
+            "type": "boolean"
+          },
+          "requiresCompanion": {
+            "type": "boolean"
+          },
+          "transport": {
+            "type": "string",
+            "enum": ["stdio", "http", "sse"]
+          },
+          "auth": {
+            "type": "string",
+            "enum": ["none", "oauth"]
+          },
+          "experimental": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

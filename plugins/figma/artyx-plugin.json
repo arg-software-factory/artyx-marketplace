@@ -1,0 +1,36 @@
+{
+  "id": "figma",
+  "name": "figma",
+  "displayName": "Figma",
+  "version": "1.0.0",
+  "summary": "Read Figma files, frames, and design variables through Figma MCP.",
+  "description": "Connect Artyx to Figma MCP for design inspection, frame reading, component context, and variable discovery.",
+  "author": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "category": "creative",
+  "tags": ["design", "frames", "variables"],
+  "icon": "🎨",
+  "license": "MIT",
+  "homepage": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server",
+  "experimental": true,
+  "notes": "Verify Figma's remote MCP auth mode (OAuth vs bearer token) and the exact URL against Figma's official MCP docs before removing `experimental`.",
+  "mcp": {
+    "transport": "http",
+    "url": "https://mcp.figma.com/mcp",
+    "auth": "oauth",
+    "timeoutMs": 15000
+  },
+  "skills": ["skills/figma"],
+  "companion": {
+    "required": false,
+    "title": "Figma",
+    "summary": "Authorize Figma and enable its MCP server.",
+    "steps": [
+      "In Figma, enable the MCP / Dev Mode MCP server if required by your plan.",
+      "Click Sign in and authorize when prompted."
+    ],
+    "docsUrl": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server"
+  }
+}

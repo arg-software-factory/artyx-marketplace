@@ -1,0 +1,14 @@
+{
+  "name": "artyx-marketplace",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "validate": "node scripts/validate.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8",
+    "ajv-formats": "^3",
+    "gray-matter": "^4"
+  }
+}

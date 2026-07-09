@@ -1,0 +1,39 @@
+{
+  "id": "unity",
+  "name": "unity",
+  "displayName": "Unity",
+  "version": "1.0.0",
+  "summary": "Drive Unity Editor through the community Unity MCP bridge.",
+  "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
+  "author": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "category": "games",
+  "tags": ["game-engine", "editor", "csharp"],
+  "icon": "🧩",
+  "license": "MIT",
+  "homepage": "https://github.com/CoplayDev/unity-mcp",
+  "experimental": true,
+  "notes": "Follows CoplayDev/unity-mcp. The Unity package auto-installs the Python MCP server; verify the exact stdio command against the upstream README before removing `experimental`.",
+  "mcp": {
+    "transport": "stdio",
+    "command": "uvx",
+    "args": ["unity-mcp-server"],
+    "auth": "none",
+    "timeoutMs": 15000
+  },
+  "skills": ["skills/unity-mcp"],
+  "companion": {
+    "required": true,
+    "title": "Finish setup inside Unity",
+    "steps": [
+      "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
+      "Open the Unity MCP window and start the bridge.",
+      "Approve the auto-install of the Python server if prompted."
+    ],
+    "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
+    "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "github",
+  "name": "github",
+  "displayName": "GitHub",
+  "version": "1.0.0",
+  "summary": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
+  "description": "Connect Artyx to GitHub MCP for repository reading, issue and pull request triage, and CI status inspection through OAuth.",
+  "author": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "category": "dev",
+  "tags": ["git", "issues", "pull-requests", "ci"],
+  "icon": "🐙",
+  "license": "MIT",
+  "homepage": "https://github.com/github/github-mcp-server",
+  "experimental": false,
+  "mcp": {
+    "transport": "http",
+    "url": "https://api.githubcopilot.com/mcp/",
+    "auth": "oauth",
+    "timeoutMs": 15000
+  },
+  "skills": ["skills/github"],
+  "companion": {
+    "required": false,
+    "title": "GitHub",
+    "summary": "Sign in with GitHub to authorize the MCP server — no in-app addon needed.",
+    "steps": [
+      "Click Sign in and approve the GitHub authorization in your browser.",
+      "The connection uses OAuth; no token to paste."
+    ],
+    "docsUrl": "https://github.com/github/github-mcp-server#readme"
+  }
+}
