@@ -8,10 +8,9 @@ import matter from "gray-matter";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-const readJson = async (relativePath) => {
-  const raw = await fs.readFile(path.join(rootDir, relativePath), "utf8");
-  return JSON.parse(raw);
-};
+const readJsonFile = async (filePath) => JSON.parse(await fs.readFile(filePath, "utf8"));
+
+const readJson = async (relativePath) => readJsonFile(path.join(rootDir, relativePath));
 
 const formatAjvErrors = (errors = []) =>
   errors.map((error) => `${error.instancePath || "/"} ${error.message}`).join("; ");
@@ -35,9 +34,10 @@ const assertEqual = (actual, expected, label) => {
 };
 
 const loadSchemas = async () => {
-  const [marketplaceSchema, pluginSchema] = await Promise.all([
+  const [marketplaceSchema, pluginSchema, mcpSchema] = await Promise.all([
     readJson("schema/marketplace.schema.json"),
-    readJson("schema/artyx-plugin.schema.json")
+    readJson("schema/plugin.schema.json"),
+    readJson("schema/mcp.schema.json")
   ]);
 
   const ajv = new Ajv2020({ allErrors: true });
@@ -45,12 +45,12 @@ const loadSchemas = async () => {
 
   return {
     validateMarketplace: ajv.compile(marketplaceSchema),
-    validatePlugin: ajv.compile(pluginSchema)
+    validatePlugin: ajv.compile(pluginSchema),
+    validateMcp: ajv.compile(mcpSchema)
   };
 };
 
-const validateSkill = async (pluginSource, skillDir) => {
-  const skillPath = path.join(rootDir, pluginSource, skillDir, "SKILL.md");
+const validateSkill = async (skillPath) => {
   const raw = await fs.readFile(skillPath, "utf8");
   const parsed = matter(raw);
 
@@ -59,7 +59,50 @@ const validateSkill = async (pluginSource, skillDir) => {
   }
 };
 
-const validatePluginEntry = async (entry, validatePlugin) => {
+const validateSkills = async (sourceDir) => {
+  const skillsDir = path.join(sourceDir, "skills");
+
+  let skillDirEntries;
+  try {
+    skillDirEntries = await fs.readdir(skillsDir, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return;
+    }
+
+    throw error;
+  }
+
+  for (const skillDirEntry of skillDirEntries) {
+    if (!skillDirEntry.isDirectory()) {
+      continue;
+    }
+
+    await validateSkill(path.join(skillsDir, skillDirEntry.name, "SKILL.md"));
+  }
+};
+
+const validateMcpConfig = async (sourceDir, validateMcp) => {
+  const mcpPath = path.join(sourceDir, ".mcp.json");
+
+  try {
+    await fs.access(mcpPath);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return;
+    }
+
+    throw error;
+  }
+
+  const mcpConfig = await readJsonFile(mcpPath);
+
+  if (!validateMcp(mcpConfig)) {
+    throw new Error(`.mcp.json invalid: ${formatAjvErrors(validateMcp.errors)}`);
+  }
+};
+
+const validatePluginEntry = async (entry, validators) => {
   const sourceDir = path.join(rootDir, entry.source);
   const stats = await fs.stat(sourceDir);
 
@@ -67,44 +110,39 @@ const validatePluginEntry = async (entry, validatePlugin) => {
     throw new Error(`${entry.source} is not a directory`);
   }
 
-  const manifest = await readJson(path.join(entry.source, "artyx-plugin.json"));
+  const manifest = await readJsonFile(path.join(sourceDir, ".claude-plugin", "plugin.json"));
 
-  if (!validatePlugin(manifest)) {
-    throw new Error(formatAjvErrors(validatePlugin.errors));
+  if (!validators.validatePlugin(manifest)) {
+    throw new Error(`plugin.json invalid: ${formatAjvErrors(validators.validatePlugin.errors)}`);
   }
 
-  assertEqual(manifest.id, entry.id, "id");
-  assertEqual(manifest.mcp.transport, entry.transport, "transport");
-  assertEqual(manifest.mcp.auth, entry.auth, "auth");
-  assertEqual(manifest.category, entry.category, "category");
-  assertEqual(manifest.icon, entry.icon, "icon");
-  assertEqual(manifest.version, entry.version, "version");
+  assertEqual(manifest.name, entry.name, "name");
+  assertUrl(manifest.companion?.docsUrl, `${entry.name} companion.docsUrl`);
+  assertUrl(manifest.companion?.downloadUrl, `${entry.name} companion.downloadUrl`);
 
-  for (const skillDir of manifest.skills ?? []) {
-    await validateSkill(entry.source, skillDir);
-  }
-
-  assertUrl(manifest.companion?.docsUrl, `${entry.id} companion.docsUrl`);
-  assertUrl(manifest.companion?.downloadUrl, `${entry.id} companion.downloadUrl`);
+  await validateMcpConfig(sourceDir, validators.validateMcp);
+  await validateSkills(sourceDir);
 };
 
 const main = async () => {
-  const { validateMarketplace, validatePlugin } = await loadSchemas();
+  const validators = await loadSchemas();
   const marketplace = await readJson("marketplace.json");
 
-  if (!validateMarketplace(marketplace)) {
-    throw new Error(`marketplace.json invalid: ${formatAjvErrors(validateMarketplace.errors)}`);
+  if (!validators.validateMarketplace(marketplace)) {
+    throw new Error(
+      `marketplace.json invalid: ${formatAjvErrors(validators.validateMarketplace.errors)}`
+    );
   }
 
   let failed = false;
 
   for (const entry of marketplace.plugins) {
     try {
-      await validatePluginEntry(entry, validatePlugin);
-      console.log(`✓ ${entry.id}`);
+      await validatePluginEntry(entry, validators);
+      console.log(`✓ ${entry.name}`);
     } catch (error) {
       failed = true;
-      console.error(`✗ ${entry.id}: ${error.message}`);
+      console.error(`✗ ${entry.name}: ${error.message}`);
     }
   }
 

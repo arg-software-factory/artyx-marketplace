@@ -1,48 +1,14 @@
 {
-  "id": "blender",
   "name": "blender",
-  "displayName": "Blender",
-  "version": "1.0.0",
-  "summary": "Drive Blender through a bundled stdio MCP bridge and the Blender MCP add-on.",
   "description": "Connect Artyx to Blender for scene inspection, procedural edits, materials, animation, cameras, lighting, and verification loops.",
   "author": {
     "name": "Artyx",
     "url": "https://artyx.ai"
   },
-  "category": "creative",
-  "tags": ["3d", "dcc", "animation"],
-  "icon": "🟠",
-  "license": "MIT",
+  "version": "1.0.0",
   "homepage": "https://github.com/ahujasid/blender-mcp",
-  "experimental": false,
-  "mcp": {
-    "transport": "stdio",
-    "auth": "none",
-    "bundledServer": true,
-    "timeoutMs": 15000
-  },
-  "skills": ["skills/blender-mcp"],
-  "configSchema": {
-    "fields": [
-      {
-        "key": "host",
-        "label": "Host",
-        "type": "string",
-        "default": "127.0.0.1",
-        "sensitive": false,
-        "help": "Blender MCP host."
-      },
-      {
-        "key": "port",
-        "label": "Port",
-        "type": "number",
-        "default": 9876,
-        "help": "Port the Blender MCP addon listens on."
-      }
-    ]
-  },
+  "keywords": ["3d", "dcc", "animation"],
   "companion": {
-    "required": true,
     "title": "Finish setup inside Blender",
     "summary": "Install and enable the Blender MCP add-on, then click Connect.",
     "steps": [

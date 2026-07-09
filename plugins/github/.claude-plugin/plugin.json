@@ -1,0 +1,20 @@
+{
+  "name": "github",
+  "description": "Connect Artyx to GitHub MCP for repository reading, issue and pull request triage, and CI status inspection using a personal access token.",
+  "author": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "version": "1.0.0",
+  "homepage": "https://github.com/github/github-mcp-server",
+  "keywords": ["git", "issues", "pull-requests", "ci"],
+  "companion": {
+    "title": "GitHub token",
+    "summary": "Create a GitHub personal access token and provide it as GITHUB_TOKEN when prompted.",
+    "steps": [
+      "Create a GitHub personal access token with the repository access needed for your workflow.",
+      "Paste the token into Artyx when prompted for GITHUB_TOKEN."
+    ],
+    "docsUrl": "https://github.com/github/github-mcp-server#readme"
+  }
+}

@@ -4,108 +4,93 @@ Artyx Marketplace is PR-only. The Artyx team reviews and merges changes.
 
 ## Add A Plugin
 
-1. Create `plugins/<plugin-id>/`.
-2. Add `plugins/<plugin-id>/artyx-plugin.json`.
-3. Add each skill under `plugins/<plugin-id>/skills/<skill-id>/SKILL.md`.
-4. Add `plugins/<plugin-id>/setup.md` with human-readable setup notes.
-5. Add an index entry to `marketplace.json`.
-6. Run `npm run validate`.
-7. Open a PR against the integration branch.
+1. Create `plugins/<plugin-name>/`.
+2. Add `plugins/<plugin-name>/.claude-plugin/plugin.json`.
+3. Add `plugins/<plugin-name>/.mcp.json` when the plugin exposes MCP tools.
+4. Add skills under `plugins/<plugin-name>/skills/<skill-id>/SKILL.md` when the plugin teaches agent behavior.
+5. Add `plugins/<plugin-name>/README.md` when setup notes help a human complete installation.
+6. Add an index entry to `marketplace.json`.
+7. Run `npm run validate`.
+8. Open a PR against the integration branch.
 
-Plugin ids must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+Plugin names must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 
-## Manifest Schema
+A plugin can be MCP-only, skills-only, or both.
 
-Each `artyx-plugin.json` is a strict JSON manifest. Unknown fields are rejected.
+## Plugin Identity
 
-Required root fields:
+Each `.claude-plugin/plugin.json` is strict JSON. Unknown fields are rejected.
 
-- `id`: plugin id.
-- `name`: machine-readable name.
-- `version`: semantic version string like `1.0.0`.
-- `summary`: short gallery summary.
+Required fields:
+
+- `name`: kebab-case plugin name.
+- `description`: plugin description.
 - `author`: `{ "name": string, "url"?: string }`.
-- `category`: one of `creative`, `dev`, `games`, `productivity`, `other`.
-- `icon`: emoji shown in the gallery.
-- `mcp`: MCP connection configuration.
 
-Optional root fields:
+Optional fields:
 
-- `displayName`
-- `description`
-- `tags`
-- `license`
-- `homepage`
-- `experimental`
-- `notes`
-- `skills`
-- `configSchema`
-- `companion`
+- `version`: semantic version string.
+- `homepage`: documentation or upstream URL.
+- `keywords`: string array.
+- `companion`: setup card consumed by the desktop.
 
-### MCP Config
+## MCP Config
 
-`mcp` requires:
-
-- `transport`: one of `stdio`, `http`, `sse`.
-- `auth`: one of `none`, `oauth`.
-
-Optional `mcp` fields:
-
-- `timeoutMs`
-- `bundledServer`
-- `command`
-- `args`
-- `env`
-- `cwd`
-- `url`
-- `headers`
-
-For stdio plugins, use `command`, `args`, `env`, and `cwd` as needed. A bundled
-stdio plugin can omit `command` and `args` when the desktop app provisions the
-server.
-
-For http or sse plugins, use `url` and `headers` as needed.
-
-### Config Fields
-
-`configSchema` has this shape:
+Each `.mcp.json` uses the standard MCP shape:
 
 ```json
 {
-  "fields": [
-    {
-      "key": "API_KEY",
-      "label": "API key",
-      "type": "string",
-      "sensitive": true,
-      "required": true,
-      "help": "Create this in the provider dashboard.",
-      "placeholder": "sk-..."
+  "mcpServers": {
+    "server-name": {
+      "command": "uvx",
+      "args": ["server-package"],
+      "env": {
+        "EXAMPLE_PORT": "9876"
+      }
     }
-  ]
+  }
 }
 ```
 
-Config field keys must match `^[a-zA-Z0-9_]+$`. Field types are `string`,
-`number`, or `boolean`.
+HTTP and SSE servers use `type`, `url`, and optional `headers`:
 
-### Placeholder Rules
+```json
+{
+  "mcpServers": {
+    "server-name": {
+      "type": "http",
+      "url": "https://example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${EXAMPLE_TOKEN}"
+      }
+    }
+  }
+}
+```
 
-Values in `mcp.env`, `mcp.args`, `mcp.url`, and `mcp.headers` may contain:
+Stdio servers use `command`, optional `args`, optional `env`, and optional `cwd`.
 
-- `${config.KEY}` for a non-sensitive `configSchema` field. The value is
-  substituted and persisted at install time.
-- `${secret.KEY}` for a `sensitive: true` field. The value is stored in the OS
-  keychain and injected at connect time. It is never persisted as plaintext.
+## Placeholder Rules
 
-Do not hardcode secrets in manifests, setup docs, or skills.
+Use bare `${VAR}` placeholders in `.mcp.json` values when user configuration or
+secrets are needed. Placeholders can appear in `url`, `headers`, `args`, and
+`env` values.
 
-### Companion Setup
+Reserved app-provided variables are resolved by Artyx and are never prompted:
+
+- `${ARTYX_ELECTRON}`: the app's node/electron binary.
+- `${ARTYX_BUNDLED}`: the bundled MCP servers directory.
+
+Every other `${...}` variable is treated as user-provided. The desktop prompts
+for it and should store sensitive values outside plaintext manifests.
+
+Do not hardcode tokens, credentials, bearer strings, or machine-specific paths.
+
+## Companion Setup
 
 Use `companion` when a plugin needs an external application add-on, local bridge,
-or manual setup step:
+token setup, or manual step:
 
-- `required`: whether setup is required before connect.
 - `title`: setup title.
 - `summary`: optional short summary.
 - `steps`: ordered setup steps.
@@ -113,14 +98,15 @@ or manual setup step:
 - `downloadUrl`: optional download URL.
 - `prerequisites`: optional prerequisite list.
 
+Mirror the same setup information in `plugins/<plugin-name>/README.md` so the
+repo remains readable without the desktop app.
+
 ## Security Review Checklist
 
-- Inspect the exact `command` and `args`; reject obfuscation or shell wrappers
-  that hide what will run.
-- DCC socket bridges must bind to localhost only. These bridges are commonly
-  unauthenticated by design, so avoid exposing them to the network.
-- Secrets must go through `configSchema` with `sensitive: true`; never hardcode
-  credentials, tokens, or bearer strings.
-- Pin server versions when the upstream supports it.
-- Mark unverified upstream commands with `experimental: true` and add a `notes`
-  field explaining what must be verified before stabilizing.
+- Inspect the exact `command` and `args`; reject obfuscation or shell wrappers that hide what will run.
+- Prefer pinned server versions when the upstream supports them.
+- Treat every non-reserved `${...}` value as user-provided and potentially sensitive.
+- Never commit real tokens, API keys, cookies, OAuth credentials, or bearer values.
+- DCC and game-editor socket bridges must bind to localhost unless there is a reviewed authentication story.
+- Mark unverified upstream commands or auth flows with `experimental: true` in `marketplace.json`.
+- Keep setup instructions honest about prerequisites, network access, and local services.

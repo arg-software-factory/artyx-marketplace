@@ -1,106 +1,88 @@
 {
+  "$schema": "./schema/marketplace.schema.json",
   "name": "artyx-marketplace",
-  "version": 1,
+  "description": "Curated MCP servers and skills for the Artyx agent.",
   "owner": {
     "name": "Artyx",
     "url": "https://artyx.ai"
   },
-  "updatedAt": "2026-07-09",
   "plugins": [
     {
-      "id": "blender",
       "name": "blender",
-      "displayName": "Blender",
-      "summary": "Drive Blender through a bundled stdio MCP bridge and the Blender MCP add-on.",
+      "description": "Drive Blender through a bundled stdio MCP bridge and the Blender MCP add-on.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "creative",
-      "tags": ["3d", "dcc", "animation"],
       "icon": "🟠",
-      "version": "1.0.0",
-      "source": "plugins/blender",
-      "featured": true,
-      "requiresCompanion": true,
-      "transport": "stdio",
-      "auth": "none",
+      "source": "./plugins/blender",
+      "homepage": "https://github.com/ahujasid/blender-mcp",
       "experimental": false
     },
     {
-      "id": "unreal-engine",
       "name": "unreal-engine",
-      "displayName": "Unreal Engine",
-      "summary": "Drive Unreal Editor through the community Unreal MCP bridge.",
+      "description": "Drive Unreal Editor through the community Unreal MCP bridge.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "games",
-      "tags": ["game-engine", "editor", "blueprints"],
       "icon": "🎮",
-      "version": "1.0.0",
-      "source": "plugins/unreal-engine",
-      "featured": true,
-      "requiresCompanion": true,
-      "transport": "stdio",
-      "auth": "none",
+      "source": "./plugins/unreal-engine",
+      "homepage": "https://github.com/chongdashu/unreal-mcp",
       "experimental": true
     },
     {
-      "id": "unity",
       "name": "unity",
-      "displayName": "Unity",
-      "summary": "Drive Unity Editor through the community Unity MCP bridge.",
+      "description": "Drive Unity Editor through the community Unity MCP bridge.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "games",
-      "tags": ["game-engine", "editor", "csharp"],
       "icon": "🧩",
-      "version": "1.0.0",
-      "source": "plugins/unity",
-      "featured": false,
-      "requiresCompanion": true,
-      "transport": "stdio",
-      "auth": "none",
+      "source": "./plugins/unity",
+      "homepage": "https://github.com/CoplayDev/unity-mcp",
       "experimental": true
     },
     {
-      "id": "github",
       "name": "github",
-      "displayName": "GitHub",
-      "summary": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
+      "description": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "dev",
-      "tags": ["git", "issues", "pull-requests", "ci"],
       "icon": "🐙",
-      "version": "1.0.0",
-      "source": "plugins/github",
-      "featured": true,
-      "requiresCompanion": false,
-      "transport": "http",
-      "auth": "oauth",
+      "source": "./plugins/github",
+      "homepage": "https://github.com/github/github-mcp-server",
       "experimental": false
     },
     {
-      "id": "figma",
       "name": "figma",
-      "displayName": "Figma",
-      "summary": "Read Figma files, frames, and design variables through Figma MCP.",
+      "description": "Read Figma files, frames, and design variables through Figma MCP.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "creative",
-      "tags": ["design", "frames", "variables"],
       "icon": "🎨",
-      "version": "1.0.0",
-      "source": "plugins/figma",
-      "featured": true,
-      "requiresCompanion": false,
-      "transport": "http",
-      "auth": "oauth",
+      "source": "./plugins/figma",
+      "homepage": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server",
       "experimental": true
     },
     {
-      "id": "photoshop",
       "name": "photoshop",
-      "displayName": "Photoshop",
-      "summary": "Drive Photoshop layers, adjustments, and exports through a community MCP bridge.",
+      "description": "Drive Photoshop layers, adjustments, and exports through a community MCP bridge.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
       "category": "creative",
-      "tags": ["image-editing", "layers", "export"],
       "icon": "🖌️",
-      "version": "1.0.0",
-      "source": "plugins/photoshop",
-      "featured": false,
-      "requiresCompanion": true,
-      "transport": "stdio",
-      "auth": "none",
+      "source": "./plugins/photoshop",
+      "homepage": "https://github.com/modelcontextprotocol/servers",
       "experimental": true
     }
   ]
