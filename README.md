@@ -1,60 +1,63 @@
+<div align="center">
+
+![Artyx Marketplace](assets/banner.png)
+
 # Artyx Marketplace
 
-This repository is the curated catalog of MCP servers and skills for the Artyx
-agent.
+**Curated MCP servers &amp; skills for the [Artyx](https://artyx.ai) agent — one click to install.**
 
-The layout mirrors Anthropic's external plugin shape: each plugin folder is
-self-contained and predictable. A plugin can be MCP-only, skills-only, or both.
+</div>
 
-## Layout
+---
 
-```text
-marketplace.json
-schema/
-  marketplace.schema.json
-  plugin.schema.json
-  mcp.schema.json
-scripts/
-  validate.mjs
-plugins/
-  <plugin-name>/
-    .claude-plugin/
-      plugin.json
-    .mcp.json
-    README.md
-    skills/
-      <skill-id>/
-        SKILL.md
+## What is this?
+
+This repo is the source of truth for the **Artyx Marketplace** — the in‑app catalog where Artyx users install *plugins* that connect the agent to their favorite tools.
+
+A **plugin** bundles two things (either, or both):
+
+- 🔌 **an MCP server** — a live connection to an app or service (Blender, Unreal, GitHub, Figma…)
+- 🧠 **skills** — up‑to‑date, task‑specific know‑how that makes the agent genuinely *pro* at that tool
+
+The Artyx desktop app fetches [`marketplace.json`](marketplace.json), renders the gallery, and — on **Install** — writes the MCP config + skills into `~/.artyx`. Any secrets go straight to your OS keychain. That's it.
+
+## Catalog
+
+| Plugin | Category | What it does |
+|---|---|---|
+| 🟠 **Blender** | Creative | Drive Blender via a bundled MCP bridge + the Blender add‑on |
+| 🎮 **Unreal Engine** | Games | Automate the Unreal Editor through the community MCP bridge |
+| 🧩 **Unity** | Games | Drive the Unity Editor through the community MCP bridge |
+| 🐙 **GitHub** | Dev | Read repos, triage issues &amp; PRs, inspect CI |
+| 🎨 **Figma** | Creative | Read files, frames &amp; design variables |
+| 🖌️ **Photoshop** | Creative | Layers, adjustments &amp; exports via a community bridge |
+
+> More coming — and it's just a PR away. 👇
+
+## Anatomy of a plugin
+
+Ultra‑simple, mirroring [Anthropic's plugin layout](https://github.com/anthropics/claude-plugins-official) — one folder, two files, an optional `skills/`:
+
+```
+plugins/<name>/
+├── .claude-plugin/plugin.json   # identity + optional setup guide
+├── .mcp.json                    # standard MCP server config (drop‑in compatible)
+├── skills/<name>/SKILL.md       # the know‑how (optional)
+└── README.md
 ```
 
-`marketplace.json` is the gallery index. It keeps only the fields needed to
-render the catalog: identity, category, icon, source, homepage, and experimental
-status.
+Secrets are bare `${VAR}` placeholders in `.mcp.json` — the app detects them, asks once, and stores them in the OS keychain (never in plaintext). Reserved `${ARTYX_ELECTRON}` / `${ARTYX_BUNDLED}` app‑vars are resolved by Artyx.
 
-Each plugin contains:
+## Contribute
 
-- `.claude-plugin/plugin.json`: plugin identity and optional `companion` setup card.
-- `.mcp.json`: standard MCP server config using `mcpServers`.
-- `skills/<skill-id>/SKILL.md`: optional agent skills.
-- `README.md`: human-readable setup notes that mirror the companion card.
-
-## Placeholders
-
-MCP config values can use Anthropic-style `${VAR}` placeholders in `url`,
-`headers`, `args`, and `env` values. The desktop prompts the user for each
-non-reserved variable.
-
-Reserved app-provided variables are resolved by Artyx and are never prompted:
-
-- `${ARTYX_ELECTRON}`
-- `${ARTYX_BUNDLED}`
-
-## Validate
+Adding a plugin is a folder and a pull request. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the schema and the security checklist. Only the Artyx team merges — every server is reviewed before it ships.
 
 ```bash
-npm install
-npm run validate
+npm install && npm run validate   # validate your plugin locally
 ```
 
-The validator checks the marketplace index, each plugin identity manifest,
-optional MCP config, skill frontmatter, and companion URLs.
+---
+
+<div align="center">
+<sub>Built for <a href="https://artyx.ai">Artyx</a> — the agentic studio for AI design · MIT licensed</sub>
+</div>
