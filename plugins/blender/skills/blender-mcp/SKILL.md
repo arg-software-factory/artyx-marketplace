@@ -1,7 +1,6 @@
 ---
-name: Blender MCP
+name: blender-mcp
 description: Drive a connected Blender MCP server like a senior technical artist — scene building, materials, keyframe animation, cameras, lighting, and verification loops using bpy.
-enabled: true
 ---
 
 # Driving Blender through MCP

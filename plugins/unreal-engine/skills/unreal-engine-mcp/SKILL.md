@@ -1,7 +1,6 @@
 ---
-name: Unreal Engine MCP
+name: unreal-engine-mcp
 description: Drive a connected Unreal Engine MCP server — actors, Blueprints, level composition, and editor control with strict inspect-mutate-verify discipline.
-enabled: true
 ---
 
 # Driving Unreal Engine through MCP

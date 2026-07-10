@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "unreal-engine": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["unreal-mcp"],
+      "env": {
+        "UNREAL_MCP_PORT": "55557"
+      }
+    }
+  }
+}

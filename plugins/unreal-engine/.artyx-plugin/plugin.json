@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "unreal-engine",
+  "version": "1.0.0",
+  "description": "Connect Artyx to Unreal Engine for editor automation, actors, Blueprints, level composition, and verification loops.",
+  "publisher": "Artyx",
+  "license": "MIT",
+  "homepage": "https://github.com/chongdashu/unreal-mcp",
+  "keywords": ["game-engine", "editor", "blueprints"],
+  "companion": {
+    "title": "Finish setup inside Unreal Engine",
+    "steps": [
+      "Copy the UnrealMCP plugin into your project's Plugins/ folder.",
+      "Enable it in Edit → Plugins (search 'Unreal MCP'), then restart the editor.",
+      "The bridge listens on 127.0.0.1:55557."
+    ],
+    "docsUrl": "https://github.com/chongdashu/unreal-mcp#readme",
+    "downloadUrl": "https://github.com/chongdashu/unreal-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
+  }
+}

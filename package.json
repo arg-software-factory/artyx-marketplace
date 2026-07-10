@@ -4,11 +4,14 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "validate": "node scripts/validate.mjs"
+    "build:v2": "node scripts/build-v2.mjs",
+    "catalog:v2": "node scripts/build-v2.mjs --write-catalog",
+    "validate": "node scripts/validate.mjs && node scripts/build-v2.mjs --check"
   },
   "devDependencies": {
     "ajv": "^8",
     "ajv-formats": "^3",
+    "archiver": "^7.0.1",
     "gray-matter": "^4"
   }
 }

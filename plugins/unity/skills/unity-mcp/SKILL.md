@@ -1,7 +1,6 @@
 ---
-name: Unity MCP
+name: unity-mcp
 description: Drive a connected Unity MCP server — GameObjects, components, C# scripts, scenes, and play-mode testing with inspect-mutate-verify discipline.
-enabled: true
 ---
 
 # Driving Unity through MCP

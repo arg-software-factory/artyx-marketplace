@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "blender": {
+      "type": "stdio",
+      "command": "${ARTYX_ELECTRON}",
+      "args": ["${ARTYX_BUNDLED}/blender-mcp-server.mjs"],
+      "env": {
+        "ELECTRON_RUN_AS_NODE": "1",
+        "BLENDER_MCP_PORT": "9876"
+      }
+    }
+  }
+}

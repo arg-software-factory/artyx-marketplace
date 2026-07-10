@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "unity",
+  "version": "1.0.0",
+  "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
+  "publisher": "Artyx",
+  "license": "MIT",
+  "homepage": "https://github.com/CoplayDev/unity-mcp",
+  "keywords": ["game-engine", "editor", "csharp"],
+  "companion": {
+    "title": "Finish setup inside Unity",
+    "steps": [
+      "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
+      "Open the Unity MCP window and start the bridge.",
+      "Approve the auto-install of the Python server if prompted."
+    ],
+    "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
+    "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
+  }
+}
