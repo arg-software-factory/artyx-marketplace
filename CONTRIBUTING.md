@@ -17,6 +17,24 @@ Plugin names must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 
 A plugin can be MCP-only, skills-only, or both.
 
+## v2 Release Package
+
+New or materially changed packages must also carry the canonical v2 files:
+
+1. Add `plugins/<plugin-name>/.artyx-plugin/plugin.json` with `schemaVersion: 2`, a
+   semantic `version`, publisher, license, and explicit `components` paths.
+2. Put the canonical MCP map in `mcp.json`; keep `.mcp.json` semantically identical for
+   legacy clients.
+3. Add or update the matching entry in `marketplace.v2.json`. The package `name` and
+   `version` must match the canonical manifest.
+4. Run `npm run catalog:v2` after every package-content change. It writes the archive SHA-256
+   and byte size into the catalog; do not edit those values manually.
+5. Run `npm run validate`. It validates schemas, component paths, skills, MCP maps, legacy
+   parity, package safety, and cross-build determinism.
+
+The v2 archive generates compatible manifests for Artyx, Claude, Codex, and Cursor. Do not
+hand-maintain generated host manifests inside a release archive.
+
 ## Plugin Identity
 
 Each `.claude-plugin/plugin.json` is strict JSON. Unknown fields are rejected.

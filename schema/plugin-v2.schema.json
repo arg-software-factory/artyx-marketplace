@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/plugin-v2.schema.json",
   "type": "object",
-  "required": ["schemaVersion", "name", "version", "description"],
+  "required": ["schemaVersion", "name", "version", "description", "publisher", "license", "components"],
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "name": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
     "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$" },
     "description": { "type": "string", "minLength": 1 },
@@ -17,12 +17,13 @@
     "icon": { "type": "string" },
     "components": {
       "type": "object",
+      "minProperties": 1,
       "additionalProperties": false,
       "properties": {
-        "skills": { "type": "string" },
-        "agents": { "type": "string" },
-        "mcp": { "type": "string" },
-        "assets": { "type": "string" }
+        "skills": { "type": "string", "pattern": "^(?:[a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$" },
+        "agents": { "type": "string", "pattern": "^(?:[a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$" },
+        "mcp": { "type": "string", "pattern": "^(?:[a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$" },
+        "assets": { "type": "string", "pattern": "^(?:[a-z0-9][a-z0-9._-]*/)*[a-z0-9][a-z0-9._-]*$" }
       }
     },
     "companion": {

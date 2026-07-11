@@ -1,21 +1,30 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "unity",
-  "version": "1.0.0",
-  "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
+  "version": "1.1.0",
+  "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
   "publisher": "Artyx",
   "license": "MIT",
-  "homepage": "https://github.com/CoplayDev/unity-mcp",
-  "keywords": ["game-engine", "editor", "csharp"],
+  "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "keywords": ["game-engine", "unity-6", "editor", "csharp", "mcp"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
   "companion": {
-    "title": "Finish setup inside Unity",
+    "title": "Enable Unity's native MCP relay",
+    "summary": "Use Unity 6's AI Assistant package and local relay; do not install a community Python bridge.",
     "steps": [
-      "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
-      "Open the Unity MCP window and start the bridge.",
-      "Approve the auto-install of the Python server if prompted."
+      "Open a Unity 6 project with the AI Assistant package installed. Go to Edit → Project Settings → AI → Unity MCP Server and confirm Unity Bridge is Running.",
+      "Set UNITY_MCP_RELAY in Artyx to the platform-specific relay executable installed under ~/.unity/relay/, then reconnect. Keep --mcp as the relay argument.",
+      "In Unity's Pending Connections, review and Accept Artyx. Confirm the client appears under Connected Clients, then ask it to summarize console warnings."
     ],
-    "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
-    "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
-    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
+    "docsUrl": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
+    "downloadUrl": "https://unity.com/download",
+    "prerequisites": [
+      "Unity 6 (6000.0)+ with the com.unity.ai.assistant package installed.",
+      "An active Unity AI trial or subscription and the project requirements documented by Unity."
+    ]
   }
 }

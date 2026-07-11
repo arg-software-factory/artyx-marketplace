@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -31,6 +32,21 @@ const assertEqual = (actual, expected, label) => {
   if (actual !== expected) {
     throw new Error(`${label} mismatch: expected ${expected}, got ${actual}`);
   }
+};
+
+const assertJsonEqual = (actual, expected, label) => {
+  if (!isDeepStrictEqual(actual, expected)) {
+    throw new Error(`${label} must match its canonical v2 equivalent`);
+  }
+};
+
+const assertPathInside = (sourceDir, componentPath) => {
+  const target = path.resolve(sourceDir, componentPath);
+  const relative = path.relative(sourceDir, target);
+  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`component path escapes plugin: ${componentPath}`);
+  }
+  return target;
 };
 
 const loadSchemas = async () => {
@@ -152,21 +168,42 @@ const validateNativePlugin = async (entry, validators) => {
   assertEqual(manifest.name, entry.name, "v2 name");
   assertEqual(manifest.version, entry.version, "v2 version");
   for (const componentPath of Object.values(manifest.components ?? {})) {
-    const target = path.resolve(sourceDir, componentPath);
-    if (!target.startsWith(`${sourceDir}${path.sep}`)) throw new Error("component path escapes plugin");
+    const target = assertPathInside(sourceDir, componentPath);
     await fs.access(target);
   }
-  const mcpPath = path.join(sourceDir, manifest.components?.mcp ?? "mcp.json");
-  const mcp = await readJsonFile(mcpPath).catch((error) => {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  });
+  const mcpPath = manifest.components?.mcp
+    ? assertPathInside(sourceDir, manifest.components.mcp)
+    : null;
+  let mcp = null;
+  if (mcpPath) {
+    mcp = await readJsonFile(mcpPath).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+  }
   if (mcp && !validators.validateMcp(mcp)) {
     throw new Error(`native mcp.json invalid: ${formatAjvErrors(validators.validateMcp.errors)}`);
   }
   if (mcp) assertNoLiteralSecrets(mcp);
+
+  const legacyManifest = await readJsonFile(path.join(sourceDir, ".claude-plugin", "plugin.json"));
+  for (const key of ["name", "version", "description", "homepage", "keywords", "companion"]) {
+    assertJsonEqual(legacyManifest[key], manifest[key], `legacy ${key}`);
+  }
+  if (mcp) {
+    const legacyMcp = await readJsonFile(path.join(sourceDir, ".mcp.json"));
+    assertJsonEqual(legacyMcp, mcp, "legacy .mcp.json");
+  }
   await validateSkills(sourceDir);
   await assertSafeTree(sourceDir);
+};
+
+const validateArchiveIdentity = (entry) => {
+  const archiveUrl = new URL(entry.archive.url);
+  const expectedName = `${entry.name}-${entry.version}.zip`;
+  if (!archiveUrl.pathname.endsWith(`/${expectedName}`)) {
+    throw new Error(`${entry.name}: archive URL must end in ${expectedName}`);
+  }
 };
 
 const validatePluginEntry = async (entry, validators) => {
@@ -225,6 +262,7 @@ const main = async () => {
 
   for (const entry of marketplaceV2.plugins) {
     try {
+      validateArchiveIdentity(entry);
       await validateNativePlugin(entry, validators);
       console.log(`✓ v2/${entry.name}`);
     } catch (error) {

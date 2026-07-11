@@ -10,16 +10,16 @@
   "plugins": [
     {
       "name": "blender",
-      "version": "1.0.0",
-      "description": "Drive Blender through a bundled stdio MCP bridge and the Blender MCP add-on.",
+      "version": "1.1.0",
+      "description": "Operate a local Blender session through a bundled MCP bridge with inspect-mutate-verify discipline.",
       "category": "creative",
       "icon": "🟠",
-      "homepage": "https://github.com/ahujasid/blender-mcp",
+      "homepage": "https://www.blender.org/lab/mcp-server/",
       "experimental": false,
       "archive": {
-        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/blender-1.0.0.zip",
-        "sha256": "ba4a0ec8f7bbbed8446ed48413dc7bcaec796f02e3361ef4d527488379b3685e",
-        "sizeBytes": 6152
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/blender-1.1.0.zip",
+        "sha256": "d6077596fb490faaaa09977440c4cdf59d24aaa049ebc1b1551ee7ba5ce2d530",
+        "sizeBytes": 13820
       },
       "compatibility": {
         "artyx": ">=0.6.2",
@@ -32,16 +32,16 @@
     },
     {
       "name": "unreal-engine",
-      "version": "1.0.0",
-      "description": "Drive Unreal Editor through the community Unreal MCP bridge.",
+      "version": "1.1.0",
+      "description": "Operate Unreal Engine 5.8 through Epic's native local MCP server with toolset discovery and verification.",
       "category": "games",
       "icon": "🎮",
-      "homepage": "https://github.com/chongdashu/unreal-mcp",
+      "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
       "experimental": true,
       "archive": {
-        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unreal-engine-1.0.0.zip",
-        "sha256": "1a55e2b080137f50080b895dff49403ec23f69cb1fe10137071c40000e8803e7",
-        "sizeBytes": 5172
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unreal-engine-1.1.0.zip",
+        "sha256": "5a04b4a2d711fe37c205a3b49b37d5ea477f31eedb8e82e48bb06e5f6e6ed75d",
+        "sizeBytes": 12962
       },
       "compatibility": {
         "artyx": ">=0.6.2",
@@ -54,16 +54,16 @@
     },
     {
       "name": "unity",
-      "version": "1.0.0",
-      "description": "Drive Unity Editor through the community Unity MCP bridge.",
+      "version": "1.1.0",
+      "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
       "category": "games",
       "icon": "🧩",
-      "homepage": "https://github.com/CoplayDev/unity-mcp",
+      "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
       "experimental": true,
       "archive": {
-        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unity-1.0.0.zip",
-        "sha256": "0b335f504287f06ff0355ea0fdfbbb0b5a887370ae633c1955abee2de8e378d8",
-        "sizeBytes": 4990
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unity-1.1.0.zip",
+        "sha256": "aeca22dbd5524fa4cfa552f14a9953124f8cb91e2614bbcc18363ac4a8c83899",
+        "sizeBytes": 13129
       },
       "compatibility": {
         "artyx": ">=0.6.2",
@@ -84,8 +84,8 @@
       "experimental": false,
       "archive": {
         "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/github-1.0.0.zip",
-        "sha256": "6a31130eea007d72e22697a668f68964cb784248180d9855d29c0eb06c5e1702",
-        "sizeBytes": 3302
+        "sha256": "b5758ab18612c62519c71c99c7a0be96c09a19fd24b934f603f26581cda62cf4",
+        "sizeBytes": 5065
       },
       "compatibility": {
         "artyx": ">=0.6.2",
@@ -106,8 +106,8 @@
       "experimental": true,
       "archive": {
         "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/figma-1.0.0.zip",
-        "sha256": "2ffe4518bb1037f5db4b0a5c9cb420089d920c6a450bf1c10280a2de5c8663f4",
-        "sizeBytes": 3529
+        "sha256": "2d28f84d6c11b8b1c4c15566c4a0ebc42d0f0d7be30af37617fd9443b0750f00",
+        "sizeBytes": 5651
       },
       "compatibility": {
         "artyx": ">=0.6.2",
@@ -128,8 +128,8 @@
       "experimental": true,
       "archive": {
         "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/photoshop-1.0.0.zip",
-        "sha256": "b1bd0d43c59d27c1ed6f805a728e6dc79552353bc4d339047059415dc60a51ff",
-        "sizeBytes": 3256
+        "sha256": "1c2716f8df53065bc1e0c31e368f694eb9f68ec77f820b215667fb7e71ac4505",
+        "sizeBytes": 4753
       },
       "compatibility": {
         "artyx": ">=0.6.2",

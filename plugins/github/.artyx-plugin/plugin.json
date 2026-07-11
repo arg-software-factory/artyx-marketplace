@@ -1,12 +1,16 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "github",
   "version": "1.0.0",
-  "description": "Connect Artyx to GitHub MCP for repository reading, issue and pull request triage, and CI status inspection.",
+  "description": "Connect Artyx to GitHub MCP for repository reading, issue and pull request triage, and CI status inspection using a personal access token.",
   "publisher": "Artyx",
   "license": "MIT",
   "homepage": "https://github.com/github/github-mcp-server",
   "keywords": ["git", "issues", "pull-requests", "ci"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
   "companion": {
     "title": "GitHub token",
     "summary": "Create a GitHub personal access token and provide it as GITHUB_TOKEN when prompted.",

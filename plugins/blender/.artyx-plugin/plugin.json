@@ -1,21 +1,25 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "blender",
-  "version": "1.0.0",
-  "description": "Connect Artyx to Blender for scene inspection, procedural edits, materials, animation, cameras, lighting, and verification loops.",
+  "version": "1.1.0",
+  "description": "Use Blender MCP for controlled local scene edits with inspect-mutate-verify discipline.",
   "publisher": "Artyx",
   "license": "MIT",
-  "homepage": "https://github.com/ahujasid/blender-mcp",
-  "keywords": ["3d", "dcc", "animation"],
+  "homepage": "https://www.blender.org/lab/mcp-server/",
+  "keywords": ["3d", "blender", "dcc", "animation", "mcp"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
   "companion": {
     "title": "Finish setup inside Blender",
-    "summary": "Install and enable the Blender MCP add-on, then click Connect.",
+    "summary": "Install the Blender Lab MCP add-on, start its local bridge, then sync Artyx.",
     "steps": [
-      "Download the Blender MCP add-on (addon.py) from the official repo.",
-      "In Blender: Edit → Preferences → Add-ons → Install…, pick addon.py, enable 'Interface: Blender MCP'.",
-      "Open the N-panel (press N) → BlenderMCP tab → click 'Connect'. The add-on listens on 127.0.0.1:9876."
+      "Get the Blender Lab MCP add-on from the official project page for your Blender version.",
+      "Enable the add-on in Blender Preferences, then start its bridge from the add-on panel.",
+      "Keep the bridge on 127.0.0.1:9876. Sync Blender in Artyx and confirm its four tools."
     ],
-    "docsUrl": "https://github.com/ahujasid/blender-mcp#readme",
-    "downloadUrl": "https://github.com/ahujasid/blender-mcp"
+    "docsUrl": "https://www.blender.org/lab/mcp-server/",
+    "downloadUrl": "https://www.blender.org/lab/mcp-server/"
   }
 }

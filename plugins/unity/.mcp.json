@@ -1,8 +1,9 @@
 {
   "mcpServers": {
-    "unity": {
-      "command": "uvx",
-      "args": ["unity-mcp-server"]
+    "unity-mcp": {
+      "type": "stdio",
+      "command": "${UNITY_MCP_RELAY}",
+      "args": ["--mcp"]
     }
   }
 }

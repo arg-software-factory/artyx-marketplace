@@ -93,7 +93,10 @@ export const buildPluginArchive = async (pluginDir) => {
     names.add(entry.name);
   }
 
-  const archive = archiver("zip", { zlib: { level: 9 } });
+  // Store rather than deflate entries. Native zlib output can differ between Node
+  // releases, which would make a catalog digest generated locally fail in CI.
+  // Package sizes are intentionally modest; cross-runtime reproducibility wins.
+  const archive = archiver("zip", { forceUTC: true, store: true });
   const output = new PassThrough();
   const chunks = [];
   output.on("data", (chunk) => chunks.push(Buffer.from(chunk)));

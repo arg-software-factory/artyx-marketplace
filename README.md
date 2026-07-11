@@ -21,6 +21,23 @@ A **plugin** bundles two things (either, or both):
 
 The Artyx desktop app fetches [`marketplace.json`](marketplace.json), renders the gallery, and — on **Install** — writes the MCP config + skills into `~/.artyx`. Any secrets go straight to your OS keychain. That's it.
 
+## v2: verified, portable packages
+
+[`marketplace.v2.json`](marketplace.v2.json) is the release catalog for Artyx 0.6.2+
+and uses schema version 2. Every entry identifies one immutable archive by URL, SHA-256,
+and byte size, then declares its supported Artyx versions and platforms. Installers must
+verify the digest and size before extracting the archive.
+
+Each archive has one canonical `.artyx-plugin/plugin.json` (schema version 2) and explicit
+components for its MCP map and skills. The build also generates small compatibility manifests
+for Claude, Codex, and Cursor, so the package's identity, setup information, MCP config, and
+skill stay aligned across clients. `mcp.json` is canonical; `.mcp.json` is the legacy-compatible
+copy and is validated to be structurally equivalent after JSON parsing.
+
+The release pipeline deliberately stores ZIP entries without compression and fixes timestamps.
+That makes SHA-256 output reproducible across operating systems and Node versions—an installer
+can trust a digest produced in CI rather than a developer's local machine.
+
 ## Catalog
 
 | Plugin | Category | What it does |
@@ -40,8 +57,10 @@ Ultra‑simple, mirroring [Anthropic's plugin layout](https://github.com/anthrop
 
 ```
 plugins/<name>/
+├── .artyx-plugin/plugin.json   # canonical v2 identity + components
 ├── .claude-plugin/plugin.json   # identity + optional setup guide
 ├── .mcp.json                    # standard MCP server config (drop‑in compatible)
+├── mcp.json                     # canonical v2 MCP config
 ├── skills/<name>/SKILL.md       # the know‑how (optional)
 └── README.md
 ```
@@ -54,6 +73,7 @@ Adding a plugin is a folder and a pull request. See **[CONTRIBUTING.md](CONTRIBU
 
 ```bash
 npm install && npm run validate   # validate your plugin locally
+npm run catalog:v2                # regenerate verified digests after a v2 package change
 ```
 
 ---
