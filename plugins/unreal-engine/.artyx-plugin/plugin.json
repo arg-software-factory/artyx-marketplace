@@ -1,13 +1,17 @@
 {
+  "schemaVersion": 2,
   "name": "unreal-engine",
-  "description": "Drive Unreal Editor through Epic's native Unreal MCP server with inspected, serialized, and verified operations.",
-  "author": {
-    "name": "Artyx",
-    "url": "https://artyx.ai"
-  },
   "version": "1.1.0",
+  "description": "Drive Unreal Editor through Epic's native Unreal MCP server with inspected, serialized, and verified operations.",
+  "publisher": "Artyx",
+  "license": "MIT",
   "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
   "keywords": ["game-engine", "editor", "blueprints", "mcp", "unreal-engine-5-8"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
   "companion": {
     "title": "Enable Unreal MCP in Unreal Engine 5.8",
     "summary": "Use Epic's built-in, experimental local MCP server; it is not the legacy community Python bridge.",

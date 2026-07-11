@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "name": "photoshop",
+  "version": "1.0.0",
+  "description": "Connect Artyx to a Photoshop UXP MCP bridge for layer inspection, edits, adjustments, and export workflows.",
+  "publisher": "Artyx",
+  "license": "MIT",
+  "homepage": "https://github.com/modelcontextprotocol/servers",
+  "keywords": ["image-editing", "layers", "export"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
+  "companion": {
+    "title": "Finish setup inside Photoshop",
+    "steps": [
+      "Install the Photoshop UXP MCP plugin and enable it in Plugins.",
+      "Start the bridge from the plugin panel."
+    ],
+    "docsUrl": "https://github.com/modelcontextprotocol/servers#readme",
+    "prerequisites": ["Node.js + npx available on PATH"]
+  }
+}

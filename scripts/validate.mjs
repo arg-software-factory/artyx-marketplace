@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -33,11 +34,28 @@ const assertEqual = (actual, expected, label) => {
   }
 };
 
+const assertJsonEqual = (actual, expected, label) => {
+  if (!isDeepStrictEqual(actual, expected)) {
+    throw new Error(`${label} must match its canonical v2 equivalent`);
+  }
+};
+
+const assertPathInside = (sourceDir, componentPath) => {
+  const target = path.resolve(sourceDir, componentPath);
+  const relative = path.relative(sourceDir, target);
+  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`component path escapes plugin: ${componentPath}`);
+  }
+  return target;
+};
+
 const loadSchemas = async () => {
-  const [marketplaceSchema, pluginSchema, mcpSchema] = await Promise.all([
+  const [marketplaceSchema, pluginSchema, mcpSchema, marketplaceV2Schema, pluginV2Schema] = await Promise.all([
     readJson("schema/marketplace.schema.json"),
     readJson("schema/plugin.schema.json"),
-    readJson("schema/mcp.schema.json")
+    readJson("schema/mcp.schema.json"),
+    readJson("schema/marketplace-v2.schema.json"),
+    readJson("schema/plugin-v2.schema.json")
   ]);
 
   const ajv = new Ajv2020({ allErrors: true });
@@ -46,7 +64,9 @@ const loadSchemas = async () => {
   return {
     validateMarketplace: ajv.compile(marketplaceSchema),
     validatePlugin: ajv.compile(pluginSchema),
-    validateMcp: ajv.compile(mcpSchema)
+    validateMcp: ajv.compile(mcpSchema),
+    validateMarketplaceV2: ajv.compile(marketplaceV2Schema),
+    validatePluginV2: ajv.compile(pluginV2Schema)
   };
 };
 
@@ -56,6 +76,29 @@ const validateSkill = async (skillPath) => {
 
   if (!parsed.data.name || !parsed.data.description) {
     throw new Error(`${path.relative(rootDir, skillPath)} missing frontmatter name/description`);
+  }
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parsed.data.name)) {
+    throw new Error(`${path.relative(rootDir, skillPath)} has an invalid skill name`);
+  }
+};
+
+const assertSafeTree = async (treeRoot, current = treeRoot, state = { files: 0, bytes: 0 }) => {
+  const entries = await fs.readdir(current, { withFileTypes: true });
+  for (const entry of entries) {
+    const filePath = path.join(current, entry.name);
+    const stat = await fs.lstat(filePath);
+    if (stat.isSymbolicLink()) throw new Error(`${path.relative(rootDir, filePath)} is a symlink`);
+    if (entry.isDirectory()) {
+      await assertSafeTree(treeRoot, filePath, state);
+    } else if (entry.isFile()) {
+      state.files += 1;
+      state.bytes += stat.size;
+      if (state.files > 256 || state.bytes > 24 * 1024 * 1024 || stat.size > 4 * 1024 * 1024) {
+        throw new Error(`${path.relative(rootDir, treeRoot)} exceeds package safety limits`);
+      }
+    } else {
+      throw new Error(`${path.relative(rootDir, filePath)} is a special file`);
+    }
   }
 };
 
@@ -75,10 +118,12 @@ const validateSkills = async (sourceDir) => {
 
   for (const skillDirEntry of skillDirEntries) {
     if (!skillDirEntry.isDirectory()) {
-      continue;
+      throw new Error(`${path.relative(rootDir, path.join(skillsDir, skillDirEntry.name))} must be a directory`);
     }
 
-    await validateSkill(path.join(skillsDir, skillDirEntry.name, "SKILL.md"));
+    const skillDir = path.join(skillsDir, skillDirEntry.name);
+    await assertSafeTree(skillDir);
+    await validateSkill(path.join(skillDir, "SKILL.md"));
   }
 };
 
@@ -99,6 +144,65 @@ const validateMcpConfig = async (sourceDir, validateMcp) => {
 
   if (!validateMcp(mcpConfig)) {
     throw new Error(`.mcp.json invalid: ${formatAjvErrors(validateMcp.errors)}`);
+  }
+};
+
+const SECRET_KEY = /token|key|secret|password|bearer|credential|authorization/i;
+
+const assertNoLiteralSecrets = (value, trail = "mcp") => {
+  if (!value || typeof value !== "object") return;
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === "string" && SECRET_KEY.test(key) && !item.includes("${")) {
+      throw new Error(`${trail}.${key} contains a literal secret`);
+    }
+    if (item && typeof item === "object") assertNoLiteralSecrets(item, `${trail}.${key}`);
+  }
+};
+
+const validateNativePlugin = async (entry, validators) => {
+  const sourceDir = path.join(rootDir, "plugins", entry.name);
+  const manifest = await readJsonFile(path.join(sourceDir, ".artyx-plugin", "plugin.json"));
+  if (!validators.validatePluginV2(manifest)) {
+    throw new Error(`native plugin.json invalid: ${formatAjvErrors(validators.validatePluginV2.errors)}`);
+  }
+  assertEqual(manifest.name, entry.name, "v2 name");
+  assertEqual(manifest.version, entry.version, "v2 version");
+  for (const componentPath of Object.values(manifest.components ?? {})) {
+    const target = assertPathInside(sourceDir, componentPath);
+    await fs.access(target);
+  }
+  const mcpPath = manifest.components?.mcp
+    ? assertPathInside(sourceDir, manifest.components.mcp)
+    : null;
+  let mcp = null;
+  if (mcpPath) {
+    mcp = await readJsonFile(mcpPath).catch((error) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+  }
+  if (mcp && !validators.validateMcp(mcp)) {
+    throw new Error(`native mcp.json invalid: ${formatAjvErrors(validators.validateMcp.errors)}`);
+  }
+  if (mcp) assertNoLiteralSecrets(mcp);
+
+  const legacyManifest = await readJsonFile(path.join(sourceDir, ".claude-plugin", "plugin.json"));
+  for (const key of ["name", "version", "description", "homepage", "keywords", "companion"]) {
+    assertJsonEqual(legacyManifest[key], manifest[key], `legacy ${key}`);
+  }
+  if (mcp) {
+    const legacyMcp = await readJsonFile(path.join(sourceDir, ".mcp.json"));
+    assertJsonEqual(legacyMcp, mcp, "legacy .mcp.json");
+  }
+  await validateSkills(sourceDir);
+  await assertSafeTree(sourceDir);
+};
+
+const validateArchiveIdentity = (entry) => {
+  const archiveUrl = new URL(entry.archive.url);
+  const expectedName = `${entry.name}-${entry.version}.zip`;
+  if (!archiveUrl.pathname.endsWith(`/${expectedName}`)) {
+    throw new Error(`${entry.name}: archive URL must end in ${expectedName}`);
   }
 };
 
@@ -127,12 +231,22 @@ const validatePluginEntry = async (entry, validators) => {
 const main = async () => {
   const validators = await loadSchemas();
   const marketplace = await readJson("marketplace.json");
+  const marketplaceV2 = await readJson("marketplace.v2.json");
 
   if (!validators.validateMarketplace(marketplace)) {
     throw new Error(
       `marketplace.json invalid: ${formatAjvErrors(validators.validateMarketplace.errors)}`
     );
   }
+  if (!validators.validateMarketplaceV2(marketplaceV2)) {
+    throw new Error(
+      `marketplace.v2.json invalid: ${formatAjvErrors(validators.validateMarketplaceV2.errors)}`
+    );
+  }
+  const duplicateIds = marketplaceV2.plugins
+    .map((entry) => entry.name)
+    .filter((name, index, all) => all.indexOf(name) !== index);
+  if (duplicateIds.length > 0) throw new Error(`duplicate v2 plugin ids: ${duplicateIds.join(", ")}`);
 
   let failed = false;
 
@@ -143,6 +257,17 @@ const main = async () => {
     } catch (error) {
       failed = true;
       console.error(`✗ ${entry.name}: ${error.message}`);
+    }
+  }
+
+  for (const entry of marketplaceV2.plugins) {
+    try {
+      validateArchiveIdentity(entry);
+      await validateNativePlugin(entry, validators);
+      console.log(`✓ v2/${entry.name}`);
+    } catch (error) {
+      failed = true;
+      console.error(`✗ v2/${entry.name}: ${error.message}`);
     }
   }
 

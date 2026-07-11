@@ -1,54 +1,79 @@
 ---
-name: Unreal Engine MCP
-description: Drive a connected Unreal Engine MCP server — actors, Blueprints, level composition, and editor control with strict inspect-mutate-verify discipline.
-enabled: true
+name: unreal-engine-mcp
+description: Operate a connected Unreal Engine 5.8 editor through Epic's native MCP server using toolset discovery, serialized changes, and read-back verification.
 ---
 
-# Driving Unreal Engine through MCP
+# Unreal Engine MCP operator playbook
 
-You are operating a LIVE Unreal Editor session. Community UE MCP servers (e.g. chongdashu/unreal-mcp, kvick UnrealMCP) are EXPERIMENTAL: they differ in tool names and silently no-op on bad input more often than Blender. Compensate with tighter verification.
+This skill is for **Epic's native Unreal MCP plugin in Unreal Engine 5.8**, which is Experimental. It is a live-editor connection, not a code generator and not a substitute for project review.
 
-## 1. Discover before you act
+Official references:
 
-Your available UE tools are in your tool list with an `mcp_` prefix. Typical categories:
-- **Actor tools** — spawn/delete actors (StaticMeshActor, lights, cameras), set transform, list/find actors, get properties.
-- **Blueprint tools** — create Blueprint classes, add components (mesh/camera/light), set component properties/physics, compile, spawn instances.
-- **Node tools** — add event nodes (BeginPlay/Tick), function calls, variables, wire pins.
-- **Editor tools** — viewport focus, camera placement, sometimes console commands / screenshots.
+- [Unreal MCP](https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor)
+- [Coordinate system and spaces](https://dev.epicgames.com/documentation/unreal-engine/coordinate-system-and-spaces-in-unreal-engine)
+- [Blueprints overview](https://dev.epicgames.com/documentation/unreal-engine/overview-of-blueprints-visual-scripting-in-unreal-engine)
 
-READ each tool's parameter schema from its description before first use — argument names vary between servers (`actor_name` vs `name`, `location` array vs xyz fields). Do not guess: a wrong argument often creates a mis-named actor instead of erroring.
+## Connect safely
 
-## 2. The loop (stricter than Blender)
+1. Confirm the editor is open, Unreal MCP is enabled, and the local endpoint is reachable. The documented default is `http://127.0.0.1:8000/mcp`.
+2. Do not change binding, proxy the server, or share its URL. Native Unreal MCP has no authentication and is intended for loopback only.
+3. If the endpoint differs from the default, use the config generated in the editor with `ModelContextProtocol.GenerateClientConfig <Client|All>`; do not guess a URL or port.
+4. If the server does not connect, inspect Unreal's Output Log (`LogModelContextProtocol`) and correct the plugin/startup configuration before retrying.
 
-1. **List first** — enumerate level actors before mutating; UE levels are rarely empty (floor, PlayerStart, SkyLight...).
-2. **One actor/Blueprint per call** — never batch unrelated spawns in one call.
-3. **Verify EVERY write with a read** — spawn → find-by-name → check transform actually matches. UE MCP servers are the most likely to accept a call and do nothing; the read-back is the only truth.
-4. **Name deterministically** — `BP_Enemy_01`, `SM_Crate_03`. You will need these exact names to find/modify later; UE auto-suffixes duplicates, so read back the FINAL name after spawn and use that.
-5. **Compile after Blueprint graph edits** — an uncompiled Blueprint silently runs the old logic. Compile, then check for reported errors.
+## Discover before planning
 
-## 3. Coordinate system & units
+Native Unreal MCP normally starts in **tool-search mode**. First use the discovery tools exposed by the connected server:
 
-- Units are **centimeters** (Blender/Unity use meters — multiply by 100 when porting dimensions).
-- **Z is up**, X forward, **left-handed**. Rotations in degrees (Roll=X, Pitch=Y, Yaw=Z).
-- Ground floor is usually at Z=0; spawn actors with Z ≥ half their height or they clip through.
+1. `list_toolsets` — learn the available capabilities.
+2. `describe_toolset` for the smallest relevant toolset — read exact schemas, constraints, and side effects.
+3. `call_tool` only with parameters verified from that schema.
 
-## 4. Blueprint workflow
+Never infer a tool, an asset path, actor name, pin name, or property type from another MCP implementation. Toolsets can differ by engine version and enabled plugins. If the needed capability is absent, report it; do not force a low-level workaround or invoke arbitrary console commands.
 
-Order matters, and each step is a separate tool call:
-1. Create the Blueprint class (parent: Actor / Pawn / Character).
-2. Add components (StaticMesh, Camera, PointLight...) — set the mesh asset path with UE notation: `/Game/Path/Asset.Asset` (engine assets: `/Engine/BasicShapes/Cube.Cube`).
-3. Set properties (physics: simulate + mass; light: intensity in candelas for point/spot).
-4. Add graph nodes (events → function nodes → connect pins by exact pin names — read them from node info responses).
-5. **Compile.** 6. Spawn an instance. 7. Verify with a find/get call.
+## Operating contract
 
-## 5. Level composition recipe
+The server executes calls on the Unreal game thread **serially**. Issue no overlapping tool calls.
 
-For "build a scene/level": (a) confirm floor exists or spawn one (scaled cube works: scale 20,20,0.5 at Z=-25), (b) hero actors with varied Yaw so nothing is axis-aligned, (c) lighting: DirectionalLight (sun, intensity ~10 lux-scale) + SkyLight for ambient + accent Point/Spot lights (~5000cd), (d) camera or viewport focus on the composition, (e) final actor list + transforms read-back as your report.
+For every task:
 
-## 6. Failure recovery
+1. **Inspect** the active level, selected actors, relevant assets, and existing implementation.
+2. **Plan** the smallest reversible set of edits and state the expected result.
+3. **Mutate one logical unit at a time** — for example, one actor, material instance, Blueprint, or graph change.
+4. **Read back** the changed object or property after every write. A successful transport response is not proof that the editor state is correct.
+5. **Verify the user-visible outcome** with a focused viewport/editor inspection and, when available, a targeted automation test.
+6. **Report** objects changed, values verified, tests run, and anything intentionally not changed.
 
-- A tool result that echoes your input without an ID/confirmation is a SUSPECT no-op — verify by listing actors.
-- `Asset not found` → the asset path notation is wrong; engine primitives live at `/Engine/BasicShapes/*.{Cube,Sphere,Cylinder,Cone,Plane}`.
-- Blueprint node connection failures → fetch the node list to get real node GUIDs/pin names; never invent pin names.
-- Two identical failures → STOP; re-read the tool schema, then `web_search` the exact error with "unreal mcp" before retrying.
-- If the connection drops mid-task (editor recompile/PIE), tell the user to check the UnrealMCP plugin is still listening (default TCP 55557) rather than retrying blindly.
+Use deterministic, project-conformant names. Before creating an asset or actor, search for an existing equivalent; never create duplicate `BP_*`, material, or level assets merely because a tool call is convenient.
+
+## Scene and transform discipline
+
+- Unreal is **left-handed** and **Z-up**: +X forward, +Y right, +Z up.
+- Use the connected tool's documented unit and transform representation. Do not apply Blender or Unity conversion rules unless the project/tool schema explicitly requires one.
+- Preserve the level's coordinate space, parent attachment, and pivot intent. Inspect before setting a transform and read it back after.
+- Prefer edits in a sandbox or clearly designated work area when the project provides one. Do not touch gameplay-critical actors, world settings, or shared assets without explicit task scope.
+
+## Blueprint and asset changes
+
+Treat a Blueprint as a class asset with components, variables, and graph logic; inspect its existing parent and components before modifying it.
+
+1. Locate the asset and inspect its current graph/components.
+2. Make one coherent change using only the discovered tool schema.
+3. Compile after graph or class changes, inspect compiler results, and fix errors before proceeding.
+4. Save only after verification. When available, place or inspect a controlled instance to confirm the intended behavior.
+
+Do not invent graph pin names, node identifiers, or `/Game/...` asset references. Retrieve the valid values through a read/discovery tool first.
+
+## Recovery
+
+- **No tools or stale schemas:** enable the required toolset, run `ModelContextProtocol.RefreshTools`, reconnect, and rediscover. New reflected C++ tool declarations require an editor restart.
+- **Connection failure:** check the Output Log, confirm loopback host/port/path, then rerun the generated client configuration. Do not scan ports or change network exposure.
+- **Unexpected result:** stop mutation, inspect the current editor state, compare it with the requested outcome, and make only a scoped corrective edit.
+- **Two failed attempts:** stop and surface the exact tool response, editor log evidence, and the missing capability or constraint.
+
+## Completion checklist
+
+- [ ] Every tool was discovered and its current schema read before use.
+- [ ] Calls were serialized; no batch or concurrent mutations were issued.
+- [ ] Every write was read back and the visible result inspected.
+- [ ] Blueprint/compiler diagnostics and targeted tests are clean when applicable.
+- [ ] The final report identifies verified changes and unresolved limitations.

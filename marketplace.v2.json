@@ -1,0 +1,144 @@
+{
+  "$schema": "./schema/marketplace-v2.schema.json",
+  "schemaVersion": 2,
+  "name": "artyx-marketplace",
+  "description": "Immutable, verified plugins for Artyx.",
+  "owner": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "plugins": [
+    {
+      "name": "blender",
+      "version": "1.1.0",
+      "description": "Operate a local Blender session through a bundled MCP bridge with inspect-mutate-verify discipline.",
+      "category": "creative",
+      "icon": "🟠",
+      "homepage": "https://www.blender.org/lab/mcp-server/",
+      "experimental": false,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/blender-1.1.0.zip",
+        "sha256": "d6077596fb490faaaa09977440c4cdf59d24aaa049ebc1b1551ee7ba5ce2d530",
+        "sizeBytes": 13820
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    },
+    {
+      "name": "unreal-engine",
+      "version": "1.1.0",
+      "description": "Operate Unreal Engine 5.8 through Epic's native local MCP server with toolset discovery and verification.",
+      "category": "games",
+      "icon": "🎮",
+      "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
+      "experimental": true,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unreal-engine-1.1.0.zip",
+        "sha256": "5a04b4a2d711fe37c205a3b49b37d5ea477f31eedb8e82e48bb06e5f6e6ed75d",
+        "sizeBytes": 12962
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    },
+    {
+      "name": "unity",
+      "version": "1.1.0",
+      "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
+      "category": "games",
+      "icon": "🧩",
+      "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
+      "experimental": true,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/unity-1.1.0.zip",
+        "sha256": "aeca22dbd5524fa4cfa552f14a9953124f8cb91e2614bbcc18363ac4a8c83899",
+        "sizeBytes": 13129
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    },
+    {
+      "name": "github",
+      "version": "1.0.0",
+      "description": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
+      "category": "dev",
+      "icon": "🐙",
+      "homepage": "https://github.com/github/github-mcp-server",
+      "experimental": false,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/github-1.0.0.zip",
+        "sha256": "b5758ab18612c62519c71c99c7a0be96c09a19fd24b934f603f26581cda62cf4",
+        "sizeBytes": 5065
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    },
+    {
+      "name": "figma",
+      "version": "1.0.0",
+      "description": "Read Figma files, frames, and design variables through Figma MCP.",
+      "category": "creative",
+      "icon": "🎨",
+      "homepage": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server",
+      "experimental": true,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/figma-1.0.0.zip",
+        "sha256": "2d28f84d6c11b8b1c4c15566c4a0ebc42d0f0d7be30af37617fd9443b0750f00",
+        "sizeBytes": 5651
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    },
+    {
+      "name": "photoshop",
+      "version": "1.0.0",
+      "description": "Drive Photoshop layers, adjustments, and exports through a community MCP bridge.",
+      "category": "creative",
+      "icon": "🖌️",
+      "homepage": "https://github.com/modelcontextprotocol/servers",
+      "experimental": true,
+      "archive": {
+        "url": "https://github.com/arg-software-factory/artyx-marketplace/releases/download/marketplace-v2-1/photoshop-1.0.0.zip",
+        "sha256": "1c2716f8df53065bc1e0c31e368f694eb9f68ec77f820b215667fb7e71ac4505",
+        "sizeBytes": 4753
+      },
+      "compatibility": {
+        "artyx": ">=0.6.2",
+        "platforms": [
+          "darwin",
+          "win32",
+          "linux"
+        ]
+      }
+    }
+  ]
+}

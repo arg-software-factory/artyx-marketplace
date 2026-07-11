@@ -1,13 +1,17 @@
 {
+  "schemaVersion": 2,
   "name": "unity",
-  "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
-  "author": {
-    "name": "Artyx",
-    "url": "https://artyx.ai"
-  },
   "version": "1.1.0",
+  "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
+  "publisher": "Artyx",
+  "license": "MIT",
   "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
   "keywords": ["game-engine", "unity-6", "editor", "csharp", "mcp"],
+  "components": {
+    "mcp": "mcp.json",
+    "skills": "skills"
+  },
   "companion": {
     "title": "Enable Unity's native MCP relay",
     "summary": "Use Unity 6's AI Assistant package and local relay; do not install a community Python bridge.",
