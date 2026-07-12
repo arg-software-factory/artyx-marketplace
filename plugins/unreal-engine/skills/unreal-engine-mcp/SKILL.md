@@ -1,6 +1,6 @@
 ---
 name: Unreal Engine MCP
-description: Drive a connected Unreal Engine MCP server — actors, Blueprints, level composition, and editor control with strict inspect-mutate-verify discipline.
+description: Load this before driving a connected Unreal Editor — actors, Blueprints, level composition, editor control. UE MCP servers silently no-op on bad input more than any other DCC; this skill's list-first, verify-every-write, compile-then-spawn discipline is what makes a build actually stick.
 ---
 
 # Driving Unreal Engine through MCP

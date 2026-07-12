@@ -1,11 +1,11 @@
 ---
 name: Blender MCP
-description: Drive a connected Blender MCP server like a senior technical artist — scene building, materials, keyframe animation, cameras, lighting, and verification loops using bpy.
+description: Load this before driving a connected Blender session — scene building, materials, keyframe animation, cameras, lighting via bpy, with the inspect→mutate-small→verify discipline and the bpy recipes (incl. the Blender 5.x layered-action fcurve API) that keep a build correct.
 ---
 
 # Driving Blender through MCP
 
-You are operating a LIVE Blender session. Every mutation is immediately visible to the user. Work like a technical artist: inspect first, change in small steps, verify after every write.
+You are operating a LIVE Blender session. Every mutation is immediately visible to the user. Work like a technical artist: inspect first, change in small steps, verify after every write. **Always end the task with a final `get_scene_info` read and report the actual objects/animation you read back — not what you intended to create.**
 
 ## 1. Know your tool surface
 

@@ -1,6 +1,6 @@
 ---
 name: Unity MCP
-description: Drive a connected Unity MCP server — GameObjects, components, C# scripts, scenes, and play-mode testing with inspect-mutate-verify discipline.
+description: Load this BEFORE driving a connected Unity Editor — GameObjects, components, C# scripts, scenes, play-mode. Unity is stateful and easy to corrupt (a second "new scene" wipes your work, play-mode loops burn the budget); this skill's guardrails keep a build from destroying itself.
 ---
 
 # Driving Unity through MCP
@@ -16,6 +16,20 @@ You are operating a LIVE Unity Editor session. Unity MCP servers (e.g. CoplayDev
 - **Editor control** — enter/exit Play Mode, run tests, read console logs, take screenshots.
 
 READ each tool's schema before first use — property paths and argument shapes vary. Component properties use serialized names (`m_Mass`, or dotted paths like `material.color`) on some servers and friendly names on others; when a set-call claims success, ALWAYS read the property back.
+
+## 1b. Hard rules — never break these (they destroy work or burn the budget)
+
+- **Open/create a scene EXACTLY ONCE, at the very start.** After you have created anything,
+  NEVER call `manage_scene` with `new` or `open` again — both discard the current scene and every
+  unsaved GameObject you built. To keep progress, `save`. If you think you need a fresh scene
+  mid-task, you don't — keep building in the current one.
+- **Enter Play Mode at most once, only to smoke-test at the END.** Do not loop play → stop →
+  play. One `play`, read the console once for runtime errors, one `stop`. Authoring during Play
+  Mode is reverted on stop, so never create/modify objects while playing.
+- **Do not re-read the console more than once per script change.** A compile result is stable;
+  reading it repeatedly wastes the step budget without new information.
+- **Know when you are done.** Once the requested objects exist, scripts compile clean, and the
+  final hierarchy read matches the goal — save, report, and STOP. Do not keep polling.
 
 ## 2. The loop
 
@@ -42,7 +56,10 @@ Script idioms that avoid common breakage: cache `GetComponent` in `Awake`; use `
 
 ## 5. Scene building recipe
 
-(a) Verify a camera + directional light exist (default scene has both; an empty one doesn't), (b) ground plane, (c) hero objects with materials (URP: use the `Universal Render Pipeline/Lit` shader; built-in: `Standard` — query the project's pipeline first if the server exposes it, or create one material and read back its shader), (d) light intensity ~1 for directional, point lights 2–5 with sensible range, (e) position the camera to frame the composition (e.g. pos (0, 3, -8), rot (15, 0, 0)), (f) save the scene, (g) report the final hierarchy.
+(a) Verify a camera + directional light exist (default scene has both; an empty one doesn't), (b) ground plane, (c) hero objects with materials (URP: use the `Universal Render Pipeline/Lit` shader; built-in: `Standard` — query the project's pipeline first if the server exposes it, or create one material and read back its shader), (d) light intensity ~1 for directional, point lights 2–5 with sensible range, (e) position the camera to frame the composition (e.g. pos (0, 3, -8), rot (15, 0, 0)), (f) save the scene, (g) **final verification step — always end here:** call `manage_scene
+get_hierarchy` one last time and report the actual object list you read back, not what you
+intended to create. If a required object is missing from that read, it was wiped or never
+created — fix it, then read again.
 
 ## 6. Failure recovery
 
