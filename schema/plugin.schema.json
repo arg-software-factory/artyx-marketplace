@@ -1,16 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/plugin.schema.json",
+  "title": "Artyx plugin manifest",
+  "description": "Self-describing plugin bundle. Lives at plugins/<name>/.artyx-plugin/plugin.json and carries ALL storefront + install metadata; the marketplace index only points at it.",
   "type": "object",
-  "required": ["name", "version", "description", "author"],
+  "required": ["name", "version", "description", "author", "interface"],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string"
+    },
     "name": {
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
     "description": {
-      "type": "string"
+      "type": "string",
+      "description": "One-line summary used for search/indexing. The rich storefront copy lives under interface."
     },
     "author": {
       "oneOf": [
@@ -19,89 +29,116 @@
           "required": ["name"],
           "additionalProperties": false,
           "properties": {
-            "name": {
-              "type": "string"
-            },
-            "url": {
-              "type": "string",
-              "format": "uri"
-            }
+            "name": { "type": "string" },
+            "url": { "type": "string", "format": "uri" }
           }
         },
-        {
-          "type": "string"
-        }
+        { "type": "string" }
       ]
-    },
-    "version": {
-      "type": "string",
-      "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$"
     },
     "homepage": {
       "type": "string",
       "format": "uri"
     },
-    "keywords": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "icon": {
-      "type": "string"
+    "repository": {
+      "type": "string",
+      "format": "uri"
     },
     "license": {
       "type": "string"
     },
-    "components": {
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "compatibility": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "skills": {
-          "type": "string"
+        "artyx": {
+          "type": "string",
+          "pattern": "^>=\\d+\\.\\d+\\.\\d+$"
         },
-        "agents": {
-          "type": "string"
+        "platforms": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["darwin", "win32", "linux"] },
+          "uniqueItems": true
+        }
+      }
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Relative pointers to companion surfaces bundled in this plugin dir.",
+      "properties": {
+        "skills": { "type": "string" },
+        "agents": { "type": "string" },
+        "commands": { "type": "string" },
+        "mcp": { "type": "string" },
+        "assets": { "type": "string" }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "description": "The storefront card. Single source of truth for how the plugin renders in Settings -> Marketplace.",
+      "required": ["displayName", "shortDescription", "category", "icon"],
+      "additionalProperties": false,
+      "properties": {
+        "displayName": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "longDescription": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": ["creative", "dev", "games", "productivity", "other"]
         },
-        "mcp": {
-          "type": "string"
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Interactive", "Read", "Write"] },
+          "uniqueItems": true
         },
-        "assets": {
-          "type": "string"
+        "brandColor": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Emoji (zero-asset default) or a ./assets/... relative path."
+        },
+        "logo": {
+          "type": "string",
+          "description": "Optional relative path to a PNG/SVG in ./assets/."
+        },
+        "defaultPrompt": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "screenshots": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "experimental": {
+          "type": "boolean"
         }
       }
     },
     "companion": {
       "type": "object",
+      "description": "Artyx-specific manual setup the user must finish outside the app (install a DCC add-on, mint a token). Richer than a binary ON_INSTALL/ON_USE flag.",
       "required": ["title", "steps"],
       "additionalProperties": false,
       "properties": {
-        "title": {
-          "type": "string"
-        },
-        "summary": {
-          "type": "string"
-        },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
         "steps": {
           "type": "array",
           "minItems": 1,
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
-        "docsUrl": {
-          "type": "string",
-          "format": "uri"
-        },
-        "downloadUrl": {
-          "type": "string",
-          "format": "uri"
-        },
+        "docsUrl": { "type": "string", "format": "uri" },
+        "downloadUrl": { "type": "string", "format": "uri" },
         "prerequisites": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         }
       }
     }

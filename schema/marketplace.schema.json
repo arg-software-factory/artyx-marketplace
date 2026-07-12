@@ -1,8 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/marketplace.schema.json",
+  "title": "Artyx marketplace index",
+  "description": "Thin curated index. Each entry is a pointer to a self-describing plugin; array order is the curation order. All storefront metadata lives in the plugin's own manifest, never here.",
   "type": "object",
-  "required": ["$schema", "name", "description", "owner", "plugins"],
+  "required": ["$schema", "name", "owner", "plugins"],
   "additionalProperties": false,
   "properties": {
     "$schema": {
@@ -20,13 +22,8 @@
       "required": ["name"],
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string",
-          "format": "uri"
-        }
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" }
       }
     },
     "plugins": {
@@ -34,65 +31,16 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name", "description", "author", "category", "icon", "source"],
+        "required": ["name", "source"],
         "additionalProperties": false,
         "properties": {
           "name": {
             "type": "string",
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
-          "description": {
-            "type": "string"
-          },
-          "author": {
-            "type": "object",
-            "required": ["name"],
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "url": {
-                "type": "string",
-                "format": "uri"
-              }
-            }
-          },
-          "category": {
-            "type": "string",
-            "enum": ["creative", "dev", "games", "productivity", "other"]
-          },
-          "icon": {
-            "type": "string"
-          },
           "source": {
             "type": "string",
             "pattern": "^\\./plugins/[a-z0-9]+(?:-[a-z0-9]+)*$"
-          },
-          "homepage": {
-            "type": "string",
-            "format": "uri"
-          },
-          "compatibility": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "artyx": {
-                "type": "string",
-                "pattern": "^>=\\d+\\.\\d+\\.\\d+$"
-              },
-              "platforms": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": ["darwin", "win32", "linux"]
-                },
-                "uniqueItems": true
-              }
-            }
-          },
-          "experimental": {
-            "type": "boolean"
           }
         }
       }

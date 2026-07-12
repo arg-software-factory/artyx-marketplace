@@ -1,0 +1,38 @@
+{
+  "$schema": "../../../schema/plugin.schema.json",
+  "name": "figma",
+  "version": "1.1.0",
+  "description": "Connect Artyx to Figma MCP for design inspection, frame reading, component context, and variable discovery.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["design", "frames", "variables", "figma"],
+  "components": {
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "Figma",
+    "shortDescription": "Read frames, components, and design variables from Figma.",
+    "longDescription": "Inspect Figma files over the Dev Mode MCP server: read frames, pull component context, and discover design variables so the agent can ground its work in your real design system. Verify token auth against the official MCP docs before removing experimental status.",
+    "category": "creative",
+    "capabilities": ["Read"],
+    "brandColor": "#F24E1E",
+    "icon": "🎨",
+    "defaultPrompt": [
+      "Read the selected Figma frame and list its components and design variables."
+    ],
+    "experimental": true
+  },
+  "companion": {
+    "title": "Figma token",
+    "summary": "Create or confirm a Figma token and provide it as FIGMA_TOKEN when prompted.",
+    "steps": [
+      "Verify Figma's current MCP authentication requirements in the official docs.",
+      "Create or locate the token required for remote MCP access.",
+      "Paste the token into Artyx when prompted for FIGMA_TOKEN."
+    ],
+    "docsUrl": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server"
+  }
+}

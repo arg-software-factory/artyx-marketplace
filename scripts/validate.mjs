@@ -18,6 +18,7 @@ const maxPluginDepth = 12;
 const blockedFileNames = new Set([".DS_Store", "Thumbs.db", "desktop.ini", ".archive.sha256"]);
 const placeholderPattern = /\$\{([^}]+)\}/g;
 const placeholderNamePattern = /^[A-Z0-9_]+$/;
+const interfaceCategories = new Set(["creative", "dev", "games", "productivity", "other"]);
 
 const readJsonFile = async (filePath) => JSON.parse(await fs.readFile(filePath, "utf8"));
 
@@ -61,32 +62,16 @@ const assertEqual = (actual, expected, label) => {
   }
 };
 
-const compareText = (left, right) => {
-  if (left < right) {
-    return -1;
-  }
+const validateMarketplaceEntries = (plugins) => {
+  const names = new Set();
 
-  if (left > right) {
-    return 1;
-  }
-
-  return 0;
-};
-
-const comparePluginEntries = (left, right) =>
-  compareText(left.category, right.category) || compareText(left.name, right.name);
-
-const validateMarketplaceOrder = (plugins) => {
-  const sortedPlugins = [...plugins].sort(comparePluginEntries);
-
-  for (let index = 0; index < plugins.length; index += 1) {
-    if (plugins[index].name !== sortedPlugins[index].name) {
-      throw new Error(
-        `marketplace.json plugins[] must be sorted by (category, name): expected ${sortedPlugins
-          .map((plugin) => plugin.name)
-          .join(", ")}`
-      );
+  for (const entry of plugins) {
+    if (names.has(entry.name)) {
+      throw new Error(`marketplace.json plugins[] duplicate name: ${entry.name}`);
     }
+
+    names.add(entry.name);
+    assertEqual(entry.source, `./plugins/${entry.name}`, `${entry.name} source`);
   }
 };
 
@@ -340,9 +325,20 @@ const validateVersionBump = async (pluginName, currentVersion, gitContext) => {
     return;
   }
 
-  const manifestRef = `origin/main:plugins/${pluginName}/.claude-plugin/plugin.json`;
+  const manifestRefs = [
+    `origin/main:plugins/${pluginName}/.artyx-plugin/plugin.json`,
+    `origin/main:plugins/${pluginName}/.claude-plugin/plugin.json`
+  ];
+  let manifestRef;
 
-  if (!(await hasGitObject(manifestRef)) || !(await hasPluginDiff(pluginName))) {
+  for (const candidateRef of manifestRefs) {
+    if (await hasGitObject(candidateRef)) {
+      manifestRef = candidateRef;
+      break;
+    }
+  }
+
+  if (!manifestRef || !(await hasPluginDiff(pluginName))) {
     return;
   }
 
@@ -374,10 +370,21 @@ const validatePluginEntry = async (entry, validators, gitContext) => {
     throw new Error(`${entry.source} is not a directory`);
   }
 
-  const manifestPath = path.join(sourceDir, ".claude-plugin", "plugin.json");
+  const manifestPathCandidates = [
+    path.join(sourceDir, ".artyx-plugin", "plugin.json"),
+    path.join(sourceDir, ".claude-plugin", "plugin.json")
+  ];
+  let manifestPath;
 
-  if (!(await pathExists(manifestPath))) {
-    throw new Error(`${relativePath(manifestPath)} missing`);
+  for (const candidatePath of manifestPathCandidates) {
+    if (await pathExists(candidatePath)) {
+      manifestPath = candidatePath;
+      break;
+    }
+  }
+
+  if (!manifestPath) {
+    throw new Error(`${relativePath(manifestPathCandidates[0])} missing`);
   }
 
   const manifest = await readJsonFile(manifestPath);
@@ -385,6 +392,12 @@ const validatePluginEntry = async (entry, validators, gitContext) => {
   if (!validators.validatePlugin(manifest)) {
     throw new Error(
       `${relativePath(manifestPath)} invalid: ${formatAjvErrors(validators.validatePlugin.errors)}`
+    );
+  }
+
+  if (!interfaceCategories.has(manifest.interface.category)) {
+    throw new Error(
+      `${relativePath(manifestPath)} interface.category invalid: ${manifest.interface.category}`
     );
   }
 
@@ -411,8 +424,8 @@ const main = async () => {
   }
 
   console.log("[ok] marketplace schema");
-  validateMarketplaceOrder(marketplace.plugins);
-  console.log("[ok] marketplace order");
+  validateMarketplaceEntries(marketplace.plugins);
+  console.log("[ok] marketplace entries");
   await validateRepositoryLimits();
   console.log("[ok] repository limits");
 
