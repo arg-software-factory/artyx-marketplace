@@ -5,13 +5,13 @@ Artyx Marketplace is PR-only. The Artyx team reviews and merges changes.
 ## Add A Plugin
 
 1. Create `plugins/<plugin-name>/`.
-2. Add `plugins/<plugin-name>/.claude-plugin/plugin.json`.
-3. Add `plugins/<plugin-name>/.mcp.json` when the plugin exposes MCP tools.
+2. Add `plugins/<plugin-name>/.claude-plugin/plugin.json` with a semver `version`.
+3. Add `plugins/<plugin-name>/.mcp.json` only when the plugin exposes MCP tools.
 4. Add skills under `plugins/<plugin-name>/skills/<skill-id>/SKILL.md` when the plugin teaches agent behavior.
-5. Add `plugins/<plugin-name>/README.md` when setup notes help a human complete installation.
-6. Add an index entry to `marketplace.json`.
+5. Add `plugins/<plugin-name>/README.md`.
+6. Add an ordered entry to `marketplace.json` sorted by `(category, name)`.
 7. Run `npm run validate`.
-8. Open a PR against the integration branch.
+8. Open a PR.
 
 Plugin names must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
 
@@ -29,10 +29,15 @@ Required fields:
 
 Optional fields:
 
-- `version`: semantic version string.
 - `homepage`: documentation or upstream URL.
 - `keywords`: string array.
+- `icon`: plugin icon.
+- `license`: license identifier.
+- `components`: alternate component paths.
 - `companion`: setup card consumed by the desktop.
+
+Changing any content inside a plugin requires a `version` bump. Artyx desktop
+caches installed plugin content by immutable version.
 
 ## MCP Config
 
@@ -69,6 +74,12 @@ HTTP and SSE servers use `type`, `url`, and optional `headers`:
 ```
 
 Stdio servers use `command`, optional `args`, optional `env`, and optional `cwd`.
+
+Prefer remote HTTP servers or stdio servers launched through `${ARTYX_ELECTRON}`
+with `${ARTYX_BUNDLED}` assets so installation does not depend on the user's
+developer tools. `npx`, `uvx`, `node`, or other local binaries require a
+`companion` with clear prerequisites and at least one setup step. Most artists
+do not have Node or Python tooling on PATH.
 
 ## Placeholder Rules
 
@@ -110,3 +121,6 @@ repo remains readable without the desktop app.
 - DCC and game-editor socket bridges must bind to localhost unless there is a reviewed authentication story.
 - Mark unverified upstream commands or auth flows with `experimental: true` in `marketplace.json`.
 - Keep setup instructions honest about prerequisites, network access, and local services.
+
+Publishing is merging to `main`. There are no releases, generated catalogs, or
+packaging steps.

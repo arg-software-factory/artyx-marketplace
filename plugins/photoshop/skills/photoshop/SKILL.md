@@ -1,7 +1,6 @@
 ---
 name: Photoshop MCP
 description: Use Photoshop MCP tools to inspect documents, layers, selections, adjustments, and exports with careful verify-after-write discipline.
-enabled: true
 ---
 
 # Driving Photoshop through MCP

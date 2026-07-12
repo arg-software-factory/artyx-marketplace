@@ -21,45 +21,6 @@
       "experimental": false
     },
     {
-      "name": "unreal-engine",
-      "description": "Drive Unreal Editor through the community Unreal MCP bridge.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "games",
-      "icon": "🎮",
-      "source": "./plugins/unreal-engine",
-      "homepage": "https://github.com/chongdashu/unreal-mcp",
-      "experimental": true
-    },
-    {
-      "name": "unity",
-      "description": "Drive Unity Editor through the community Unity MCP bridge.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "games",
-      "icon": "🧩",
-      "source": "./plugins/unity",
-      "homepage": "https://github.com/CoplayDev/unity-mcp",
-      "experimental": true
-    },
-    {
-      "name": "github",
-      "description": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "dev",
-      "icon": "🐙",
-      "source": "./plugins/github",
-      "homepage": "https://github.com/github/github-mcp-server",
-      "experimental": false
-    },
-    {
       "name": "figma",
       "description": "Read Figma files, frames, and design variables through Figma MCP.",
       "author": {
@@ -84,6 +45,58 @@
       "source": "./plugins/photoshop",
       "homepage": "https://github.com/modelcontextprotocol/servers",
       "experimental": true
+    },
+    {
+      "name": "github",
+      "description": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
+      "category": "dev",
+      "icon": "🐙",
+      "source": "./plugins/github",
+      "homepage": "https://github.com/github/github-mcp-server",
+      "experimental": false
+    },
+    {
+      "name": "unity",
+      "description": "Drive Unity Editor through the community Unity MCP bridge.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
+      "category": "games",
+      "icon": "🧩",
+      "source": "./plugins/unity",
+      "homepage": "https://github.com/CoplayDev/unity-mcp",
+      "experimental": true
+    },
+    {
+      "name": "unreal-engine",
+      "description": "Drive Unreal Editor through the community Unreal MCP bridge.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
+      "category": "games",
+      "icon": "🎮",
+      "source": "./plugins/unreal-engine",
+      "homepage": "https://github.com/chongdashu/unreal-mcp",
+      "experimental": true
+    },
+    {
+      "name": "mcp-power-user",
+      "description": "Power-user playbook for driving any connected MCP server reliably — discovery, read-before-write, small mutations, verification, and error recovery.",
+      "author": {
+        "name": "Artyx",
+        "url": "https://artyx.ai"
+      },
+      "category": "productivity",
+      "icon": "🧠",
+      "source": "./plugins/mcp-power-user",
+      "homepage": "https://artyx.ai",
+      "experimental": false
     }
   ]
 }

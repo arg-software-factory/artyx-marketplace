@@ -4,7 +4,7 @@
 
 # Artyx Marketplace
 
-**Curated MCP servers &amp; skills for the [Artyx](https://artyx.ai) agent — one click to install.**
+**Curated MCP servers &amp; skills for the [Artyx](https://artyx.ai) agent — git-backed and one click to install.**
 
 </div>
 
@@ -12,25 +12,28 @@
 
 ## What is this?
 
-This repo is the source of truth for the **Artyx Marketplace** — the in‑app catalog where Artyx users install *plugins* that connect the agent to their favorite tools.
+This repo is the single source of truth for the **Artyx Marketplace** — the in-app catalog where Artyx users install *plugins* that connect the agent to their favorite tools.
 
 A **plugin** bundles two things (either, or both):
 
 - 🔌 **an MCP server** — a live connection to an app or service (Blender, Unreal, GitHub, Figma…)
 - 🧠 **skills** — up‑to‑date, task‑specific know‑how that makes the agent genuinely *pro* at that tool
 
-The Artyx desktop app fetches [`marketplace.json`](marketplace.json), renders the gallery, and — on **Install** — writes the MCP config + skills into `~/.artyx`. Any secrets go straight to your OS keychain. That's it.
+The Artyx desktop app resolves the current `main` commit SHA through `api.github.com`, downloads a zipball from `codeload.github.com` pinned to that SHA, then reads [`marketplace.json`](marketplace.json) and `plugins/<name>/` directly from the checkout. There are no releases, packages, or generated catalogs: publishing is merging to `main`.
+
+On **Install**, the desktop writes the MCP config + skills into `~/.artyx`. Any secrets go straight to your OS keychain. That's it.
 
 ## Catalog
 
 | Plugin | Category | What it does |
 |---|---|---|
 | 🟠 **Blender** | Creative | Drive Blender via a bundled MCP bridge + the Blender add‑on |
-| 🎮 **Unreal Engine** | Games | Automate the Unreal Editor through the community MCP bridge |
-| 🧩 **Unity** | Games | Drive the Unity Editor through the community MCP bridge |
-| 🐙 **GitHub** | Dev | Read repos, triage issues &amp; PRs, inspect CI |
 | 🎨 **Figma** | Creative | Read files, frames &amp; design variables |
 | 🖌️ **Photoshop** | Creative | Layers, adjustments &amp; exports via a community bridge |
+| 🐙 **GitHub** | Dev | Read repos, triage issues &amp; PRs, inspect CI |
+| 🧩 **Unity** | Games | Drive the Unity Editor through the community MCP bridge |
+| 🎮 **Unreal Engine** | Games | Automate the Unreal Editor through the community MCP bridge |
+| 🧠 **MCP Power User** | Productivity | Reliable playbook for driving any connected MCP server |
 
 > More coming — and it's just a PR away. 👇
 

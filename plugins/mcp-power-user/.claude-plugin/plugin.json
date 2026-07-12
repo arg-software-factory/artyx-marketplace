@@ -1,0 +1,10 @@
+{
+  "name": "mcp-power-user",
+  "version": "1.0.0",
+  "description": "Power-user playbook for driving any connected MCP server reliably — discovery, read-before-write, small mutations, verification, and error recovery.",
+  "author": {
+    "name": "Artyx",
+    "url": "https://artyx.ai"
+  },
+  "keywords": ["mcp", "productivity"]
+}

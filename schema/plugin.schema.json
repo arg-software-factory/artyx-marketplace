@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/plugin.schema.json",
   "type": "object",
-  "required": ["name", "description", "author"],
+  "required": ["name", "version", "description", "author"],
   "additionalProperties": false,
   "properties": {
     "name": {
@@ -13,18 +13,25 @@
       "type": "string"
     },
     "author": {
-      "type": "object",
-      "required": ["name"],
-      "additionalProperties": false,
-      "properties": {
-        "name": {
-          "type": "string"
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["name"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
         },
-        "url": {
-          "type": "string",
-          "format": "uri"
+        {
+          "type": "string"
         }
-      }
+      ]
     },
     "version": {
       "type": "string",
@@ -38,6 +45,30 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "icon": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string"
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skills": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "string"
+        },
+        "mcp": {
+          "type": "string"
+        },
+        "assets": {
+          "type": "string"
+        }
       }
     },
     "companion": {

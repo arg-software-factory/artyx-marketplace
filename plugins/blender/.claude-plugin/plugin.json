@@ -5,7 +5,7 @@
     "name": "Artyx",
     "url": "https://artyx.ai"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "https://github.com/ahujasid/blender-mcp",
   "keywords": ["3d", "dcc", "animation"],
   "companion": {

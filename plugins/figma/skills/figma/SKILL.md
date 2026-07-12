@@ -1,7 +1,6 @@
 ---
 name: Figma MCP
 description: Use Figma MCP tools to inspect files, frames, components, styles, and variables before translating design intent into implementation guidance.
-enabled: true
 ---
 
 # Driving Figma through MCP

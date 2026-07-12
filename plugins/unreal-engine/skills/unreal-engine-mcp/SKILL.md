@@ -1,7 +1,6 @@
 ---
 name: Unreal Engine MCP
 description: Drive a connected Unreal Engine MCP server — actors, Blueprints, level composition, and editor control with strict inspect-mutate-verify discipline.
-enabled: true
 ---
 
 # Driving Unreal Engine through MCP
@@ -11,6 +10,7 @@ You are operating a LIVE Unreal Editor session. Community UE MCP servers (e.g. c
 ## 1. Discover before you act
 
 Your available UE tools are in your tool list with an `mcp_` prefix. Typical categories:
+
 - **Actor tools** — spawn/delete actors (StaticMeshActor, lights, cameras), set transform, list/find actors, get properties.
 - **Blueprint tools** — create Blueprint classes, add components (mesh/camera/light), set component properties/physics, compile, spawn instances.
 - **Node tools** — add event nodes (BeginPlay/Tick), function calls, variables, wire pins.
@@ -35,6 +35,7 @@ READ each tool's parameter schema from its description before first use — argu
 ## 4. Blueprint workflow
 
 Order matters, and each step is a separate tool call:
+
 1. Create the Blueprint class (parent: Actor / Pawn / Character).
 2. Add components (StaticMesh, Camera, PointLight...) — set the mesh asset path with UE notation: `/Game/Path/Asset.Asset` (engine assets: `/Engine/BasicShapes/Cube.Cube`).
 3. Set properties (physics: simulate + mass; light: intensity in candelas for point/spot).

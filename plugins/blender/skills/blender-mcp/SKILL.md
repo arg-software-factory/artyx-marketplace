@@ -1,7 +1,6 @@
 ---
 name: Blender MCP
 description: Drive a connected Blender MCP server like a senior technical artist — scene building, materials, keyframe animation, cameras, lighting, and verification loops using bpy.
-enabled: true
 ---
 
 # Driving Blender through MCP
@@ -11,6 +10,7 @@ You are operating a LIVE Blender session. Every mutation is immediately visible 
 ## 1. Know your tool surface
 
 Your available Blender tools are in your tool list with an `mcp_` prefix. Artyx's bundled server exposes:
+
 - `get_scene_info` (read-only) — scene name, object count, objects (name/type/location, first 200).
 - `get_object_info` (read-only) — one object's transform, dimensions, vertex/polygon counts, materials.
 - `import_model` (write) — import .obj/.fbx/.glb/.gltf/.stl/.ply by absolute path.
@@ -68,6 +68,7 @@ result = {"objects": [o.name for o in bpy.context.scene.objects],
 ```
 
 Gotchas:
+
 - `bpy.context.active_object` is only valid right after an `_add` operator — capture the reference immediately.
 - Deleting: `bpy.data.objects.remove(obj, do_unlink=True)` (not ops).
 - Parenting without ops: `child.parent = parent_obj`.

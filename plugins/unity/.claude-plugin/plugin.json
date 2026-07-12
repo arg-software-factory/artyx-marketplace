@@ -5,7 +5,7 @@
     "name": "Artyx",
     "url": "https://artyx.ai"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "homepage": "https://github.com/CoplayDev/unity-mcp",
   "keywords": ["game-engine", "editor", "csharp"],
   "companion": {

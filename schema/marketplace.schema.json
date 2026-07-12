@@ -73,6 +73,24 @@
             "type": "string",
             "format": "uri"
           },
+          "compatibility": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "artyx": {
+                "type": "string",
+                "pattern": "^>=\\d+\\.\\d+\\.\\d+$"
+              },
+              "platforms": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["darwin", "win32", "linux"]
+                },
+                "uniqueItems": true
+              }
+            }
+          },
           "experimental": {
             "type": "boolean"
           }
