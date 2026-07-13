@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "unity-mcp": {
-      "type": "stdio",
-      "command": "${UNITY_MCP_RELAY}",
-      "args": ["--mcp"]
-    }
-  }
-}

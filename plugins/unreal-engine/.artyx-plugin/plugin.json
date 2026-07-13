@@ -1,31 +1,39 @@
 {
-  "schemaVersion": 2,
+  "$schema": "../../../schema/plugin.schema.json",
   "name": "unreal-engine",
-  "version": "1.1.0",
-  "description": "Drive Unreal Editor through Epic's native Unreal MCP server with inspected, serialized, and verified operations.",
-  "publisher": "Artyx",
-  "license": "MIT",
-  "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
+  "version": "1.1.1",
+  "description": "Connect Artyx to Unreal Engine for editor automation, actors, Blueprints, level composition, and verification loops.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/chongdashu/unreal-mcp",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
-  "keywords": ["game-engine", "editor", "blueprints", "mcp", "unreal-engine-5-8"],
+  "license": "MIT",
+  "keywords": ["game-engine", "editor", "blueprints", "unreal"],
   "components": {
-    "mcp": "mcp.json",
-    "skills": "skills"
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "Unreal Engine",
+    "shortDescription": "Automate the Unreal Editor: actors, Blueprints, levels.",
+    "longDescription": "Operate a live Unreal Editor over MCP: spawn actors, build and compile Blueprints, compose levels, and verify every write. The bundled skill leans into list-first, compile-then-spawn discipline because UE MCP servers silently no-op more than any other DCC.",
+    "category": "games",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#0E1128",
+    "icon": "🎮",
+    "defaultPrompt": [
+      "Build a small Unreal level with a floor, three lit hero actors, and a compiled BP_Spinner that rotates on Tick."
+    ],
+    "experimental": true
   },
   "companion": {
-    "title": "Enable Unreal MCP in Unreal Engine 5.8",
-    "summary": "Use Epic's built-in, experimental local MCP server; it is not the legacy community Python bridge.",
+    "title": "Finish setup inside Unreal Engine",
     "steps": [
-      "Open the UE 5.8 project, then select Edit → Plugins, search for 'Unreal MCP', enable it, and restart the editor.",
-      "Open Edit → Editor Preferences → General → Model Context Protocol and enable Auto Start Server. Keep the default local endpoint unless you intentionally change it: http://127.0.0.1:8000/mcp.",
-      "In the editor console, run ModelContextProtocol.GenerateClientConfig All (or ClaudeCode, Codex, Cursor, VSCode, or Gemini). This generates the client configuration from the editor's actual port and path.",
-      "Enable the AllToolsets plugin, then reconnect the agent so Unreal MCP can advertise useful toolsets."
+      "Copy the UnrealMCP plugin into your project's Plugins/ folder.",
+      "Enable it in Edit → Plugins (search 'Unreal MCP'), then restart the editor.",
+      "The bridge listens on 127.0.0.1:55557."
     ],
-    "docsUrl": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
-    "downloadUrl": "https://www.unrealengine.com/download",
-    "prerequisites": [
-      "Unreal Engine 5.8; Unreal MCP is an Experimental built-in plugin.",
-      "Keep the server on loopback. It has no authentication and is not safe to expose remotely."
-    ]
+    "docsUrl": "https://github.com/chongdashu/unreal-mcp#readme",
+    "downloadUrl": "https://github.com/chongdashu/unreal-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
   }
 }

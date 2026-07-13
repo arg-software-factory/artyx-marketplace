@@ -1,15 +1,29 @@
 {
-  "schemaVersion": 2,
+  "$schema": "../../../schema/plugin.schema.json",
   "name": "photoshop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Connect Artyx to a Photoshop UXP MCP bridge for layer inspection, edits, adjustments, and export workflows.",
-  "publisher": "Artyx",
-  "license": "MIT",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/modelcontextprotocol/servers",
-  "keywords": ["image-editing", "layers", "export"],
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["image-editing", "layers", "export", "photoshop"],
   "components": {
-    "mcp": "mcp.json",
-    "skills": "skills"
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "Photoshop",
+    "shortDescription": "Inspect and edit Photoshop layers, adjustments, and exports.",
+    "longDescription": "Drive Photoshop through a UXP MCP bridge: read the layer stack, apply edits and adjustments, and run export workflows, with the read-before-write discipline that keeps a document intact.",
+    "category": "creative",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#31A8FF",
+    "icon": "🖌️",
+    "defaultPrompt": [
+      "Open the active Photoshop document, list its layers, and boost the contrast on the top layer."
+    ],
+    "experimental": true
   },
   "companion": {
     "title": "Finish setup inside Photoshop",

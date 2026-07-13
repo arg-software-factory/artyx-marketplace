@@ -1,89 +1,18 @@
 {
   "$schema": "./schema/marketplace.schema.json",
   "name": "artyx-marketplace",
-  "description": "Curated MCP servers and skills for the Artyx agent.",
+  "description": "Curated MCP servers and skills for the Artyx agent. Each entry points at a self-describing plugin under plugins/; storefront metadata lives in the plugin's own manifest.",
   "owner": {
     "name": "Artyx",
     "url": "https://artyx.ai"
   },
   "plugins": [
-    {
-      "name": "blender",
-      "description": "Operate a local Blender session through a bundled MCP bridge with inspect-mutate-verify discipline.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "creative",
-      "icon": "🟠",
-      "source": "./plugins/blender",
-      "homepage": "https://www.blender.org/lab/mcp-server/",
-      "experimental": false
-    },
-    {
-      "name": "unreal-engine",
-      "description": "Operate Unreal Engine 5.8 through Epic's native local MCP server with toolset discovery and verification.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "games",
-      "icon": "🎮",
-      "source": "./plugins/unreal-engine",
-      "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
-      "experimental": true
-    },
-    {
-      "name": "unity",
-      "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "games",
-      "icon": "🧩",
-      "source": "./plugins/unity",
-      "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
-      "experimental": true
-    },
-    {
-      "name": "github",
-      "description": "Read repositories, triage issues and PRs, and inspect CI status through GitHub MCP.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "dev",
-      "icon": "🐙",
-      "source": "./plugins/github",
-      "homepage": "https://github.com/github/github-mcp-server",
-      "experimental": false
-    },
-    {
-      "name": "figma",
-      "description": "Read Figma files, frames, and design variables through Figma MCP.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "creative",
-      "icon": "🎨",
-      "source": "./plugins/figma",
-      "homepage": "https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Dev-Mode-MCP-Server",
-      "experimental": true
-    },
-    {
-      "name": "photoshop",
-      "description": "Drive Photoshop layers, adjustments, and exports through a community MCP bridge.",
-      "author": {
-        "name": "Artyx",
-        "url": "https://artyx.ai"
-      },
-      "category": "creative",
-      "icon": "🖌️",
-      "source": "./plugins/photoshop",
-      "homepage": "https://github.com/modelcontextprotocol/servers",
-      "experimental": true
-    }
+    { "name": "blender", "source": "./plugins/blender" },
+    { "name": "photoshop", "source": "./plugins/photoshop" },
+    { "name": "figma", "source": "./plugins/figma" },
+    { "name": "github", "source": "./plugins/github" },
+    { "name": "unity", "source": "./plugins/unity" },
+    { "name": "unreal-engine", "source": "./plugins/unreal-engine" },
+    { "name": "mcp-power-user", "source": "./plugins/mcp-power-user" }
   ]
 }

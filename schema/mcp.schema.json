@@ -41,10 +41,6 @@
               "command": {
                 "type": "string"
               },
-              "type": {
-                "type": "string",
-                "const": "stdio"
-              },
               "args": {
                 "type": "array",
                 "items": {

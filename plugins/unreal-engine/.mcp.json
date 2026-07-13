@@ -1,8 +1,11 @@
 {
   "mcpServers": {
-    "unreal-mcp": {
-      "type": "http",
-      "url": "http://127.0.0.1:8000/mcp"
+    "unreal-engine": {
+      "command": "uvx",
+      "args": ["unreal-mcp"],
+      "env": {
+        "UNREAL_MCP_PORT": "55557"
+      }
     }
   }
 }

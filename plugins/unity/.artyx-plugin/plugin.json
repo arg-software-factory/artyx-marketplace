@@ -1,30 +1,39 @@
 {
-  "schemaVersion": 2,
+  "$schema": "../../../schema/plugin.schema.json",
   "name": "unity",
-  "version": "1.1.0",
-  "description": "Operate Unity 6 through Unity's native MCP relay with inspected, reversible, and verified editor changes.",
-  "publisher": "Artyx",
-  "license": "MIT",
-  "homepage": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
+  "version": "1.1.1",
+  "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/CoplayDev/unity-mcp",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
-  "keywords": ["game-engine", "unity-6", "editor", "csharp", "mcp"],
+  "license": "MIT",
+  "keywords": ["game-engine", "editor", "csharp", "unity"],
   "components": {
-    "mcp": "mcp.json",
-    "skills": "skills"
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "Unity",
+    "shortDescription": "Drive the Unity Editor: scenes, GameObjects, scripts, play-mode.",
+    "longDescription": "Operate a live Unity Editor over MCP: build scene hierarchies, add components, author C# scripts, manage assets, and smoke-test in Play Mode. The bundled skill's guardrails stop a build from wiping its own scene.",
+    "category": "games",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#222C37",
+    "icon": "🧩",
+    "defaultPrompt": [
+      "Create a simple 2D game scene in Unity: a player sprite that moves with the arrow keys."
+    ],
+    "experimental": true
   },
   "companion": {
-    "title": "Enable Unity's native MCP relay",
-    "summary": "Use Unity 6's AI Assistant package and local relay; do not install a community Python bridge.",
+    "title": "Finish setup inside Unity",
     "steps": [
-      "Open a Unity 6 project with the AI Assistant package installed. Go to Edit → Project Settings → AI → Unity MCP Server and confirm Unity Bridge is Running.",
-      "Set UNITY_MCP_RELAY in Artyx to the platform-specific relay executable installed under ~/.unity/relay/, then reconnect. Keep --mcp as the relay argument.",
-      "In Unity's Pending Connections, review and Accept Artyx. Confirm the client appears under Connected Clients, then ask it to summarize console warnings."
+      "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
+      "Open the Unity MCP window and start the bridge.",
+      "Approve the auto-install of the Python server if prompted."
     ],
-    "docsUrl": "https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html",
-    "downloadUrl": "https://unity.com/download",
-    "prerequisites": [
-      "Unity 6 (6000.0)+ with the com.unity.ai.assistant package installed.",
-      "An active Unity AI trial or subscription and the project requirements documented by Unity."
-    ]
+    "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
+    "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
   }
 }

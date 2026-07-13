@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "photoshop": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "photoshop-mcp"]
-    }
-  }
-}

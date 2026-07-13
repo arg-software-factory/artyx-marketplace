@@ -1,17 +1,45 @@
+import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { isDeepStrictEqual } from "node:util";
+import { promisify } from "node:util";
 
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import matter from "gray-matter";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const execFileAsync = promisify(execFile);
+
+const maxPluginFiles = 256;
+const maxFileBytes = 20 * 1024 * 1024;
+const maxRepoBytes = 20 * 1024 * 1024;
+const maxPluginDepth = 12;
+const blockedFileNames = new Set([".DS_Store", "Thumbs.db", "desktop.ini", ".archive.sha256"]);
+const placeholderPattern = /\$\{([^}]+)\}/g;
+const placeholderNamePattern = /^[A-Z0-9_]+$/;
+const interfaceCategories = new Set(["creative", "dev", "games", "productivity", "other"]);
 
 const readJsonFile = async (filePath) => JSON.parse(await fs.readFile(filePath, "utf8"));
 
 const readJson = async (relativePath) => readJsonFile(path.join(rootDir, relativePath));
+
+const relativePath = (filePath) => path.relative(rootDir, filePath);
+
+const pathExists = async (filePath) => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return false;
+    }
+
+    throw error;
+  }
+};
+
+const runGit = (args) => execFileAsync("git", args, { cwd: rootDir, maxBuffer: 10 * 1024 * 1024 });
 
 const formatAjvErrors = (errors = []) =>
   errors.map((error) => `${error.instancePath || "/"} ${error.message}`).join("; ");
@@ -34,28 +62,24 @@ const assertEqual = (actual, expected, label) => {
   }
 };
 
-const assertJsonEqual = (actual, expected, label) => {
-  if (!isDeepStrictEqual(actual, expected)) {
-    throw new Error(`${label} must match its canonical v2 equivalent`);
-  }
-};
+const validateMarketplaceEntries = (plugins) => {
+  const names = new Set();
 
-const assertPathInside = (sourceDir, componentPath) => {
-  const target = path.resolve(sourceDir, componentPath);
-  const relative = path.relative(sourceDir, target);
-  if (relative === "" || relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error(`component path escapes plugin: ${componentPath}`);
+  for (const entry of plugins) {
+    if (names.has(entry.name)) {
+      throw new Error(`marketplace.json plugins[] duplicate name: ${entry.name}`);
+    }
+
+    names.add(entry.name);
+    assertEqual(entry.source, `./plugins/${entry.name}`, `${entry.name} source`);
   }
-  return target;
 };
 
 const loadSchemas = async () => {
-  const [marketplaceSchema, pluginSchema, mcpSchema, marketplaceV2Schema, pluginV2Schema] = await Promise.all([
+  const [marketplaceSchema, pluginSchema, mcpSchema] = await Promise.all([
     readJson("schema/marketplace.schema.json"),
     readJson("schema/plugin.schema.json"),
-    readJson("schema/mcp.schema.json"),
-    readJson("schema/marketplace-v2.schema.json"),
-    readJson("schema/plugin-v2.schema.json")
+    readJson("schema/mcp.schema.json")
   ]);
 
   const ajv = new Ajv2020({ allErrors: true });
@@ -64,41 +88,40 @@ const loadSchemas = async () => {
   return {
     validateMarketplace: ajv.compile(marketplaceSchema),
     validatePlugin: ajv.compile(pluginSchema),
-    validateMcp: ajv.compile(mcpSchema),
-    validateMarketplaceV2: ajv.compile(marketplaceV2Schema),
-    validatePluginV2: ajv.compile(pluginV2Schema)
+    validateMcp: ajv.compile(mcpSchema)
   };
 };
 
 const validateSkill = async (skillPath) => {
-  const raw = await fs.readFile(skillPath, "utf8");
-  const parsed = matter(raw);
-
-  if (!parsed.data.name || !parsed.data.description) {
-    throw new Error(`${path.relative(rootDir, skillPath)} missing frontmatter name/description`);
-  }
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parsed.data.name)) {
-    throw new Error(`${path.relative(rootDir, skillPath)} has an invalid skill name`);
-  }
-};
-
-const assertSafeTree = async (treeRoot, current = treeRoot, state = { files: 0, bytes: 0 }) => {
-  const entries = await fs.readdir(current, { withFileTypes: true });
-  for (const entry of entries) {
-    const filePath = path.join(current, entry.name);
-    const stat = await fs.lstat(filePath);
-    if (stat.isSymbolicLink()) throw new Error(`${path.relative(rootDir, filePath)} is a symlink`);
-    if (entry.isDirectory()) {
-      await assertSafeTree(treeRoot, filePath, state);
-    } else if (entry.isFile()) {
-      state.files += 1;
-      state.bytes += stat.size;
-      if (state.files > 256 || state.bytes > 24 * 1024 * 1024 || stat.size > 4 * 1024 * 1024) {
-        throw new Error(`${path.relative(rootDir, treeRoot)} exceeds package safety limits`);
-      }
-    } else {
-      throw new Error(`${path.relative(rootDir, filePath)} is a special file`);
+  let raw;
+  try {
+    raw = await fs.readFile(skillPath, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      throw new Error(`${relativePath(skillPath)} missing`);
     }
+
+    throw error;
+  }
+
+  let parsed;
+  try {
+    parsed = matter(raw);
+  } catch (error) {
+    throw new Error(`${relativePath(skillPath)} has invalid frontmatter: ${error.message}`);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(parsed.data, "enabled")) {
+    throw new Error(`${relativePath(skillPath)} frontmatter must not include enabled`);
+  }
+
+  if (
+    typeof parsed.data.name !== "string" ||
+    parsed.data.name.trim() === "" ||
+    typeof parsed.data.description !== "string" ||
+    parsed.data.description.trim() === ""
+  ) {
+    throw new Error(`${path.relative(rootDir, skillPath)} missing frontmatter name/description`);
   }
 };
 
@@ -110,7 +133,7 @@ const validateSkills = async (sourceDir) => {
     skillDirEntries = await fs.readdir(skillsDir, { withFileTypes: true });
   } catch (error) {
     if (error.code === "ENOENT") {
-      return;
+      return 0;
     }
 
     throw error;
@@ -118,156 +141,310 @@ const validateSkills = async (sourceDir) => {
 
   for (const skillDirEntry of skillDirEntries) {
     if (!skillDirEntry.isDirectory()) {
-      throw new Error(`${path.relative(rootDir, path.join(skillsDir, skillDirEntry.name))} must be a directory`);
+      const looseSkillPath = path.join(skillsDir, skillDirEntry.name);
+      throw new Error(`${relativePath(looseSkillPath)} must be a directory`);
     }
 
-    const skillDir = path.join(skillsDir, skillDirEntry.name);
-    await assertSafeTree(skillDir);
-    await validateSkill(path.join(skillDir, "SKILL.md"));
+    await validateSkill(path.join(skillsDir, skillDirEntry.name, "SKILL.md"));
+  }
+
+  return skillDirEntries.length;
+};
+
+const validatePlaceholders = (raw, filePath) => {
+  for (const match of raw.matchAll(placeholderPattern)) {
+    if (!placeholderNamePattern.test(match[1])) {
+      throw new Error(`${relativePath(filePath)} placeholder must be uppercase: ${match[0]}`);
+    }
   }
 };
 
-const validateMcpConfig = async (sourceDir, validateMcp) => {
+const hasCompanionSteps = (manifest) =>
+  Array.isArray(manifest.companion?.steps) && manifest.companion.steps.length > 0;
+
+const validateMcpConfig = async (sourceDir, manifest, validateMcp) => {
   const mcpPath = path.join(sourceDir, ".mcp.json");
 
+  if (!(await pathExists(mcpPath))) {
+    return false;
+  }
+
+  const raw = await fs.readFile(mcpPath, "utf8");
+  validatePlaceholders(raw, mcpPath);
+
+  let mcpConfig;
   try {
-    await fs.access(mcpPath);
+    mcpConfig = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`${relativePath(mcpPath)} invalid JSON: ${error.message}`);
+  }
+
+  if (!validateMcp(mcpConfig)) {
+    throw new Error(`${relativePath(mcpPath)} invalid: ${formatAjvErrors(validateMcp.errors)}`);
+  }
+
+  for (const [serverName, serverConfig] of Object.entries(mcpConfig.mcpServers)) {
+    if (
+      typeof serverConfig.command === "string" &&
+      serverConfig.command !== "${ARTYX_ELECTRON}" &&
+      !hasCompanionSteps(manifest)
+    ) {
+      const serverLabel = `${relativePath(mcpPath)} server ${serverName}`;
+      throw new Error(
+        `${serverLabel} uses ${serverConfig.command} without companion steps`
+      );
+    }
+  }
+
+  return true;
+};
+
+const validateTreeItem = (filePath, stats, depth) => {
+  if (stats.isSymbolicLink()) {
+    throw new Error(`${relativePath(filePath)} must not be a symlink`);
+  }
+
+  if (blockedFileNames.has(path.basename(filePath))) {
+    throw new Error(`${relativePath(filePath)} is not allowed`);
+  }
+
+  if (depth > maxPluginDepth) {
+    throw new Error(`${relativePath(filePath)} exceeds max depth ${maxPluginDepth}`);
+  }
+
+  if (stats.isFile() && stats.size > maxFileBytes) {
+    throw new Error(`${relativePath(filePath)} exceeds max file size`);
+  }
+};
+
+const walkPluginDir = async (directoryPath, visitor, depth = 0) => {
+  const entries = await fs.readdir(directoryPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const filePath = path.join(directoryPath, entry.name);
+    const stats = await fs.lstat(filePath);
+    const itemDepth = depth + 1;
+
+    await visitor(filePath, stats, itemDepth);
+
+    if (stats.isDirectory()) {
+      await walkPluginDir(filePath, visitor, itemDepth);
+    }
+  }
+};
+
+const validateRepositoryLimits = async () => {
+  const pluginsDir = path.join(rootDir, "plugins");
+  const pluginStats = new Map();
+  let totalBytes = (await fs.stat(path.join(rootDir, "marketplace.json"))).size;
+  const entries = await fs.readdir(pluginsDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const pluginPath = path.join(pluginsDir, entry.name);
+    const stats = await fs.lstat(pluginPath);
+
+    if (stats.isSymbolicLink()) {
+      throw new Error(`${relativePath(pluginPath)} must not be a symlink`);
+    }
+
+    if (blockedFileNames.has(path.basename(pluginPath))) {
+      throw new Error(`${relativePath(pluginPath)} is not allowed`);
+    }
+
+    if (stats.isFile()) {
+      if (stats.size > maxFileBytes) {
+        throw new Error(`${relativePath(pluginPath)} exceeds max file size`);
+      }
+
+      totalBytes += stats.size;
+      continue;
+    }
+
+    if (!stats.isDirectory()) {
+      continue;
+    }
+
+    let fileCount = 0;
+
+    await walkPluginDir(pluginPath, (filePath, itemStats, depth) => {
+      validateTreeItem(filePath, itemStats, depth);
+
+      if (itemStats.isFile()) {
+        fileCount += 1;
+        totalBytes += itemStats.size;
+
+        if (fileCount > maxPluginFiles) {
+          throw new Error(`${relativePath(pluginPath)} exceeds ${maxPluginFiles} files`);
+        }
+      }
+    });
+
+    pluginStats.set(entry.name, { fileCount });
+  }
+
+  if (totalBytes > maxRepoBytes) {
+    throw new Error("plugins/ plus marketplace.json exceeds max repository payload size");
+  }
+
+  return pluginStats;
+};
+
+const hasGitRef = async (refName) => {
+  try {
+    await runGit(["rev-parse", "--verify", refName]);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const hasGitObject = async (objectName) => {
+  try {
+    await runGit(["cat-file", "-e", objectName]);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const hasPluginDiff = async (pluginName) => {
+  try {
+    await runGit(["diff", "--quiet", "origin/main", "--", `plugins/${pluginName}`]);
+    return false;
+  } catch (error) {
+    if (error.code === 1) {
+      return true;
+    }
+
+    throw error;
+  }
+};
+
+const validateVersionBump = async (pluginName, currentVersion, gitContext) => {
+  if (!gitContext.hasOriginMain) {
+    return;
+  }
+
+  const manifestRefs = [
+    `origin/main:plugins/${pluginName}/.artyx-plugin/plugin.json`,
+    `origin/main:plugins/${pluginName}/.claude-plugin/plugin.json`
+  ];
+  let manifestRef;
+
+  for (const candidateRef of manifestRefs) {
+    if (await hasGitObject(candidateRef)) {
+      manifestRef = candidateRef;
+      break;
+    }
+  }
+
+  if (!manifestRef || !(await hasPluginDiff(pluginName))) {
+    return;
+  }
+
+  const { stdout } = await runGit(["show", manifestRef]);
+  const previousManifest = JSON.parse(stdout);
+
+  if (previousManifest.version === currentVersion) {
+    throw new Error(`content changed without version bump: ${pluginName}`);
+  }
+};
+
+const validatePluginEntry = async (entry, validators, gitContext) => {
+  const expectedSource = `./plugins/${entry.name}`;
+  assertEqual(entry.source, expectedSource, `${entry.name} source`);
+
+  const sourceDir = path.join(rootDir, entry.source);
+  let stats;
+  try {
+    stats = await fs.stat(sourceDir);
   } catch (error) {
     if (error.code === "ENOENT") {
-      return;
+      throw new Error(`${entry.source} does not exist`);
     }
 
     throw error;
   }
 
-  const mcpConfig = await readJsonFile(mcpPath);
-
-  if (!validateMcp(mcpConfig)) {
-    throw new Error(`.mcp.json invalid: ${formatAjvErrors(validateMcp.errors)}`);
-  }
-};
-
-const SECRET_KEY = /token|key|secret|password|bearer|credential|authorization/i;
-
-const assertNoLiteralSecrets = (value, trail = "mcp") => {
-  if (!value || typeof value !== "object") return;
-  for (const [key, item] of Object.entries(value)) {
-    if (typeof item === "string" && SECRET_KEY.test(key) && !item.includes("${")) {
-      throw new Error(`${trail}.${key} contains a literal secret`);
-    }
-    if (item && typeof item === "object") assertNoLiteralSecrets(item, `${trail}.${key}`);
-  }
-};
-
-const validateNativePlugin = async (entry, validators) => {
-  const sourceDir = path.join(rootDir, "plugins", entry.name);
-  const manifest = await readJsonFile(path.join(sourceDir, ".artyx-plugin", "plugin.json"));
-  if (!validators.validatePluginV2(manifest)) {
-    throw new Error(`native plugin.json invalid: ${formatAjvErrors(validators.validatePluginV2.errors)}`);
-  }
-  assertEqual(manifest.name, entry.name, "v2 name");
-  assertEqual(manifest.version, entry.version, "v2 version");
-  for (const componentPath of Object.values(manifest.components ?? {})) {
-    const target = assertPathInside(sourceDir, componentPath);
-    await fs.access(target);
-  }
-  const mcpPath = manifest.components?.mcp
-    ? assertPathInside(sourceDir, manifest.components.mcp)
-    : null;
-  let mcp = null;
-  if (mcpPath) {
-    mcp = await readJsonFile(mcpPath).catch((error) => {
-      if (error.code === "ENOENT") return null;
-      throw error;
-    });
-  }
-  if (mcp && !validators.validateMcp(mcp)) {
-    throw new Error(`native mcp.json invalid: ${formatAjvErrors(validators.validateMcp.errors)}`);
-  }
-  if (mcp) assertNoLiteralSecrets(mcp);
-
-  const legacyManifest = await readJsonFile(path.join(sourceDir, ".claude-plugin", "plugin.json"));
-  for (const key of ["name", "version", "description", "homepage", "keywords", "companion"]) {
-    assertJsonEqual(legacyManifest[key], manifest[key], `legacy ${key}`);
-  }
-  if (mcp) {
-    const legacyMcp = await readJsonFile(path.join(sourceDir, ".mcp.json"));
-    assertJsonEqual(legacyMcp, mcp, "legacy .mcp.json");
-  }
-  await validateSkills(sourceDir);
-  await assertSafeTree(sourceDir);
-};
-
-const validateArchiveIdentity = (entry) => {
-  const archiveUrl = new URL(entry.archive.url);
-  const expectedName = `${entry.name}-${entry.version}.zip`;
-  if (!archiveUrl.pathname.endsWith(`/${expectedName}`)) {
-    throw new Error(`${entry.name}: archive URL must end in ${expectedName}`);
-  }
-};
-
-const validatePluginEntry = async (entry, validators) => {
-  const sourceDir = path.join(rootDir, entry.source);
-  const stats = await fs.stat(sourceDir);
-
   if (!stats.isDirectory()) {
     throw new Error(`${entry.source} is not a directory`);
   }
 
-  const manifest = await readJsonFile(path.join(sourceDir, ".claude-plugin", "plugin.json"));
+  const manifestPathCandidates = [
+    path.join(sourceDir, ".artyx-plugin", "plugin.json"),
+    path.join(sourceDir, ".claude-plugin", "plugin.json")
+  ];
+  let manifestPath;
 
-  if (!validators.validatePlugin(manifest)) {
-    throw new Error(`plugin.json invalid: ${formatAjvErrors(validators.validatePlugin.errors)}`);
+  for (const candidatePath of manifestPathCandidates) {
+    if (await pathExists(candidatePath)) {
+      manifestPath = candidatePath;
+      break;
+    }
   }
 
-  assertEqual(manifest.name, entry.name, "name");
+  if (!manifestPath) {
+    throw new Error(`${relativePath(manifestPathCandidates[0])} missing`);
+  }
+
+  const manifest = await readJsonFile(manifestPath);
+
+  if (!validators.validatePlugin(manifest)) {
+    throw new Error(
+      `${relativePath(manifestPath)} invalid: ${formatAjvErrors(validators.validatePlugin.errors)}`
+    );
+  }
+
+  if (!interfaceCategories.has(manifest.interface.category)) {
+    throw new Error(
+      `${relativePath(manifestPath)} interface.category invalid: ${manifest.interface.category}`
+    );
+  }
+
+  assertEqual(manifest.name, path.basename(sourceDir), "manifest.name");
+  assertEqual(manifest.name, entry.name, "manifest.name");
   assertUrl(manifest.companion?.docsUrl, `${entry.name} companion.docsUrl`);
   assertUrl(manifest.companion?.downloadUrl, `${entry.name} companion.downloadUrl`);
 
-  await validateMcpConfig(sourceDir, validators.validateMcp);
-  await validateSkills(sourceDir);
+  const hasMcp = await validateMcpConfig(sourceDir, manifest, validators.validateMcp);
+  const skillCount = await validateSkills(sourceDir);
+  await validateVersionBump(entry.name, manifest.version, gitContext);
+
+  return { hasMcp, skillCount };
 };
 
 const main = async () => {
   const validators = await loadSchemas();
   const marketplace = await readJson("marketplace.json");
-  const marketplaceV2 = await readJson("marketplace.v2.json");
 
   if (!validators.validateMarketplace(marketplace)) {
     throw new Error(
       `marketplace.json invalid: ${formatAjvErrors(validators.validateMarketplace.errors)}`
     );
   }
-  if (!validators.validateMarketplaceV2(marketplaceV2)) {
-    throw new Error(
-      `marketplace.v2.json invalid: ${formatAjvErrors(validators.validateMarketplaceV2.errors)}`
-    );
-  }
-  const duplicateIds = marketplaceV2.plugins
-    .map((entry) => entry.name)
-    .filter((name, index, all) => all.indexOf(name) !== index);
-  if (duplicateIds.length > 0) throw new Error(`duplicate v2 plugin ids: ${duplicateIds.join(", ")}`);
+
+  console.log("[ok] marketplace schema");
+  validateMarketplaceEntries(marketplace.plugins);
+  console.log("[ok] marketplace entries");
+  await validateRepositoryLimits();
+  console.log("[ok] repository limits");
+
+  const gitContext = {
+    hasOriginMain: await hasGitRef("origin/main")
+  };
 
   let failed = false;
 
   for (const entry of marketplace.plugins) {
     try {
-      await validatePluginEntry(entry, validators);
-      console.log(`✓ ${entry.name}`);
+      const result = await validatePluginEntry(entry, validators, gitContext);
+      const mcpLabel = result.hasMcp ? "mcp" : "no-mcp";
+      console.log(
+        `[ok] ${entry.name}: manifest, source, ${mcpLabel}, skills:${result.skillCount}, version`
+      );
     } catch (error) {
       failed = true;
-      console.error(`✗ ${entry.name}: ${error.message}`);
-    }
-  }
-
-  for (const entry of marketplaceV2.plugins) {
-    try {
-      validateArchiveIdentity(entry);
-      await validateNativePlugin(entry, validators);
-      console.log(`✓ v2/${entry.name}`);
-    } catch (error) {
-      failed = true;
-      console.error(`✗ v2/${entry.name}: ${error.message}`);
+      console.error(`[fail] ${entry.name}: ${error.message}`);
     }
   }
 

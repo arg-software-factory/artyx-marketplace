@@ -1,15 +1,29 @@
 {
-  "schemaVersion": 2,
+  "$schema": "../../../schema/plugin.schema.json",
   "name": "github",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Connect Artyx to GitHub MCP for repository reading, issue and pull request triage, and CI status inspection using a personal access token.",
-  "publisher": "Artyx",
-  "license": "MIT",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/github/github-mcp-server",
-  "keywords": ["git", "issues", "pull-requests", "ci"],
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["git", "issues", "pull-requests", "ci", "github"],
   "components": {
-    "mcp": "mcp.json",
-    "skills": "skills"
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "GitHub",
+    "shortDescription": "Read repos, triage issues and PRs, inspect CI.",
+    "longDescription": "Connect the agent to GitHub over MCP: browse repositories, triage issues and pull requests, and inspect CI status with a personal access token you supply.",
+    "category": "dev",
+    "capabilities": ["Read", "Write"],
+    "brandColor": "#1F2328",
+    "icon": "🐙",
+    "defaultPrompt": [
+      "Triage the open pull requests on a repository and summarize what needs review."
+    ],
+    "experimental": false
   },
   "companion": {
     "title": "GitHub token",

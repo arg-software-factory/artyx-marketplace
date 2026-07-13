@@ -1,70 +1,69 @@
 ---
-name: unity-mcp
-description: >-
-  Operate a connected Unity Editor professionally through MCP: inspect first, make
-  reversible edits, compile, test, and verify the saved result.
+name: Unity MCP
+description: Load this BEFORE driving a connected Unity Editor — GameObjects, components, C# scripts, scenes, play-mode. Unity is stateful and easy to corrupt (a second "new scene" wipes your work, play-mode loops burn the budget); this skill's guardrails keep a build from destroying itself.
 ---
 
-# Unity MCP Operator Playbook
+# Driving Unity through MCP
 
-You are controlling a live Unity 6 Editor through Unity's official MCP relay. It is a
-local authoring interface, not a substitute for source control or a build pipeline. Use
-only the tools advertised by the connected server; the relay can target a specific project
-or editor instance, and tools can vary with Unity/package version.
+You are operating a LIVE Unity Editor session. Unity MCP servers (e.g. CoplayDev/unity-mcp with its MCPForUnity bridge) expose dozens of focused tools; use the exact names/schemas from your tool list (`mcp_` prefix) — this document teaches the strategy, not the tool names.
 
-## Session contract
+## 1. Typical tool surface
 
-1. Confirm the target Unity instance, project, Unity version, active scene, and whether the editor is in Play Mode.
-2. Read the hierarchy, scene path, and Console before changing anything. Identify the rendering pipeline before creating materials or shaders.
-3. State a small plan. Perform one concern per operation: create/find an object, add a component, set fields, then parent or save it.
-4. Read the affected object, component, or asset back after each write. A successful tool response alone is not proof that Unity serialized the intended value.
-5. Save the scene and report the changed assets, test result, and remaining Console errors.
+- **Scene/hierarchy** — open/save scenes, list hierarchy, create/find/modify/delete GameObjects.
+- **Components** — add/remove components, get/set serialized properties.
+- **Assets** — create/list materials, prefabs, folders; instantiate prefabs.
+- **Scripts (C#)** — create/read/edit script files; the editor recompiles on save.
+- **Editor control** — enter/exit Play Mode, run tests, read console logs, take screenshots.
 
-Never delete, replace, reimport, or bulk-edit project assets without confirming the exact scope. When an editor tool exposes Undo, use it for discrete mutations; never assume it exists.
+READ each tool's schema before first use — property paths and argument shapes vary. Component properties use serialized names (`m_Mass`, or dotted paths like `material.color`) on some servers and friendly names on others; when a set-call claims success, ALWAYS read the property back.
 
-## Scene and asset work
+## 1b. Hard rules — never break these (they destroy work or burn the budget)
 
-- Use deterministic names (`Player`, `Enemy_01`, `UI_HealthBar`) and verify Unity did not suffix a duplicate.
-- Unity uses meters, Y-up, and degrees in Inspector-facing Euler rotations. Do not infer gameplay scale: inspect existing units, layers, tags, input, physics settings, and prefabs first.
-- Preserve existing cameras, lights, EventSystems, and render-pipeline assets unless the task explicitly changes them. For a new material, inspect the project's pipeline and verify the assigned shader after creation.
-- Treat prefab instances carefully: identify whether an edit targets the instance, an override, or the source prefab before writing. Re-read the target afterward.
-- Save authoring work in Edit Mode. Play Mode is for verification; do not rely on edits made there to persist after exit.
+- **Open/create a scene EXACTLY ONCE, at the very start.** After you have created anything,
+  NEVER call `manage_scene` with `new` or `open` again — both discard the current scene and every
+  unsaved GameObject you built. To keep progress, `save`. If you think you need a fresh scene
+  mid-task, you don't — keep building in the current one.
+- **Enter Play Mode at most once, only to smoke-test at the END.** Do not loop play → stop →
+  play. One `play`, read the console once for runtime errors, one `stop`. Authoring during Play
+  Mode is reverted on stop, so never create/modify objects while playing.
+- **Do not re-read the console more than once per script change.** A compile result is stable;
+  reading it repeatedly wastes the step budget without new information.
+- **Know when you are done.** Once the requested objects exist, scripts compile clean, and the
+  final hierarchy read matches the goal — save, report, and STOP. Do not keep polling.
 
-Unity's [scene workflow](https://docs.unity3d.com/Manual/scenes-working-with.html) is the source of truth for opening and saving scenes.
+## 2. The loop
 
-## C# workflow
+1. **Inspect** — get the scene hierarchy before touching anything; note existing cameras/lights.
+2. **One concern per call** — create the GameObject; then add components; then set properties; then parent it. Batched mega-calls fail opaquely.
+3. **Verify each write with a read** — especially transform values and component properties (silently-clamped/ignored values are common).
+4. **Console is your stderr** — after script edits or play-mode actions, read the Unity console for compile errors BEFORE proceeding. A compile error freezes the whole editor tool surface until fixed.
+5. **Name deterministically** — `Player`, `Enemy_01`, `UI_HealthBar`; read back final names (Unity appends `(1)` on duplicates).
 
-1. Inspect the existing assembly definitions, namespaces, and nearby scripts before creating a new class.
-2. Make the MonoBehaviour file name and class name match. Make external configuration explicit with `[SerializeField] private` fields of Unity-serializable types.
-3. Write the smallest coherent edit. After every file change, wait for Unity to compile and read the Console. Fix compile errors before attaching or testing the component.
-4. Attach the script only after compilation succeeds. Set fields through the tool schema, then read them back from the component.
-5. Run a focused test or a short Play Mode check, collect Console output, exit Play Mode, and save in Edit Mode.
+## 3. Coordinates, units, conventions
 
-Unity serializes public fields and non-public fields marked `[SerializeField]`; it does not serialize C# properties or static fields. See Unity's official [SerializeField reference](https://docs.unity3d.com/ScriptReference/SerializeField.html) and [code-reloading guidance](https://docs.unity3d.com/Manual/code-reloading-editor.html).
+- Meters, **Y is up**, left-handed, rotations in degrees (Quaternion under the hood — set eulerAngles).
+- New GameObjects spawn at origin; a "floor" is usually a scaled Plane (default Plane = 10×10m at scale 1) or a scaled Cube.
+- 2D projects: Z is depth/layering; sprites face -Z camera.
 
-## Verification standard
+## 4. C# script workflow
 
-- **Hierarchy/component change:** read back the GameObject path, component list, and changed serialized values.
-- **Visual change:** inspect the active camera or take a screenshot if the server provides one; report what is and is not visible.
-- **Script change:** Console is clean of new compile errors, then run the narrowest relevant test.
-- **Runtime change:** enter Play Mode only after compilation, capture runtime logs/errors, exit, and confirm the scene is saved.
-- **Build request:** inspect target/platform settings first, run the smallest requested build, and report artifact path plus errors. Never claim a build passed because the MCP call returned.
+1. Create the script asset with the EXACT class name = file name (Unity requirement for MonoBehaviours).
+2. Wait/recompile: after any script write, read the console; fix compile errors before attaching.
+3. Attach the component to its GameObject, then set serialized fields.
+4. Test in Play Mode: enter play, read console for runtime logs/exceptions, exit play. **State changes made DURING Play Mode are reverted on exit** — never do authoring work in play mode.
 
-Use Unity Test Framework's Edit Mode tests for editor/data behavior and Play Mode tests for runtime behavior when applicable. Unity documents both modes in its [Test Framework manual](https://docs.unity3d.com/Manual/com.unity.test-framework.html).
+Script idioms that avoid common breakage: cache `GetComponent` in `Awake`; use `[SerializeField] private` fields for anything you'll set from MCP; guard `Update` logic with null checks; prefer `Time.deltaTime`-scaled motion.
 
-## Recovery
+## 5. Scene building recipe
 
-- If a write is rejected or has no effect, re-read the tool schema and object/component data before retrying. Serialized property paths can vary by Unity/package version.
-- If tools stop responding after script edits, Unity may be compiling or reloading. Make one cheap read after it settles, then retry once.
-- If the connection is absent, check **Edit → Project Settings → AI → Unity MCP Server**:
-  Unity Bridge must be Running and the Artyx client must be accepted. Do not replace the
-  relay or guess its path; use Unity's generated/official configuration.
-- If the Console contains an error, fix the earliest relevant error before continuing; cascading errors make later observations unreliable.
-- After two identical failures, stop mutating. Report the tool, arguments, exact error, current scene state, and the smallest safe next diagnostic.
+(a) Verify a camera + directional light exist (default scene has both; an empty one doesn't), (b) ground plane, (c) hero objects with materials (URP: use the `Universal Render Pipeline/Lit` shader; built-in: `Standard` — query the project's pipeline first if the server exposes it, or create one material and read back its shader), (d) light intensity ~1 for directional, point lights 2–5 with sensible range, (e) position the camera to frame the composition (e.g. pos (0, 3, -8), rot (15, 0, 0)), (f) save the scene, (g) **final verification step — always end here:** call `manage_scene
+get_hierarchy` one last time and report the actual object list you read back, not what you
+intended to create. If a required object is missing from that read, it was wiped or never
+created — fix it, then read again.
 
-## References
+## 6. Failure recovery
 
-- [Unity MCP setup and relay configuration](https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.9/manual/integration/unity-mcp-get-started.html)
-- [Unity Package Manager](https://docs.unity3d.com/Manual/upm-ui.html)
-- [Unity scene creation, loading, and saving](https://docs.unity3d.com/Manual/scenes-working-with.html)
-- [Unity Test Framework](https://docs.unity3d.com/Manual/com.unity.test-framework.html)
+- `Component not found` → wrong serialized name; fetch the component's property list if the server has such a tool, else read the object's full info.
+- Script tool succeeded but behavior unchanged → console has a compile error; read it.
+- Play-mode tools hang → domain reload in progress; wait one call (a cheap read), then retry once.
+- Two identical failures → STOP, re-read the tool schema, `web_search` the exact error with "unity mcp" before retrying.

@@ -1,5 +1,5 @@
 ---
-name: github
+name: GitHub MCP
 description: Use GitHub MCP tools to inspect repositories, triage issues and pull requests, and check CI status with read-before-write discipline.
 ---
 

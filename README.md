@@ -4,80 +4,97 @@
 
 # Artyx Marketplace
 
-**Curated MCP servers &amp; skills for the [Artyx](https://artyx.ai) agent — one click to install.**
+**Curated MCP servers and skills for the [Artyx](https://artyx.ai) agent.**
 
 </div>
 
 ---
 
-## What is this?
+## What This Repo Is
 
-This repo is the source of truth for the **Artyx Marketplace** — the in‑app catalog where Artyx users install *plugins* that connect the agent to their favorite tools.
+Artyx Marketplace is a git-backed catalog of installable plugins for Artyx.
 
-A **plugin** bundles two things (either, or both):
+The core rule is simple: [`marketplace.json`](marketplace.json) is a thin
+curated index, and each plugin under `plugins/<name>/` is a self-describing
+bundle. The plugin's `.artyx-plugin/plugin.json` carries all storefront and
+install metadata.
 
-- 🔌 **an MCP server** — a live connection to an app or service (Blender, Unreal, GitHub, Figma…)
-- 🧠 **skills** — up‑to‑date, task‑specific know‑how that makes the agent genuinely *pro* at that tool
+`marketplace.json` only contains ordered pointers:
 
-The Artyx desktop app fetches [`marketplace.json`](marketplace.json), renders the gallery, and — on **Install** — writes the MCP config + skills into `~/.artyx`. Any secrets go straight to your OS keychain. That's it.
-
-## v2: verified, portable packages
-
-[`marketplace.v2.json`](marketplace.v2.json) is the release catalog for Artyx 0.6.2+
-and uses schema version 2. Every entry identifies one immutable archive by URL, SHA-256,
-and byte size, then declares its supported Artyx versions and platforms. Installers must
-verify the digest and size before extracting the archive.
-
-Each archive has one canonical `.artyx-plugin/plugin.json` (schema version 2) and explicit
-components for its MCP map and skills. The build also generates small compatibility manifests
-for Claude, Codex, and Cursor, so the package's identity, setup information, MCP config, and
-skill stay aligned across clients. `mcp.json` is canonical; `.mcp.json` is the legacy-compatible
-copy and is validated to be structurally equivalent after JSON parsing.
-
-The release pipeline deliberately stores ZIP entries without compression and fixes timestamps.
-That makes SHA-256 output reproducible across operating systems and Node versions—an installer
-can trust a digest produced in CI rather than a developer's local machine.
-
-## Catalog
-
-| Plugin | Category | What it does |
-|---|---|---|
-| 🟠 **Blender** | Creative | Drive Blender via a bundled MCP bridge + the Blender add‑on |
-| 🎮 **Unreal Engine** | Games | Automate the Unreal Editor through the community MCP bridge |
-| 🧩 **Unity** | Games | Drive the Unity Editor through the community MCP bridge |
-| 🐙 **GitHub** | Dev | Read repos, triage issues &amp; PRs, inspect CI |
-| 🎨 **Figma** | Creative | Read files, frames &amp; design variables |
-| 🖌️ **Photoshop** | Creative | Layers, adjustments &amp; exports via a community bridge |
-
-> More coming — and it's just a PR away. 👇
-
-## Anatomy of a plugin
-
-Ultra‑simple, mirroring [Anthropic's plugin layout](https://github.com/anthropics/claude-plugins-official) — one folder, two files, an optional `skills/`:
-
+```json
+{ "name": "blender", "source": "./plugins/blender" }
 ```
+
+Array order is the curation order shown by Artyx. Storefront fields such as
+display name, category, icon, copy, screenshots, and experimental status belong
+in the plugin manifest, not in the index.
+
+Publishing is merging to `main`. There are no releases, tags, package uploads,
+or generated catalogs.
+
+## Plugin Layout
+
+```text
 plugins/<name>/
-├── .artyx-plugin/plugin.json   # canonical v2 identity + components
-├── .claude-plugin/plugin.json   # identity + optional setup guide
-├── .mcp.json                    # standard MCP server config (drop‑in compatible)
-├── mcp.json                     # canonical v2 MCP config
-├── skills/<name>/SKILL.md       # the know‑how (optional)
-└── README.md
+|-- .artyx-plugin/plugin.json       # required manifest
+|-- skills/<id>/SKILL.md            # optional, one or more skills
+|-- .mcp.json                       # optional MCP server config
+|-- assets/                         # optional icons, logos, screenshots, binaries
+|-- agents/                         # reserved for future agent bundles
+|-- commands/                       # reserved for future command bundles
+|-- hooks.json                      # reserved for future hooks
+`-- README.md                       # plugin docs and setup notes
 ```
 
-Secrets are bare `${VAR}` placeholders in `.mcp.json` — the app detects them, asks once, and stores them in the OS keychain (never in plaintext). Reserved `${ARTYX_ELECTRON}` / `${ARTYX_BUNDLED}` app‑vars are resolved by Artyx.
+Plugins can contain MCP config, skills, assets, or any combination that matches
+the manifest. The validator allows the reserved `agents/`, `commands/`, and
+`hooks.json` paths for forward compatibility.
 
-## Contribute
+Secrets and user-specific settings in `.mcp.json` use bare `${VAR}`
+placeholders. Artyx resolves reserved app variables such as `${ARTYX_ELECTRON}`
+and `${ARTYX_BUNDLED}`; other placeholders are prompted for by the desktop app.
 
-Adding a plugin is a folder and a pull request. See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the schema and the security checklist. Only the Artyx team merges — every server is reviewed before it ships.
+## Manifest
+
+Each plugin manifest lives at:
+
+```text
+plugins/<name>/.artyx-plugin/plugin.json
+```
+
+The manifest is strict JSON validated by
+[`schema/plugin.schema.json`](schema/plugin.schema.json). Required top-level
+fields are `name`, `version`, `description`, `author`, and `interface`.
+
+The `interface` block is the storefront card:
+
+| Field | Required | Purpose |
+| --- | --- | --- |
+| `displayName` | Yes | Human-readable plugin name. |
+| `shortDescription` | Yes | Short storefront summary. |
+| `category` | Yes | One of `creative`, `dev`, `games`, `productivity`, `other`. |
+| `icon` | Yes | Emoji or `./assets/...` path. |
+| `longDescription` | No | Longer storefront copy. |
+| `capabilities` | No | `Interactive`, `Read`, and/or `Write`. |
+| `brandColor` | No | Hex color, such as `#EA7600`. |
+| `logo` | No | Optional `./assets/...` logo path. |
+| `defaultPrompt` | No | Example prompts to start from. |
+| `screenshots` | No | Optional screenshot paths. |
+| `experimental` | No | Marks the plugin as experimental. |
+
+Other install metadata, such as `repository`, `license`, `compatibility`,
+`components`, and `companion`, also lives in this manifest when applicable.
+
+## Validate
 
 ```bash
-npm install && npm run validate   # validate your plugin locally
-npm run catalog:v2                # regenerate verified digests after a v2 package change
+npm install
+npm run validate
 ```
 
----
+Validation checks the marketplace schema, plugin manifests, MCP config,
+placeholder names, skill frontmatter, repository limits, symlinks, junk files,
+and plugin version bumps.
 
-<div align="center">
-<sub>Built for <a href="https://artyx.ai">Artyx</a> — the agentic studio for AI design · MIT licensed</sub>
-</div>
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution checklist and review
+rules.
