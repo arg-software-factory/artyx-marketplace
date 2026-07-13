@@ -20,6 +20,21 @@ const placeholderPattern = /\$\{([^}]+)\}/g;
 const placeholderNamePattern = /^[A-Z0-9_]+$/;
 const interfaceCategories = new Set(["creative", "dev", "games", "productivity", "other"]);
 
+// App-provided placeholders are substituted by the desktop at install time (the packaged
+// Electron binary, the immutable plugin cache dir, etc). They are NOT user-config vars and
+// never trigger the needs-config dialog. Keep this set in sync with the desktop's classifier;
+// any other ${...} in a config is a user var. ARTYX_PLUGIN_ROOT is treated exactly like the
+// legacy ARTYX_BUNDLED it replaces.
+const appProvidedPlaceholders = new Set(["ARTYX_ELECTRON", "ARTYX_BUNDLED", "ARTYX_PLUGIN_ROOT"]);
+const loopbackHosts = new Set(["127.0.0.1", "localhost", "::1"]);
+
+const singlePlaceholderPattern = /^\$\{([^}]+)\}$/;
+
+const isAppProvidedCommand = (command) => {
+  const match = singlePlaceholderPattern.exec(command ?? "");
+  return match ? appProvidedPlaceholders.has(match[1]) : false;
+};
+
 const readJsonFile = async (filePath) => JSON.parse(await fs.readFile(filePath, "utf8"));
 
 const readJson = async (relativePath) => readJsonFile(path.join(rootDir, relativePath));
@@ -184,12 +199,34 @@ const validateMcpConfig = async (sourceDir, manifest, validateMcp) => {
   }
 
   for (const [serverName, serverConfig] of Object.entries(mcpConfig.mcpServers)) {
+    const serverLabel = `${relativePath(mcpPath)} server ${serverName}`;
+
+    if (typeof serverConfig.url === "string") {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(serverConfig.url);
+      } catch {
+        throw new Error(`${serverLabel} has invalid url: ${serverConfig.url}`);
+      }
+
+      if (parsedUrl.protocol === "http:") {
+        if (!loopbackHosts.has(parsedUrl.hostname)) {
+          throw new Error(
+            `${serverLabel} uses plain http for non-loopback host ${parsedUrl.hostname} (https required): ${serverConfig.url}`
+          );
+        }
+      } else if (parsedUrl.protocol !== "https:") {
+        throw new Error(
+          `${serverLabel} url must use https (or http for loopback only): ${serverConfig.url}`
+        );
+      }
+    }
+
     if (
       typeof serverConfig.command === "string" &&
-      serverConfig.command !== "${ARTYX_ELECTRON}" &&
+      !isAppProvidedCommand(serverConfig.command) &&
       !hasCompanionSteps(manifest)
     ) {
-      const serverLabel = `${relativePath(mcpPath)} server ${serverName}`;
       throw new Error(
         `${serverLabel} uses ${serverConfig.command} without companion steps`
       );
