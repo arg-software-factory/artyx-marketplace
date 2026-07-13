@@ -1,7 +1,7 @@
 {
   "$schema": "../../../schema/plugin.schema.json",
   "name": "unreal-engine",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Connect Artyx to Unreal Engine for editor automation, actors, Blueprints, level composition, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/chongdashu/unreal-mcp",

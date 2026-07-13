@@ -1,7 +1,7 @@
 {
   "$schema": "../../../schema/plugin.schema.json",
   "name": "blender",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Connect Artyx to Blender for scene inspection, procedural edits, materials, animation, cameras, lighting, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/ahujasid/blender-mcp",
