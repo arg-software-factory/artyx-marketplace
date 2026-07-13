@@ -1,15 +1,16 @@
-# Finish setup inside Unreal Engine
+# Enable Unreal Engine's native MCP server
+
+Unreal Engine 5.8 ships a native MCP server inside the editor. Artyx connects to
+it directly over local HTTP — there is no third-party server to install.
 
 ## Prerequisites
 
-- Install uv / uvx — https://astral.sh/uv
+- Unreal Engine 5.8 or newer
 
 ## Steps
 
-1. Copy the UnrealMCP plugin into your project's `Plugins/` folder.
-2. Enable it in Edit → Plugins (search `Unreal MCP`), then restart the editor.
-3. The bridge listens on `127.0.0.1:55557`.
+1. In Unreal Engine 5.8+: `Edit → Plugins`, search `Unreal MCP` (plugin id `ModelContextProtocol`), tick `Enabled`, and restart the editor when prompted.
+2. Start the server: `Edit → Editor Preferences → General → Model Context Protocol` → enable `Auto Start Server` (off by default), or run `ModelContextProtocol.StartServer` in the editor console on demand.
+3. Keep a project open — the server listens on `http://127.0.0.1:8000/mcp` (HTTP + SSE, loopback) and Artyx connects to it automatically once it is running.
 
-Docs: https://github.com/chongdashu/unreal-mcp#readme
-
-Download: https://github.com/chongdashu/unreal-mcp
+Docs: https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor
