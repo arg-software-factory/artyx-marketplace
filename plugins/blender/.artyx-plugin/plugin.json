@@ -1,7 +1,7 @@
 {
   "$schema": "../../../schema/plugin.schema.json",
   "name": "blender",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Connect Artyx to Blender for scene inspection, procedural edits, materials, animation, cameras, lighting, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/ahujasid/blender-mcp",
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "Blender",
     "shortDescription": "Build and animate 3D scenes in a live Blender session.",
-    "longDescription": "Drive a connected Blender session over MCP: inspect the scene, build meshes, author materials and lighting, keyframe animation, and verify every change. Pairs the bundled stdio bridge with the Blender MCP add-on.",
+    "longDescription": "Drive a connected Blender session over MCP: inspect the scene, build meshes, author materials and lighting, keyframe animation, and verify every change. Pairs the plugin's own stdio bridge with the Blender MCP add-on.",
     "category": "creative",
     "capabilities": ["Interactive", "Write"],
     "brandColor": "#EA7600",
