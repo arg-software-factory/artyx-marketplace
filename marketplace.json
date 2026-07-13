@@ -8,11 +8,12 @@
   },
   "plugins": [
     { "name": "blender", "source": "./plugins/blender" },
+    { "name": "unity", "source": "./plugins/unity" },
+    { "name": "unreal-engine", "source": "./plugins/unreal-engine" },
+    { "name": "godot", "source": "./plugins/godot" },
     { "name": "photoshop", "source": "./plugins/photoshop" },
     { "name": "figma", "source": "./plugins/figma" },
     { "name": "github", "source": "./plugins/github" },
-    { "name": "unity", "source": "./plugins/unity" },
-    { "name": "unreal-engine", "source": "./plugins/unreal-engine" },
     { "name": "mcp-power-user", "source": "./plugins/mcp-power-user" }
   ]
 }
