@@ -1,7 +1,7 @@
 {
   "$schema": "../../../schema/plugin.schema.json",
   "name": "unity",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/CoplayDev/unity-mcp",

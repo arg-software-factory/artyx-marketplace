@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "blender": {
+    "godot": {
       "command": "${ARTYX_ELECTRON}",
-      "args": ["${ARTYX_PLUGIN_ROOT}/server/blender-mcp-server.mjs"],
+      "args": ["${ARTYX_PLUGIN_ROOT}/server/godot-mcp.mjs"],
       "env": {
         "ELECTRON_RUN_AS_NODE": "1",
-        "BLENDER_MCP_PORT": "9876"
+        "GODOT_PATH": "${GODOT_PATH}"
       }
     }
   }

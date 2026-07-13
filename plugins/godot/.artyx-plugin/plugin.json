@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../schema/plugin.schema.json",
+  "name": "godot",
+  "version": "1.0.0",
+  "description": "Connect Artyx to the Godot engine to launch the editor, run projects headlessly, inspect scenes, and capture debug output.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/Coding-Solo/godot-mcp",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["game-engine", "editor", "gdscript", "godot"],
+  "components": {
+    "skills": "./skills/",
+    "mcp": "./.mcp.json"
+  },
+  "interface": {
+    "displayName": "Godot",
+    "shortDescription": "Launch Godot, run projects, and read debug output over MCP.",
+    "longDescription": "Drive the Godot engine over MCP: the server launches its own headless Godot (via GODOT_PATH) to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
+    "category": "games",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#478CBF",
+    "icon": "🤖",
+    "defaultPrompt": [
+      "Run my Godot project, capture any script errors, and tell me what's failing."
+    ],
+    "experimental": true
+  },
+  "companion": {
+    "title": "Point Artyx at your Godot",
+    "summary": "Paste the full path to your Godot 4 executable when prompted for GODOT_PATH.",
+    "steps": [
+      "Locate your Godot 4 executable (macOS: /Applications/Godot.app/Contents/MacOS/Godot; Windows: C:\\Godot\\Godot_v4.x.exe; Linux: the extracted Godot_v4.x binary).",
+      "Paste that full path when Artyx prompts for GODOT_PATH during install.",
+      "The server launches this executable headlessly to run and inspect your projects — no in-editor add-on is required."
+    ],
+    "docsUrl": "https://github.com/Coding-Solo/godot-mcp#readme",
+    "prerequisites": ["Godot 4.x installed"]
+  }
+}
