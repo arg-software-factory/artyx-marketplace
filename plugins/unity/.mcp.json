@@ -2,7 +2,7 @@
   "mcpServers": {
     "unity": {
       "command": "uvx",
-      "args": ["unity-mcp-server"]
+      "args": ["--from", "mcpforunityserver", "mcp-for-unity", "--transport", "stdio"]
     }
   }
 }

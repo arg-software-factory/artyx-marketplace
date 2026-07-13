@@ -20,9 +20,10 @@ READ each tool's schema before first use — property paths and argument shapes 
 ## 1b. Hard rules — never break these (they destroy work or burn the budget)
 
 - **Open/create a scene EXACTLY ONCE, at the very start.** After you have created anything,
-  NEVER call `manage_scene` with `new` or `open` again — both discard the current scene and every
-  unsaved GameObject you built. To keep progress, `save`. If you think you need a fresh scene
-  mid-task, you don't — keep building in the current one.
+  NEVER call `manage_scene` with action `create` or `load` again — both discard the current scene
+  and every unsaved GameObject you built. To keep progress, use action `save`. If you think you need
+  a fresh scene mid-task, you don't — keep building in the current one. (Additive multi-scene loads
+  are the one exception — see the `scene-spawning-hierarchy` skill.)
 - **Enter Play Mode at most once, only to smoke-test at the END.** Do not loop play → stop →
   play. One `play`, read the console once for runtime errors, one `stop`. Authoring during Play
   Mode is reverted on stop, so never create/modify objects while playing.
