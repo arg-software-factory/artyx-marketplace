@@ -5,10 +5,15 @@ merging to `main`.
 
 ## Principle
 
-`marketplace.json` is a thin curated index. Each entry is only:
+`.agents/plugins/marketplace.json` is an OpenAI-style curated index. Each entry is:
 
 ```json
-{ "name": "plugin-name", "source": "./plugins/plugin-name" }
+{
+  "name": "plugin-name",
+  "source": { "source": "local", "path": "./plugins/plugin-name" },
+  "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+  "category": "Developer Tools"
+}
 ```
 
 All storefront and install metadata lives in
@@ -23,8 +28,7 @@ details in the plugin bundle.
 4. Add optional `.mcp.json` when the plugin exposes MCP tools.
 5. Add optional `assets/` files for icons, logos, screenshots, or binaries.
 6. Add `plugins/<name>/README.md` with setup notes.
-7. Add `{ "name": "<name>", "source": "./plugins/<name>" }` to
-   `marketplace.json` in the curated position you want.
+7. Add the OpenAI-style entry to `.agents/plugins/marketplace.json` in the curated position you want.
 8. Run `npm run validate`.
 9. Open a PR to `develop`.
 
@@ -53,8 +57,8 @@ Optional top-level fields from the schema:
 - `license`
 - `keywords`
 - `compatibility`
-- `components`
-- `companion`
+- `skills`, `mcpServers`, `apps`, `agents`, `commands`, `hooks`
+- `artyx.companion`
 
 Changing content inside a plugin requires a `version` bump. Artyx desktop caches
 installed plugin content by immutable version.
@@ -67,8 +71,7 @@ Required fields:
 
 - `displayName`
 - `shortDescription`
-- `category`: one of `creative`, `dev`, `games`, `productivity`, `other`.
-- `icon`
+- `category`: storefront category matching the marketplace entry.
 
 Optional fields:
 
@@ -80,7 +83,8 @@ Optional fields:
 - `screenshots`
 - `experimental`
 
-Do not duplicate these fields in `marketplace.json`.
+Use `artyx.companion` for required external setup. Do not add proprietary
+metadata outside that namespace.
 
 ## Bundle Layout
 
@@ -96,8 +100,8 @@ plugins/<name>/
 `-- README.md
 ```
 
-`skills/`, `.mcp.json`, and `assets/` are optional. `agents/`, `commands/`, and
-`hooks.json` are reserved and may be included for forward-compatible bundles.
+`skills/`, `.mcp.json`, and `assets/` are optional. Point at each included
+surface from the manifest (`skills`, `mcpServers`, and so on).
 
 Skills must be directories, each with `SKILL.md` frontmatter containing `name`
 and `description`. Do not include `enabled:` frontmatter.
@@ -135,7 +139,7 @@ setup.
 
 ## Companion Setup
 
-Use `companion` when a plugin needs an external application add-on, local
+Use `artyx.companion` when a plugin needs an external application add-on, local
 bridge, token setup, or manual step:
 
 - `title`

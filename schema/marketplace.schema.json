@@ -2,28 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/marketplace.schema.json",
   "title": "Artyx marketplace index",
-  "description": "Thin curated index. Each entry is a pointer to a self-describing plugin; array order is the curation order. All storefront metadata lives in the plugin's own manifest, never here.",
+  "description": "OpenAI-style curated index. Each entry points at a self-describing plugin; array order is the curation order.",
   "type": "object",
-  "required": ["$schema", "name", "owner", "plugins"],
+  "required": ["name", "interface", "plugins"],
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string"
-    },
     "name": {
       "type": "string",
-      "const": "artyx-marketplace"
+      "const": "artyx-official"
     },
-    "description": {
-      "type": "string"
-    },
-    "owner": {
+    "interface": {
       "type": "object",
-      "required": ["name"],
+      "required": ["displayName"],
       "additionalProperties": false,
       "properties": {
-        "name": { "type": "string" },
-        "url": { "type": "string", "format": "uri" }
+        "displayName": { "type": "string", "minLength": 1 }
       }
     },
     "plugins": {
@@ -31,7 +24,7 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["name", "source"],
+        "required": ["name", "source", "policy", "category"],
         "additionalProperties": false,
         "properties": {
           "name": {
@@ -39,8 +32,26 @@
             "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           },
           "source": {
+            "type": "object",
+            "required": ["source", "path"],
+            "additionalProperties": false,
+            "properties": {
+              "source": { "const": "local" },
+              "path": { "type": "string", "pattern": "^\\./plugins/[a-z0-9]+(?:-[a-z0-9]+)*$" }
+            }
+          },
+          "policy": {
+            "type": "object",
+            "required": ["installation", "authentication"],
+            "additionalProperties": false,
+            "properties": {
+              "installation": { "enum": ["NOT_AVAILABLE", "AVAILABLE", "INSTALLED_BY_DEFAULT"] },
+              "authentication": { "enum": ["ON_INSTALL", "ON_USE"] }
+            }
+          },
+          "category": {
             "type": "string",
-            "pattern": "^\\./plugins/[a-z0-9]+(?:-[a-z0-9]+)*$"
+            "minLength": 1
           }
         }
       }

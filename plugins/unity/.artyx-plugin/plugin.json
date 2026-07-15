@@ -1,31 +1,29 @@
 {
   "$schema": "../../../schema/plugin.schema.json",
   "name": "unity",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/CoplayDev/unity-mcp",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
   "license": "MIT",
   "keywords": ["game-engine", "editor", "csharp", "unity"],
-  "components": {
-    "skills": "./skills/",
-    "mcp": "./.mcp.json"
-  },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Unity",
     "shortDescription": "Drive the Unity Editor: scenes, GameObjects, scripts, play-mode.",
     "longDescription": "Operate a live Unity Editor over MCP: build scene hierarchies, add components, author C# scripts, manage assets, and smoke-test in Play Mode. The bundled skill's guardrails stop a build from wiping its own scene.",
-    "category": "games",
+    "developerName": "Artyx",
+    "category": "Developer Tools",
     "capabilities": ["Interactive", "Write"],
     "brandColor": "#222C37",
-    "icon": "🧩",
     "defaultPrompt": [
       "Create a simple 2D game scene in Unity: a player sprite that moves with the arrow keys."
     ],
     "experimental": true
   },
-  "companion": {
+  "artyx": { "companion": {
     "title": "Finish setup inside Unity",
     "steps": [
       "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
@@ -35,5 +33,5 @@
     "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
     "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
     "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
-  }
+  } }
 }

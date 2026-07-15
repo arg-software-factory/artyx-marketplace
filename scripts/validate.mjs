@@ -18,7 +18,7 @@ const maxPluginDepth = 12;
 const blockedFileNames = new Set([".DS_Store", "Thumbs.db", "desktop.ini", ".archive.sha256"]);
 const placeholderPattern = /\$\{([^}]+)\}/g;
 const placeholderNamePattern = /^[A-Z0-9_]+$/;
-const interfaceCategories = new Set(["creative", "dev", "games", "productivity", "other"]);
+const marketplacePath = ".agents/plugins/marketplace.json";
 
 // App-provided placeholders are substituted by the desktop at install time (the packaged
 // Electron binary, the immutable plugin cache dir, etc). They are NOT user-config vars and
@@ -86,7 +86,8 @@ const validateMarketplaceEntries = (plugins) => {
     }
 
     names.add(entry.name);
-    assertEqual(entry.source, `./plugins/${entry.name}`, `${entry.name} source`);
+    assertEqual(entry.source?.source, "local", `${entry.name} source.source`);
+    assertEqual(entry.source?.path, `./plugins/${entry.name}`, `${entry.name} source.path`);
   }
 };
 
@@ -175,10 +176,17 @@ const validatePlaceholders = (raw, filePath) => {
 };
 
 const hasCompanionSteps = (manifest) =>
-  Array.isArray(manifest.companion?.steps) && manifest.companion.steps.length > 0;
+  Array.isArray(manifest.artyx?.companion?.steps) && manifest.artyx.companion.steps.length > 0;
 
 const validateMcpConfig = async (sourceDir, manifest, validateMcp) => {
-  const mcpPath = path.join(sourceDir, ".mcp.json");
+  if (!manifest.mcpServers) {
+    return false;
+  }
+
+  const mcpPath = path.resolve(sourceDir, manifest.mcpServers);
+  if (!mcpPath.startsWith(`${sourceDir}${path.sep}`)) {
+    throw new Error(`${relativePath(sourceDir)} mcpServers escapes the plugin package`);
+  }
 
   if (!(await pathExists(mcpPath))) {
     return false;
@@ -273,7 +281,7 @@ const walkPluginDir = async (directoryPath, visitor, depth = 0) => {
 const validateRepositoryLimits = async () => {
   const pluginsDir = path.join(rootDir, "plugins");
   const pluginStats = new Map();
-  let totalBytes = (await fs.stat(path.join(rootDir, "marketplace.json"))).size;
+  let totalBytes = (await fs.stat(path.join(rootDir, marketplacePath))).size;
   const entries = await fs.readdir(pluginsDir, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -320,7 +328,7 @@ const validateRepositoryLimits = async () => {
   }
 
   if (totalBytes > maxRepoBytes) {
-    throw new Error("plugins/ plus marketplace.json exceeds max repository payload size");
+    throw new Error("plugins/ plus marketplace index exceeds max repository payload size");
   }
 
   return pluginStats;
@@ -389,40 +397,27 @@ const validateVersionBump = async (pluginName, currentVersion, gitContext) => {
 
 const validatePluginEntry = async (entry, validators, gitContext) => {
   const expectedSource = `./plugins/${entry.name}`;
-  assertEqual(entry.source, expectedSource, `${entry.name} source`);
+  assertEqual(entry.source?.source, "local", `${entry.name} source.source`);
+  assertEqual(entry.source?.path, expectedSource, `${entry.name} source.path`);
 
-  const sourceDir = path.join(rootDir, entry.source);
+  const sourceDir = path.join(rootDir, entry.source.path);
   let stats;
   try {
     stats = await fs.stat(sourceDir);
   } catch (error) {
     if (error.code === "ENOENT") {
-      throw new Error(`${entry.source} does not exist`);
+      throw new Error(`${entry.source.path} does not exist`);
     }
 
     throw error;
   }
 
   if (!stats.isDirectory()) {
-    throw new Error(`${entry.source} is not a directory`);
+    throw new Error(`${entry.source.path} is not a directory`);
   }
 
-  const manifestPathCandidates = [
-    path.join(sourceDir, ".artyx-plugin", "plugin.json"),
-    path.join(sourceDir, ".claude-plugin", "plugin.json")
-  ];
-  let manifestPath;
-
-  for (const candidatePath of manifestPathCandidates) {
-    if (await pathExists(candidatePath)) {
-      manifestPath = candidatePath;
-      break;
-    }
-  }
-
-  if (!manifestPath) {
-    throw new Error(`${relativePath(manifestPathCandidates[0])} missing`);
-  }
+  const manifestPath = path.join(sourceDir, ".artyx-plugin", "plugin.json");
+  if (!(await pathExists(manifestPath))) throw new Error(`${relativePath(manifestPath)} missing`);
 
   const manifest = await readJsonFile(manifestPath);
 
@@ -432,16 +427,11 @@ const validatePluginEntry = async (entry, validators, gitContext) => {
     );
   }
 
-  if (!interfaceCategories.has(manifest.interface.category)) {
-    throw new Error(
-      `${relativePath(manifestPath)} interface.category invalid: ${manifest.interface.category}`
-    );
-  }
-
   assertEqual(manifest.name, path.basename(sourceDir), "manifest.name");
   assertEqual(manifest.name, entry.name, "manifest.name");
-  assertUrl(manifest.companion?.docsUrl, `${entry.name} companion.docsUrl`);
-  assertUrl(manifest.companion?.downloadUrl, `${entry.name} companion.downloadUrl`);
+  assertEqual(manifest.interface.category, entry.category, `${entry.name} category`);
+  assertUrl(manifest.artyx?.companion?.docsUrl, `${entry.name} companion.docsUrl`);
+  assertUrl(manifest.artyx?.companion?.downloadUrl, `${entry.name} companion.downloadUrl`);
 
   const hasMcp = await validateMcpConfig(sourceDir, manifest, validators.validateMcp);
   const skillCount = await validateSkills(sourceDir);
@@ -452,11 +442,11 @@ const validatePluginEntry = async (entry, validators, gitContext) => {
 
 const main = async () => {
   const validators = await loadSchemas();
-  const marketplace = await readJson("marketplace.json");
+  const marketplace = await readJson(marketplacePath);
 
   if (!validators.validateMarketplace(marketplace)) {
     throw new Error(
-      `marketplace.json invalid: ${formatAjvErrors(validators.validateMarketplace.errors)}`
+      `${marketplacePath} invalid: ${formatAjvErrors(validators.validateMarketplace.errors)}`
     );
   }
 

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/plugin.schema.json",
   "title": "Artyx plugin manifest",
-  "description": "Self-describing plugin bundle. Lives at plugins/<name>/.artyx-plugin/plugin.json and carries ALL storefront + install metadata; the marketplace index only points at it.",
+  "description": "Self-describing plugin bundle. Lives at plugins/<name>/.artyx-plugin/plugin.json and follows the OpenAI plugin manifest shape with a minimal Artyx extension.",
   "type": "object",
   "required": ["name", "version", "description", "author", "interface"],
   "additionalProperties": false,
@@ -51,6 +51,12 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "skills": { "type": "string" },
+    "agents": { "type": "string" },
+    "commands": { "type": "string" },
+    "hooks": { "type": "string" },
+    "apps": { "type": "string" },
+    "mcpServers": { "type": "string" },
     "compatibility": {
       "type": "object",
       "additionalProperties": false,
@@ -66,31 +72,17 @@
         }
       }
     },
-    "components": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "Relative pointers to companion surfaces bundled in this plugin dir.",
-      "properties": {
-        "skills": { "type": "string" },
-        "agents": { "type": "string" },
-        "commands": { "type": "string" },
-        "mcp": { "type": "string" },
-        "assets": { "type": "string" }
-      }
-    },
     "interface": {
       "type": "object",
       "description": "The storefront card. Single source of truth for how the plugin renders in Settings -> Marketplace.",
-      "required": ["displayName", "shortDescription", "category", "icon"],
+      "required": ["displayName", "shortDescription", "category"],
       "additionalProperties": false,
       "properties": {
         "displayName": { "type": "string" },
         "shortDescription": { "type": "string" },
         "longDescription": { "type": "string" },
-        "category": {
-          "type": "string",
-          "enum": ["creative", "dev", "games", "productivity", "other"]
-        },
+        "developerName": { "type": "string" },
+        "category": { "type": "string", "minLength": 1 },
         "capabilities": {
           "type": "array",
           "items": { "type": "string", "enum": ["Interactive", "Read", "Write"] },
@@ -100,10 +92,10 @@
           "type": "string",
           "pattern": "^#[0-9A-Fa-f]{6}$"
         },
-        "icon": {
-          "type": "string",
-          "description": "Emoji (zero-asset default) or a ./assets/... relative path."
-        },
+        "websiteURL": { "type": "string", "format": "uri" },
+        "privacyPolicyURL": { "type": "string", "format": "uri" },
+        "termsOfServiceURL": { "type": "string", "format": "uri" },
+        "composerIcon": { "type": "string" },
         "logo": {
           "type": "string",
           "description": "Optional relative path to a PNG/SVG in ./assets/."
@@ -121,24 +113,22 @@
         }
       }
     },
-    "companion": {
+    "artyx": {
       "type": "object",
-      "description": "Artyx-specific manual setup the user must finish outside the app (install a DCC add-on, mint a token). Richer than a binary ON_INSTALL/ON_USE flag.",
-      "required": ["title", "steps"],
       "additionalProperties": false,
       "properties": {
-        "title": { "type": "string" },
-        "summary": { "type": "string" },
-        "steps": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "string" }
-        },
-        "docsUrl": { "type": "string", "format": "uri" },
-        "downloadUrl": { "type": "string", "format": "uri" },
-        "prerequisites": {
-          "type": "array",
-          "items": { "type": "string" }
+        "companion": {
+          "type": "object",
+          "required": ["title", "steps"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string" },
+            "summary": { "type": "string" },
+            "steps": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "docsUrl": { "type": "string", "format": "uri" },
+            "downloadUrl": { "type": "string", "format": "uri" },
+            "prerequisites": { "type": "array", "items": { "type": "string" } }
+          }
         }
       }
     }

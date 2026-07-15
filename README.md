@@ -14,20 +14,25 @@
 
 Artyx Marketplace is a git-backed catalog of installable plugins for Artyx.
 
-The core rule is simple: [`marketplace.json`](marketplace.json) is a thin
-curated index, and each plugin under `plugins/<name>/` is a self-describing
-bundle. The plugin's `.artyx-plugin/plugin.json` carries all storefront and
-install metadata.
+The core rule is simple: [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json)
+is an OpenAI-style curated index, and each plugin under `plugins/<name>/` is a
+self-describing bundle. The plugin's `.artyx-plugin/plugin.json` carries all
+plugin metadata.
 
-`marketplace.json` only contains ordered pointers:
+The marketplace contains ordered policy-aware pointers:
 
 ```json
-{ "name": "blender", "source": "./plugins/blender" }
+{
+  "name": "blender",
+  "source": { "source": "local", "path": "./plugins/blender" },
+  "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+  "category": "Creativity"
+}
 ```
 
-Array order is the curation order shown by Artyx. Storefront fields such as
-display name, category, icon, copy, screenshots, and experimental status belong
-in the plugin manifest, not in the index.
+Array order is the curation order shown by Artyx. The index controls
+availability and install-time authentication; the manifest owns the plugin's
+storefront copy and bundled surfaces.
 
 Publishing is merging to `main`. There are no releases, tags, package uploads,
 or generated catalogs.
@@ -72,8 +77,7 @@ The `interface` block is the storefront card:
 | --- | --- | --- |
 | `displayName` | Yes | Human-readable plugin name. |
 | `shortDescription` | Yes | Short storefront summary. |
-| `category` | Yes | One of `creative`, `dev`, `games`, `productivity`, `other`. |
-| `icon` | Yes | Emoji or `./assets/...` path. |
+| `category` | Yes | Storefront category, matching the marketplace entry. |
 | `longDescription` | No | Longer storefront copy. |
 | `capabilities` | No | `Interactive`, `Read`, and/or `Write`. |
 | `brandColor` | No | Hex color, such as `#EA7600`. |
@@ -82,8 +86,9 @@ The `interface` block is the storefront card:
 | `screenshots` | No | Optional screenshot paths. |
 | `experimental` | No | Marks the plugin as experimental. |
 
-Other install metadata, such as `repository`, `license`, `compatibility`,
-`components`, and `companion`, also lives in this manifest when applicable.
+Plugin surfaces use direct pointers (`skills`, `mcpServers`, `apps`, `agents`,
+`commands`, `hooks`). `artyx.companion` is the only Artyx-specific extension;
+it supplies required external DCC/MCP setup steps.
 
 ## Validate
 
