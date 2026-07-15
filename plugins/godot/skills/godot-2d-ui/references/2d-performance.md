@@ -7,5 +7,5 @@ the lowest supported GPU. Use visibility/notifier nodes or scene streaming for c
 
 ## Official sources
 
-- 2D rendering optimization: https://docs.godotengine.org/en/4.6/tutorials/performance/optimizing_2d_performance.html
+- Performance section: https://docs.godotengine.org/en/4.6/tutorials/performance/index.html
 - General optimization: https://docs.godotengine.org/en/4.6/tutorials/performance/general_optimization.html

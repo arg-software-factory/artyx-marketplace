@@ -29,7 +29,7 @@ Test state interruption and disable/enable paths, especially for attack, hit and
 
 ## Official sources
 
-- Unity Manual: [Model import settings](https://docs.unity3d.com/6000.0/Documentation/Manual/class-ModelImporter.html)
+- Unity Manual: [FBX model importer](https://docs.unity3d.com/6000.0/Documentation/Manual/FBXImporter-Model.html)
 - Unity Manual: [Mecanim animation system](https://docs.unity3d.com/6000.0/Documentation/Manual/AnimationOverview.html)
 - Unity Manual: [Blend Trees](https://docs.unity3d.com/6000.0/Documentation/Manual/class-BlendTree.html)
 - Unity Scripting API: [Animator](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Animator.html)

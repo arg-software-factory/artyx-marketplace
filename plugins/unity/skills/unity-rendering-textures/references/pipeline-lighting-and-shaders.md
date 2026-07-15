@@ -32,7 +32,7 @@ micro-optimizations in shader arithmetic.
 
 ## Official sources
 
-- Unity Manual: [URP](https://docs.unity3d.com/6000.0/Documentation/Manual/com.unity.render-pipelines.universal.html)
+- Unity Manual: [URP introduction](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/urp-introduction.html)
 - Unity Manual: [HDRP](https://docs.unity3d.com/6000.0/Documentation/Manual/com.unity.render-pipelines.high-definition.html)
 - Unity Manual: [Shader Graph](https://docs.unity3d.com/6000.0/Documentation/Manual/shader-graph.html)
 - Unity Manual: [Lighting](https://docs.unity3d.com/6000.0/Documentation/Manual/Lighting.html)

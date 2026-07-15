@@ -27,7 +27,7 @@ one-time scene decoration simply to appear optimized.
 
 ## Official sources
 
-- Unity Manual: [Random](https://docs.unity3d.com/6000.0/Documentation/Manual/class-Random.html)
+- Unity Scripting API: [Random](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Random.html)
 - Unity Scripting API: [ObjectPool](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Pool.ObjectPool_1.html)
 - Unity Manual: [GPU instancing](https://docs.unity3d.com/6000.0/Documentation/Manual/GPUInstancing.html)
 - Unity Manual: [Tilemaps](https://docs.unity3d.com/6000.0/Documentation/Manual/Tilemap.html)

@@ -33,4 +33,4 @@ after correctness and its measured cost are both known.
 - Unity Manual: [Profiler](https://docs.unity3d.com/6000.0/Documentation/Manual/Profiler.html)
 - Unity Manual: [Frame Debugger](https://docs.unity3d.com/6000.0/Documentation/Manual/FrameDebugger.html)
 - Unity Manual: [Memory Profiler](https://docs.unity3d.com/6000.0/Documentation/Manual/ProfilerMemory.html)
-- Unity Scripting API: [ProfilerMarker](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Profiling.ProfilerMarker.html)
+- Unity Scripting API: [ProfilerMarker](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Unity.Profiling.ProfilerMarker.html)

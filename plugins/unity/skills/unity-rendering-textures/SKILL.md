@@ -27,4 +27,4 @@ budget, and whether the material is opaque, alpha-clipped, or transparent before
 Do not change render pipelines to solve a material issue. Use `unity-performance-qa` for measured
 regressions and `unity-scenes-content` for asset ownership/addressability.
 
-Official baseline: [Unity 6 rendering manual](https://docs.unity3d.com/6000.0/Documentation/Manual/Graphics.html).
+Official baseline: [Unity 6 render pipelines](https://docs.unity3d.com/6000.0/Documentation/Manual/render-pipelines.html).

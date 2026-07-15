@@ -25,6 +25,6 @@ unload/release memory recovery. A feature is not content-complete merely because
 ## Official sources
 
 - Addressables 2.7: [manual](https://docs.unity3d.com/Packages/com.unity.addressables@2.7/manual/index.html)
-- Addressables 2.7: [loading assets](https://docs.unity3d.com/Packages/com.unity.addressables@2.7/manual/LoadingAssets.html)
+- Addressables 2.7: [load assets](https://docs.unity3d.com/Packages/com.unity.addressables@2.7/manual/load-assets.html)
 - Unity Manual: [Build Profiles](https://docs.unity3d.com/6000.0/Documentation/Manual/BuildSettings.html)
 - Unity Manual: [AssetBundles](https://docs.unity3d.com/6000.0/Documentation/Manual/AssetBundlesIntro.html)

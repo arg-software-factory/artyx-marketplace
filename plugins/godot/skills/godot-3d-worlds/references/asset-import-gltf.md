@@ -10,5 +10,5 @@ scene when the change must survive a reimport.
 
 ## Official sources
 
-- 3D asset pipeline: https://docs.godotengine.org/en/4.6/tutorials/assets_pipeline/3d_asset_pipeline.html
+- 3D scene import workflow: https://docs.godotengine.org/en/4.6/tutorials/assets_pipeline/importing_3d_scenes/index.html
 - Importing 3D scenes: https://docs.godotengine.org/en/4.6/tutorials/assets_pipeline/importing_3d_scenes/index.html

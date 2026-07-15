@@ -11,4 +11,4 @@ wrapper node, then use the same convention for collision, navigation, and animat
 ## Official sources
 
 - Introduction to 3D: https://docs.godotengine.org/en/4.6/tutorials/3d/introduction_to_3d.html
-- Environment: https://docs.godotengine.org/en/4.6/tutorials/environment_and_post_processing.html
+- Environment and post-processing: https://docs.godotengine.org/en/4.6/tutorials/3d/environment_and_post_processing.html

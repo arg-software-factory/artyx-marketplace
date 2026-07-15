@@ -35,6 +35,6 @@ Return names, object types, modifier/node counts, material slots, frame range, v
 
 ## Official sources
 
-- [Blender Python API: `bpy`](https://docs.blender.org/api/current/bpy.html)
+- [Blender Python API](https://docs.blender.org/api/current/index.html)
 - [Operators and context](https://docs.blender.org/api/current/bpy.ops.html)
 - [Blender Manual: Python API](https://docs.blender.org/manual/en/4.5/advanced/scripting/index.html)
