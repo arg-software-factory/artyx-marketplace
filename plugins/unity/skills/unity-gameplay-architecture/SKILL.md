@@ -28,4 +28,4 @@ because a local reference was inconvenient.
 For streaming/content ownership use `unity-scenes-content`; for concrete editor sessions load
 `unity-mcp`; for measurements use `unity-performance-qa`.
 
-Official baseline: [Unity 6 scripting](https://docs.unity3d.com/6000.0/Documentation/Manual/ScriptingSection.html).
+Official baseline: [Unity 6 scripting](https://docs.unity3d.com/6000.0/Documentation/Manual/scripting.html).

@@ -37,5 +37,5 @@ yet validated.
 
 - Unity Manual: [Texture importer](https://docs.unity3d.com/6000.0/Documentation/Manual/class-TextureImporter.html)
 - Unity Manual: [Texture compression formats](https://docs.unity3d.com/6000.0/Documentation/Manual/texture-compression-formats.html)
-- Unity Manual: [Materials introduction](https://docs.unity3d.com/6000.0/Documentation/Manual/materials-introduction.html)
-- Unity Manual: [Sprite Atlas](https://docs.unity3d.com/6000.0/Documentation/Manual/class-SpriteAtlas.html)
+- Unity Manual: [Material Inspector window](https://docs.unity3d.com/6000.0/Documentation/Manual/class-Material.html)
+- Unity Manual: [Sprite Atlas](https://docs.unity3d.com/6000.0/Documentation/Manual/sprite/atlas/sprite-atlas-reference.html)

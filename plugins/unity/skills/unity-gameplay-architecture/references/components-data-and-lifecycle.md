@@ -29,6 +29,6 @@ acyclic and isolate `UnityEditor` code in Editor-only assemblies.
 ## Official sources
 
 - Unity Manual: [MonoBehaviour](https://docs.unity3d.com/6000.0/Documentation/Manual/class-MonoBehaviour.html)
-- Unity Manual: [Execution order](https://docs.unity3d.com/6000.0/Documentation/Manual/ExecutionOrder.html)
+- Unity Manual: [Execution order](https://docs.unity3d.com/6000.0/Documentation/Manual/execution-order.html)
 - Unity Manual: [ScriptableObject](https://docs.unity3d.com/6000.0/Documentation/Manual/class-ScriptableObject.html)
-- Unity Manual: [Assembly definitions](https://docs.unity3d.com/6000.0/Documentation/Manual/ScriptCompilationAssemblyDefinitionFiles.html)
+- Unity Manual: [Assembly definitions](https://docs.unity3d.com/6000.0/Documentation/Manual/assembly-definition-files.html)

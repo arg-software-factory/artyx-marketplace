@@ -38,4 +38,4 @@ operation once. Save only after the expected hierarchy and console state are obs
 - Unity Manual: [Scenes](https://docs.unity3d.com/6000.0/Documentation/Manual/CreatingScenes.html)
 - Unity Manual: [Prefab workflow](https://docs.unity3d.com/6000.0/Documentation/Manual/Prefabs.html)
 - Unity Scripting API: [Undo](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Undo.html)
-- Unity Manual: [Enter Play Mode settings](https://docs.unity3d.com/6000.0/Documentation/Manual/ConfigurableEnterPlayMode.html)
+- Unity Manual: [Enter Play Mode settings](https://docs.unity3d.com/6000.0/Documentation/Manual/configurable-enter-play-mode.html)

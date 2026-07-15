@@ -28,6 +28,6 @@ returns a reachable result.
 ## Official sources
 
 - Unity Manual: [Script compilation](https://docs.unity3d.com/6000.0/Documentation/Manual/script-compilation.html)
-- Unity Manual: [Assembly definitions](https://docs.unity3d.com/6000.0/Documentation/Manual/ScriptCompilationAssemblyDefinitionFiles.html)
-- Unity Scripting API: [MonoBehaviour execution order](https://docs.unity3d.com/6000.0/Documentation/Manual/ExecutionOrder.html)
+- Unity Manual: [Assembly definitions](https://docs.unity3d.com/6000.0/Documentation/Manual/assembly-definition-files.html)
+- Unity Scripting API: [MonoBehaviour execution order](https://docs.unity3d.com/6000.0/Documentation/Manual/execution-order.html)
 - Unity Test Framework 1.4: [manual](https://docs.unity3d.com/Packages/com.unity.test-framework@1.4/manual/index.html)

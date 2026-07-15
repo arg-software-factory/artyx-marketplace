@@ -29,4 +29,4 @@ For gameplay authority, distinguish “no complete path exists” from “agent 
 - Unity Manual: [AI Navigation](https://docs.unity3d.com/6000.0/Documentation/Manual/com.unity.ai.navigation.html)
 - Unity Scripting API: [NavMesh](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AI.NavMesh.html)
 - Unity Scripting API: [NavMeshAgent](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AI.NavMeshAgent.html)
-- AI Navigation package: [Navigation overview](https://docs.unity3d.com/Packages/com.unity.ai.navigation@2.0/manual/index.html)
+- Unity Manual: [AI Navigation](https://docs.unity3d.com/6000.0/Documentation/Manual/com.unity.ai.navigation.html)
