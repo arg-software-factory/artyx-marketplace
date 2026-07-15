@@ -1,0 +1,36 @@
+{
+  "name": "unity",
+  "version": "1.2.1",
+  "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/CoplayDev/unity-mcp",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["game-engine", "editor", "csharp", "unity"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Unity",
+    "shortDescription": "Drive the Unity Editor: scenes, GameObjects, scripts, play-mode.",
+    "longDescription": "Operate a live Unity Editor over MCP: build scene hierarchies, add components, author C# scripts, manage assets, and smoke-test in Play Mode. The bundled skill's guardrails stop a build from wiping its own scene.",
+    "developerName": "Artyx",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Write"],
+    "brandColor": "#222C37",
+    "defaultPrompt": [
+      "Create a simple 2D game scene in Unity: a player sprite that moves with the arrow keys."
+    ],
+    "experimental": true
+  },
+  "artyx": { "companion": {
+    "title": "Finish setup inside Unity",
+    "steps": [
+      "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
+      "Open the Unity MCP window and start the bridge.",
+      "Approve the auto-install of the Python server if prompted."
+    ],
+    "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
+    "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
+    "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
+  } }
+}

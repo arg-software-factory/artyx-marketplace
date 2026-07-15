@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "photoshop": {
+      "command": "npx",
+      "args": ["-y", "photoshop-mcp"]
+    }
+  }
+}

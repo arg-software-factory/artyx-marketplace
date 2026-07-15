@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "godot": {
+      "command": "${ARTYX_ELECTRON}",
+      "args": ["${ARTYX_PLUGIN_ROOT}/server/godot-mcp.mjs"],
+      "env": {
+        "ELECTRON_RUN_AS_NODE": "1",
+        "GODOT_PATH": "${GODOT_PATH}"
+      }
+    }
+  }
+}
