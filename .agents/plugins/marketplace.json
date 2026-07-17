@@ -51,12 +51,6 @@
       "source": { "source": "local", "path": "./plugins/github" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
       "category": "Developer Tools"
-    },
-    {
-      "name": "mcp-power-user",
-      "source": { "source": "local", "path": "./plugins/mcp-power-user" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
-      "category": "Productivity"
     }
   ]
 }
