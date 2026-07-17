@@ -33,6 +33,6 @@ debug output as evidence. Do not claim a visual result from a successful write a
 
 ## Official sources
 
-- Published package: https://www.npmjs.com/package/@coding-solo/godot-mcp
+- Published package: `@coding-solo/godot-mcp` on npm (`npx -y @coding-solo/godot-mcp`)
 - Upstream repository: https://github.com/Coding-Solo/godot-mcp
 - Godot command-line reference, 4.6: https://docs.godotengine.org/en/4.6/tutorials/editor/command_line_tutorial.html
