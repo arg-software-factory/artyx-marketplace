@@ -1,3 +1,4 @@
+// TODO Wave 3 — remove this launcher shim once desktop ships platform-overrides support.
 // Roblox Studio MCP launcher shim for the Artyx "roblox-studio" plugin.
 //
 // Roblox Studio ships a first-party MCP server, but its launch command differs
