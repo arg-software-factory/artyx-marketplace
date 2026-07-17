@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "godot": {
-      "command": "${ARTYX_ELECTRON}",
-      "args": ["${ARTYX_PLUGIN_ROOT}/server/godot-mcp.mjs"],
+      "command": "npx",
+      "args": ["-y", "@coding-solo/godot-mcp"],
       "env": {
-        "ELECTRON_RUN_AS_NODE": "1",
         "GODOT_PATH": "${GODOT_PATH}"
       }
     }

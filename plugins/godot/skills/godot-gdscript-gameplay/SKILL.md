@@ -15,5 +15,5 @@ physics, `_process` for presentation, and signals for cross-node events.
 | State, CharacterBody2D/3D, reusable gameplay | [gameplay architecture](references/gameplay-architecture.md) |
 | Errors, assertions, debugger and test boundary | [debugging and testing](references/debugging-testing.md) |
 
-Do not write scripts through the bundled MCP bridge: it cannot do so. Edit code through the target
+Do not write scripts through the godot-mcp server: it cannot do so. Edit code through the target
 project workflow, then use `godot-mcp` to run and capture evidence.

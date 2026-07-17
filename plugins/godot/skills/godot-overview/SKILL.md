@@ -1,12 +1,12 @@
 ---
 name: godot-overview
-description: Route Godot 4.6+ work to the correct expert skill. Use first for ambiguous Godot requests, project planning, or when choosing between 2D, 3D, rendering, gameplay, animation, navigation, procedural generation, performance, export, and the bundled MCP bridge.
+description: Route Godot 4.6+ work to the correct expert skill. Use first for ambiguous Godot requests, project planning, or when choosing between 2D, 3D, rendering, gameplay, animation, navigation, procedural generation, performance, export, and the published godot-mcp bridge.
 ---
 
 # Godot production map
 
 Target Godot **4.6+**. Verify release notes before applying a 4.7+ feature. Start with
-the domain skill; load `godot-mcp` only when operating this plugin's disk-based MCP bridge.
+the domain skill; load `godot-mcp` only when operating the published `@coding-solo/godot-mcp` bridge.
 
 | Task | Load |
 | --- | --- |
