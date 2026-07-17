@@ -1,13 +1,13 @@
 {
   "name": "roblox-studio",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Control Roblox Studio through Roblox's official built-in MCP server: read and edit Luau scripts, run code, insert assets, inspect the game tree, and drive playtests.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://create.roblox.com/docs/en-us/studio/mcp",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
   "license": "MIT",
   "keywords": ["roblox", "roblox-studio", "luau", "game-engine", "playtest"],
-  "compatibility": { "artyx": ">=0.1.0", "platforms": ["darwin", "win32"] },
+  "compatibility": { "artyx": ">=0.6.4", "platforms": ["darwin", "win32"] },
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {

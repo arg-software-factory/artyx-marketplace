@@ -1,10 +1,14 @@
 {
   "mcpServers": {
     "studio": {
-      "command": "${ARTYX_ELECTRON}",
-      "args": ["${ARTYX_PLUGIN_ROOT}/server/roblox-studio-launcher.mjs"],
-      "env": {
-        "ELECTRON_RUN_AS_NODE": "1"
+      "platform": {
+        "darwin": {
+          "command": "/Applications/RobloxStudio.app/Contents/MacOS/StudioMCP"
+        },
+        "win32": {
+          "command": "cmd.exe",
+          "args": ["/d", "/s", "/c", "${LOCALAPPDATA}\\Roblox\\mcp.bat"]
+        }
       }
     }
   }

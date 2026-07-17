@@ -6,7 +6,8 @@ const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/u;
 const LITERAL_PORT_IN_URL = /:\d{2,5}(?:\/|$)/u;
 const LOOPBACK_HOST = /(?:localhost|127\.0\.0\.1)/iu;
 const DISALLOWED_PLACEHOLDERS = /\$\{ARTYX_(?:ELECTRON|PLUGIN_ROOT)\}/u;
-const SERVER_CODE_ALLOWLIST = new Set(['roblox-studio']);
+const SERVER_CODE_ALLOWLIST = new Set();
+const PLATFORM_KEYS = new Set(['darwin', 'win32', 'linux']);
 const jsonOutput = process.argv.includes('--json');
 
 /** @type {string[]} */
@@ -144,13 +145,49 @@ function validateMcpServerShape(pluginName, serverName, config) {
     return;
   }
 
-  if (!config.command || typeof config.command !== 'string') {
-    fail(`${prefix} stdio servers require command`);
-    return;
-  }
-
   if (config.type !== undefined && config.type !== 'stdio') {
     fail(`${prefix} unknown transport type "${String(config.type)}"`);
+  }
+
+  validateStdioFields(prefix, config);
+
+  const platform = config.platform;
+  if (platform !== undefined) {
+    if (!platform || typeof platform !== 'object' || Array.isArray(platform)) {
+      fail(`${prefix} platform must be an object when present`);
+    } else {
+      for (const [osKey, override] of Object.entries(platform)) {
+        if (!PLATFORM_KEYS.has(osKey)) {
+          fail(`${prefix} unknown platform override "${osKey}" (expected darwin|win32|linux)`);
+          continue;
+        }
+        if (!override || typeof override !== 'object' || Array.isArray(override)) {
+          fail(`${prefix} platform.${osKey} must be an object`);
+          continue;
+        }
+        validateStdioFields(`${prefix} platform.${osKey}`, override);
+      }
+    }
+  }
+
+  // A stdio server must resolve a command for at least one platform: either a
+  // base command, or a command in every declared platform override.
+  const hasBaseCommand = typeof config.command === 'string' && config.command.length > 0;
+  const overrides = platform && typeof platform === 'object' ? Object.values(platform) : [];
+  const everyOverrideHasCommand =
+    overrides.length > 0 && overrides.every((o) => o && typeof o.command === 'string');
+  if (!hasBaseCommand && !everyOverrideHasCommand) {
+    fail(`${prefix} stdio servers require a command (base command, or one per platform override)`);
+  }
+
+  if (config.url) {
+    fail(`${prefix} stdio servers must not include url`);
+  }
+}
+
+function validateStdioFields(prefix, config) {
+  if (config.command !== undefined && typeof config.command !== 'string') {
+    fail(`${prefix} command must be a string when present`);
   }
 
   if (config.args !== undefined) {
@@ -163,10 +200,6 @@ function validateMcpServerShape(pluginName, serverName, config) {
     if (!config.env || typeof config.env !== 'object' || Array.isArray(config.env)) {
       fail(`${prefix} env must be an object when present`);
     }
-  }
-
-  if (config.url) {
-    fail(`${prefix} stdio servers must not include url`);
   }
 }
 
@@ -184,18 +217,28 @@ function validateMcpLiterals(pluginName, rawText, config) {
     }
   }
 
-  if (config.env && typeof config.env === 'object') {
-    for (const [key, value] of Object.entries(config.env)) {
-      if (typeof value !== 'string') {
-        fail(`${prefix} env.${key} must be a string`);
-        continue;
+  checkEnvLiterals(prefix, config.env);
+  if (config.platform && typeof config.platform === 'object') {
+    for (const [osKey, override] of Object.entries(config.platform)) {
+      if (override && typeof override === 'object') {
+        checkEnvLiterals(`${prefix} platform.${osKey}`, override.env);
       }
-      if (LOOPBACK_HOST.test(value)) {
-        fail(`${prefix} env.${key} contains a literal loopback host`);
-      }
-      if (/^\d{2,5}$/u.test(value)) {
-        fail(`${prefix} env.${key} contains a literal numeric port`);
-      }
+    }
+  }
+}
+
+function checkEnvLiterals(prefix, env) {
+  if (!env || typeof env !== 'object') return;
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value !== 'string') {
+      fail(`${prefix} env.${key} must be a string`);
+      continue;
+    }
+    if (LOOPBACK_HOST.test(value)) {
+      fail(`${prefix} env.${key} contains a literal loopback host`);
+    }
+    if (/^\d{2,5}$/u.test(value)) {
+      fail(`${prefix} env.${key} contains a literal numeric port`);
     }
   }
 }
@@ -244,18 +287,6 @@ async function validateNoBundledServerCode(pluginName, pluginDir) {
   }
 }
 
-async function validateRobloxAllowlistComment(pluginDir) {
-  const launcherPath = path.join(pluginDir, 'server', 'roblox-studio-launcher.mjs');
-  if (!(await pathExists(launcherPath))) {
-    return;
-  }
-
-  const contents = await readFile(launcherPath, 'utf8');
-  if (!contents.includes('TODO Wave 3')) {
-    fail('roblox-studio: server/roblox-studio-launcher.mjs must include a "// TODO Wave 3" comment');
-  }
-}
-
 async function validatePlugin(pluginName, pluginsRoot, marketplaceByName) {
   const pluginDir = path.join(pluginsRoot, pluginName);
   const manifestPath = path.join(pluginDir, '.artyx-plugin', 'plugin.json');
@@ -277,10 +308,6 @@ async function validatePlugin(pluginName, pluginsRoot, marketplaceByName) {
   const category = await validatePluginJson(pluginName, manifest, pluginDir, pluginsRoot);
   await validateMcpJson(pluginName, pluginDir);
   await validateNoBundledServerCode(pluginName, pluginDir);
-
-  if (pluginName === 'roblox-studio') {
-    await validateRobloxAllowlistComment(pluginDir);
-  }
 
   const marketplaceEntry = marketplaceByName.get(pluginName);
   if (!marketplaceEntry) {
