@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Blender",
+    "logo": "./logo.png",
     "shortDescription": "Build and animate 3D scenes in a live Blender session.",
     "longDescription": "Drive a connected Blender session over the official Blender Lab MCP server: inspect blend files and objects, execute bpy code, query the bundled Python API docs, capture viewport screenshots, and verify every change. Artyx connects over HTTP to a locally running blender-mcp process that relays to the Blender MCP add-on.",
     "developerName": "Artyx",

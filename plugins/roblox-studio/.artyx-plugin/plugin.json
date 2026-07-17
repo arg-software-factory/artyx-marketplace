@@ -12,6 +12,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Roblox Studio",
+    "logo": "./logo.png",
     "shortDescription": "Build, script, and playtest Roblox experiences with AI.",
     "longDescription": "Drive your open Roblox Studio session through Roblox's official first-party MCP server (built into Studio — nothing extra to install). The agent can search and edit Luau scripts, execute code, search and insert Creator Store assets, generate meshes and materials, inspect and navigate the game tree, start and stop playtests, read console output, capture the viewport, and simulate player input. Supports multiple open Studio instances.",
     "developerName": "Artyx",

@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Unreal Engine",
+    "logo": "./logo.png",
     "shortDescription": "Automate the Unreal Editor: actors, Blueprints, levels.",
     "longDescription": "Operate a live Unreal Editor over MCP through Unreal Engine 5.8's native in-editor MCP server: spawn actors, build and compile Blueprints, compose levels, configure lighting, inspect Slate widgets, and run automation tests. Connects to the editor's local HTTP endpoint — no third-party server to install. The bundled skill leans into list-first, compile-then-spawn discipline because editor writes silently no-op more than any other DCC.",
     "developerName": "Artyx",

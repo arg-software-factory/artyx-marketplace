@@ -95,6 +95,19 @@ async function validatePluginJson(pluginName, manifest, pluginDir, pluginsRoot) 
     fail(`${prefix} missing interface.displayName`);
   }
 
+  if (!iface.logo || typeof iface.logo !== 'string') {
+    fail(`${prefix} missing interface.logo (every plugin must ship a logo, e.g. "./logo.png")`);
+  } else {
+    const logoPath = path.resolve(pluginDir, iface.logo);
+    if (!logoPath.startsWith(pluginsRoot)) {
+      fail(`${prefix} interface.logo path escapes plugins root`);
+    } else if (!logoPath.toLowerCase().endsWith('.png')) {
+      fail(`${prefix} interface.logo must be a .png file`);
+    } else if (!(await pathExists(logoPath))) {
+      fail(`${prefix} interface.logo file does not exist: ${iface.logo}`);
+    }
+  }
+
   if (!iface.category || typeof iface.category !== 'string') {
     fail(`${prefix} missing interface.category`);
     return undefined;

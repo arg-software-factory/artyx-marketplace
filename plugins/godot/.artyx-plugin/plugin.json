@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Godot",
+    "logo": "./logo.png",
     "shortDescription": "Launch Godot, run projects, and read debug output over MCP.",
     "longDescription": "Drive the Godot engine over the published @coding-solo/godot-mcp server: launch its own headless Godot (via GODOT_PATH) to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
     "developerName": "Artyx",

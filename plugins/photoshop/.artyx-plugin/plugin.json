@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Photoshop",
+    "logo": "./logo.png",
     "shortDescription": "Inspect and edit Photoshop layers, adjustments, and exports.",
     "longDescription": "Drive Photoshop through a UXP MCP bridge: read the layer stack, apply edits and adjustments, and run export workflows, with the read-before-write discipline that keeps a document intact.",
     "developerName": "Artyx",
