@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "studio": {
+      "command": "${ARTYX_ELECTRON}",
+      "args": ["${ARTYX_PLUGIN_ROOT}/server/roblox-studio-launcher.mjs"],
+      "env": {
+        "ELECTRON_RUN_AS_NODE": "1"
+      }
+    }
+  }
+}
