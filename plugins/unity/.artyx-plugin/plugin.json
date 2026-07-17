@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Unity",
+    "logo": "./logo.png",
     "shortDescription": "Drive the Unity Editor: scenes, GameObjects, scripts, play-mode.",
     "longDescription": "Operate a live Unity Editor over MCP: build scene hierarchies, add components, author C# scripts, manage assets, and smoke-test in Play Mode. The bundled skill's guardrails stop a build from wiping its own scene.",
     "developerName": "Artyx",

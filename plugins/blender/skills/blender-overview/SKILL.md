@@ -1,6 +1,6 @@
 ---
 name: blender-overview
-description: Route Blender 4.5 LTS work to the right expert workflow. Use first for multi-domain Blender tasks, production planning, or when selecting modeling, materials, Geometry Nodes, animation, rendering, simulation, pipeline, or live MCP control guidance.
+description: Route Blender 4.5 LTS work to the right expert workflow. Use first for multi-domain Blender tasks, production planning, or when selecting modeling, materials, Geometry Nodes, animation, rendering, simulation, pipeline, or live official MCP control guidance.
 ---
 
 # Blender production map

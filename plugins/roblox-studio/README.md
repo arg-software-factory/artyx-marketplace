@@ -3,12 +3,12 @@
 Connects Artyx to the **official MCP server built into Roblox Studio** — nothing
 extra to install on the Roblox side, just a one-time toggle.
 
-This plugin bundles no server of its own: `server/roblox-studio-launcher.mjs` is a
-zero-dependency launcher shim that resolves the platform-specific Studio MCP
-command and passes stdio straight through:
+This plugin bundles no server code. Its `.mcp.json` declares the platform-specific
+Studio MCP launch command directly, and Artyx spawns it over the generic stdio
+transport:
 
 - macOS: `/Applications/RobloxStudio.app/Contents/MacOS/StudioMCP`
-- Windows: `%LOCALAPPDATA%\Roblox\mcp.bat` (via `cmd.exe /c`)
+- Windows: `cmd.exe /d /s /c ${LOCALAPPDATA}\Roblox\mcp.bat`
 
 Linux is not supported (Roblox Studio does not run on Linux).
 

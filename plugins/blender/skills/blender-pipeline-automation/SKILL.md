@@ -14,3 +14,11 @@ Define the target consumer before changing the asset. Interchange is a contract:
 5. Measure evaluated geometry, texture memory, draw/instance count, and render time against the delivery budget.
 
 Load [assets-interchange.md](references/assets-interchange.md) for libraries and export contracts. Load [performance-automation.md](references/performance-automation.md) for `bpy` patterns, profiling, data reuse, and delivery audits.
+
+## MCP verification
+
+Audit linked assets with `get_blendfile_summary_of_linked_libraries` and missing
+files with `get_blendfile_summary_missing_files`. Batch automation belongs in
+`execute_blender_code` or `execute_blender_code_for_cli` for headless blends.
+Use `get_blendfile_summary_usage_guess` to sanity-check project intent before
+large exports.

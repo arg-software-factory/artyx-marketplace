@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "GitHub",
+    "logo": "./logo.png",
     "shortDescription": "Read repos, triage issues and PRs, inspect CI.",
     "longDescription": "Connect the agent to GitHub over MCP: browse repositories, triage issues and pull requests, and inspect CI status with a personal access token you supply.",
     "developerName": "Artyx",

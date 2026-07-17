@@ -11,6 +11,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Figma",
+    "logo": "./logo.png",
     "shortDescription": "Read frames, components, and design variables from Figma.",
     "longDescription": "Inspect Figma files over the Dev Mode MCP server: read frames, pull component context, and discover design variables so the agent can ground its work in your real design system. Verify token auth against the official MCP docs before removing experimental status.",
     "developerName": "Artyx",

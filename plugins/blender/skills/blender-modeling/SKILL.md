@@ -14,3 +14,10 @@ Choose the deliverable before modeling: hero render mesh, deforming character, s
 5. Validate normals, manifoldness, scale, modifier order, and target triangle budget.
 
 Load [topology-modifiers.md](references/topology-modifiers.md) for hard-surface and deformation rules. Load [uv-retopo-sculpt.md](references/uv-retopo-sculpt.md) for UV, retopo, sculpt, and transfer workflows.
+
+## MCP verification
+
+Inspect with `get_objects_summary` / `get_object_detail_summary`; mutate meshes
+via `execute_blender_code`. Confirm vertex/polygon counts and modifier stacks in
+the returned payload; use `get_screenshot_of_area_as_image` when silhouette or
+shading must be judged.

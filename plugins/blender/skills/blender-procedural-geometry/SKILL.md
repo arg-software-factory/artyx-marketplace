@@ -14,3 +14,9 @@ Treat a node graph as a parameterized asset with stable inputs, explicit units, 
 5. Measure evaluated instance count, vertex count, memory impact, and target-engine compatibility.
 
 Load [geometry-nodes.md](references/geometry-nodes.md) for graph/field patterns. Load [scripting-instancing.md](references/scripting-instancing.md) for `bpy`, data-block reuse, determinism, and performance.
+
+## MCP verification
+
+Build or audit node groups through `execute_blender_code`; return graph/node/link
+counts in the result dict. Use `get_objects_summary` to confirm instance counts
+and collection ownership after scattering or instancing.

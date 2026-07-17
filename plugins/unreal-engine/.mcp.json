@@ -2,7 +2,7 @@
   "mcpServers": {
     "unreal-engine": {
       "type": "http",
-      "url": "http://127.0.0.1:8000/mcp"
+      "url": "http://127.0.0.1:${UNREAL_MCP_PORT}/mcp"
     }
   }
 }

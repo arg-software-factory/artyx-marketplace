@@ -14,3 +14,10 @@ Lock units, frame rate, frame range, coordinate conventions, and delivery format
 5. Verify at playback speed and render representative frames from the delivery camera.
 
 Load [actions-rigs.md](references/actions-rigs.md) for armatures, weights, constraints, and action ownership. Load [fcurves-nla-cameras.md](references/fcurves-nla-cameras.md) for curve polish, NLA, camera grammar, and automation caveats.
+
+## MCP verification
+
+Confirm armature hierarchy and action ranges via `get_object_detail_summary` or
+`execute_blender_code`. Scrub representative frames with
+`jump_to_view3d_object_by_name` and capture `render_viewport_to_path` or
+`get_screenshot_of_area_as_image` for pose/silhouette checks.

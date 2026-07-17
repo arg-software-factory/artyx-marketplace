@@ -14,3 +14,9 @@ Treat simulation as a cached dependency graph, not a random button press. Freeze
 5. Render representative frames and archive the cache or documented regeneration inputs with the `.blend`.
 
 Load [physics-cloth-rigid.md](references/physics-cloth-rigid.md) for body/cloth workflows. Load [fluids-hair-volumes.md](references/fluids-hair-volumes.md) for Mantaflow, particle/hair systems, volumes, and cache strategy.
+
+## MCP verification
+
+Bake and inspect caches through `execute_blender_code`; verify modifier/cache
+state in the returned dict. Representative frames need
+`render_viewport_to_path` — simulation parameters alone do not prove motion.

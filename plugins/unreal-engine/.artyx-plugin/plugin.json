@@ -1,16 +1,18 @@
 {
   "name": "unreal-engine",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Connect Artyx to Unreal Engine 5.8's native in-editor MCP server for editor automation, actors, Blueprints, level composition, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
   "license": "MIT",
   "keywords": ["game-engine", "editor", "blueprints", "unreal"],
+  "compatibility": { "artyx": ">=0.6.4" },
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Unreal Engine",
+    "logo": "./logo.png",
     "shortDescription": "Automate the Unreal Editor: actors, Blueprints, levels.",
     "longDescription": "Operate a live Unreal Editor over MCP through Unreal Engine 5.8's native in-editor MCP server: spawn actors, build and compile Blueprints, compose levels, configure lighting, inspect Slate widgets, and run automation tests. Connects to the editor's local HTTP endpoint — no third-party server to install. The bundled skill leans into list-first, compile-then-spawn discipline because editor writes silently no-op more than any other DCC.",
     "developerName": "Artyx",
@@ -24,11 +26,11 @@
   },
   "artyx": { "companion": {
     "title": "Enable Unreal Engine's native MCP server",
-    "summary": "Turn on the built-in 'Unreal MCP' plugin (UE 5.8+) and start its local server.",
+    "summary": "Turn on the built-in 'Unreal MCP' plugin (UE 5.8+) and start its local server. It listens on 127.0.0.1 and port 8000 by default — Artyx will ask for the port on install.",
     "steps": [
       "In Unreal Engine 5.8+: Edit → Plugins, search 'Unreal MCP' (plugin id ModelContextProtocol), tick Enabled, and restart the editor when prompted.",
       "Start the server: Edit → Editor Preferences → General → Model Context Protocol → enable 'Auto Start Server' (off by default), or run 'ModelContextProtocol.StartServer' in the editor console on demand.",
-      "Keep a project open — the server listens on http://127.0.0.1:8000/mcp (HTTP + SSE, loopback) and Artyx connects to it automatically once it is running."
+      "Keep a project open. The server defaults to 127.0.0.1:8000 (HTTP + SSE, loopback). Enter the port when Artyx prompts during install (default 8000)."
     ],
     "docsUrl": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
     "prerequisites": ["Unreal Engine 5.8 or newer"]

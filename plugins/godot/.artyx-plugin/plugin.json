@@ -1,7 +1,7 @@
 {
   "name": "godot",
-  "version": "1.0.1",
-  "description": "Connect Artyx to the Godot engine to launch the editor, run projects headlessly, inspect scenes, and capture debug output.",
+  "version": "2.0.0",
+  "description": "Connect Artyx to the Godot engine via the published @coding-solo/godot-mcp server to launch the editor, run projects headlessly, inspect scenes, and capture debug output.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/Coding-Solo/godot-mcp",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
@@ -11,8 +11,9 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Godot",
+    "logo": "./logo.png",
     "shortDescription": "Launch Godot, run projects, and read debug output over MCP.",
-    "longDescription": "Drive the Godot engine over MCP: the server launches its own headless Godot (via GODOT_PATH) to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
+    "longDescription": "Drive the Godot engine over the published @coding-solo/godot-mcp server: launch its own headless Godot (via GODOT_PATH) to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
     "developerName": "Artyx",
     "category": "Developer Tools",
     "capabilities": ["Interactive", "Write"],
@@ -24,13 +25,13 @@
   },
   "artyx": { "companion": {
     "title": "Point Artyx at your Godot",
-    "summary": "Paste the full path to your Godot 4 executable when prompted for GODOT_PATH.",
+    "summary": "Node.js and npx must be on PATH; paste the full path to your Godot 4 executable when prompted for GODOT_PATH.",
     "steps": [
+      "Ensure Node.js and npx are available on your PATH (the server is launched via npx @coding-solo/godot-mcp).",
       "Locate your Godot 4 executable (macOS: /Applications/Godot.app/Contents/MacOS/Godot; Windows: C:\\Godot\\Godot_v4.x.exe; Linux: the extracted Godot_v4.x binary).",
-      "Paste that full path when Artyx prompts for GODOT_PATH during install.",
-      "The server launches this executable headlessly to run and inspect your projects — no in-editor add-on is required."
+      "Paste that full path when Artyx prompts for GODOT_PATH during install."
     ],
     "docsUrl": "https://github.com/Coding-Solo/godot-mcp#readme",
-    "prerequisites": ["Godot 4.x installed"]
+    "prerequisites": ["Godot 4.x installed", "Node.js + npx on PATH"]
   } }
 }

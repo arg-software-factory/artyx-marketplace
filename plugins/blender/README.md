@@ -1,13 +1,26 @@
 # Finish setup inside Blender
 
-Install and enable the Blender MCP add-on, then click Connect.
+Connect Artyx to the **official Blender Lab MCP server** over HTTP. This plugin
+ships client config only — you install and run the server yourself.
 
 ## Steps
 
-1. Download the Blender MCP add-on (`addon.py`) from the official repo.
-2. In Blender: Edit → Preferences → Add-ons → Install…, pick `addon.py`, enable `Interface: Blender MCP`.
-3. Open the N-panel (press N) → BlenderMCP tab → click `Connect`. The add-on listens on `127.0.0.1:9876`.
+1. In Blender, add the Blender Lab extensions repository `https://lab.blender.org/`
+   and install+enable the **MCP** add-on (its preferences panel configures
+   host/port and optional auto-start).
+2. Install the official MCP server:
+   `pip install "git+https://projects.blender.org/lab/blender_mcp.git#subdirectory=mcp"`
+   (requires Python 3.10+).
+3. Run it in HTTP mode: `blender-mcp --transport http --port 8000` (any free
+   port; enter the same port when Artyx asks during install).
 
-Docs: https://github.com/ahujasid/blender-mcp#readme
+## Troubleshooting
 
-Download: https://github.com/ahujasid/blender-mcp
+- **Connection refused** — Is `blender-mcp` running in HTTP mode? Does the port
+  match what you entered in Artyx?
+- **Tools time out** — Is Blender open with the MCP add-on enabled? Check the
+  add-on preferences for auto-start errors.
+- **Wrong Blender instance** — Only one add-on listener should own the configured
+  port.
+
+Docs: https://www.blender.org/lab/mcp-server/

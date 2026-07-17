@@ -2,7 +2,7 @@
 
 ## `bpy` graph creation
 
-Create node groups through `bpy.data.node_groups`, declare interface sockets, create nodes/links, then attach the group to a Geometry Nodes modifier. Use stable names and look up nodes by name or type before modifying; node socket labels can change, so inspect available sockets for version-sensitive automation. Keep generated content in a named collection and return graph/node/link counts through MCP.
+Create node groups through `bpy.data.node_groups`, declare interface sockets, create nodes/links, then attach the group to a Geometry Nodes modifier. Use stable names and look up nodes by name or type before modifying; node socket labels can change, so inspect available sockets for version-sensitive automation — use `get_python_api_docs` when unsure. Keep generated content in a named collection and return graph/node/link counts through `execute_blender_code`.
 
 ## Reuse data
 

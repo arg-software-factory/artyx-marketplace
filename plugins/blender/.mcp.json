@@ -1,12 +1,8 @@
 {
   "mcpServers": {
     "blender": {
-      "command": "${ARTYX_ELECTRON}",
-      "args": ["${ARTYX_PLUGIN_ROOT}/server/blender-mcp-server.mjs"],
-      "env": {
-        "ELECTRON_RUN_AS_NODE": "1",
-        "BLENDER_MCP_PORT": "9876"
-      }
+      "type": "http",
+      "url": "http://127.0.0.1:${BLENDER_MCP_PORT}/mcp"
     }
   }
 }
