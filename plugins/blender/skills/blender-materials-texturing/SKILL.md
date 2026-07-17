@@ -14,3 +14,10 @@ Start from the physical material and target renderer, then establish color space
 5. Bake only after low/high mesh, cage/ray distance, UV padding, and target format are locked.
 
 Load [pbr-nodes.md](references/pbr-nodes.md) for physically based node design and mapping. Load [texture-baking-color.md](references/texture-baking-color.md) for image settings, baking, color management, and troubleshooting.
+
+## MCP verification
+
+Read material slots and node trees through `get_object_detail_summary` or targeted
+`execute_blender_code`. After shader edits, capture
+`get_screenshot_of_area_as_image` under representative lighting — node counts
+alone do not prove lookdev.
