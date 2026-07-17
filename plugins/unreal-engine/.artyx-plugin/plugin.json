@@ -24,11 +24,11 @@
   },
   "artyx": { "companion": {
     "title": "Enable Unreal Engine's native MCP server",
-    "summary": "Turn on the built-in 'Unreal MCP' plugin (UE 5.8+) and start its local server. Defaults are 127.0.0.1 and port 8000 — Artyx will ask for these on install.",
+    "summary": "Turn on the built-in 'Unreal MCP' plugin (UE 5.8+) and start its local server. It listens on 127.0.0.1 and port 8000 by default — Artyx will ask for the port on install.",
     "steps": [
       "In Unreal Engine 5.8+: Edit → Plugins, search 'Unreal MCP' (plugin id ModelContextProtocol), tick Enabled, and restart the editor when prompted.",
       "Start the server: Edit → Editor Preferences → General → Model Context Protocol → enable 'Auto Start Server' (off by default), or run 'ModelContextProtocol.StartServer' in the editor console on demand.",
-      "Keep a project open. The server defaults to 127.0.0.1:8000 (HTTP + SSE, loopback). Enter the host and port when Artyx prompts during install."
+      "Keep a project open. The server defaults to 127.0.0.1:8000 (HTTP + SSE, loopback). Enter the port when Artyx prompts during install (default 8000)."
     ],
     "docsUrl": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
     "prerequisites": ["Unreal Engine 5.8 or newer"]
