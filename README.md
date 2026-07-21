@@ -25,6 +25,16 @@ Every plugin directory contains:
 - `interface.displayName`, `interface.category` — shown in the Artyx plugin UI
 - `interface.longDescription`, `interface.capabilities`, `interface.brandColor`, …
 - `artyx.companion` — install-time setup steps shown in the desktop client
+- `artyx.userVars` — labels, descriptions, and optional defaults for
+  `${VAR}` placeholders in `.mcp.json`; required for non-secret placeholders so
+  the desktop config dialog is pre-filled with useful copy
+- `artyx.userVars.<VAR>` supports `label`, `description`, `default` (strings)
+  and `secret` (boolean); secret-like names containing TOKEN, KEY, SECRET, or
+  PASSWORD can omit `userVars` because the desktop treats them as password
+  inputs automatically
+- `artyx.requires` — advisory runtime prerequisites such as `["npx"]` or
+  `["uvx"]`; the desktop may preflight-check these before starting stdio MCP
+  servers
 - `icon: "./logo.png"` — **upcoming mandatory field**; plugin logos land in a
   follow-up wave
 
