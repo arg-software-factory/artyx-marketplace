@@ -1,6 +1,6 @@
 {
   "name": "unity",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Connect Artyx to Unity for scene hierarchy edits, components, scripts, assets, play-mode checks, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/CoplayDev/unity-mcp",
@@ -23,7 +23,7 @@
     ],
     "experimental": true
   },
-  "artyx": { "companion": {
+  "artyx": { "requires": ["uvx"], "companion": {
     "title": "Finish setup inside Unity",
     "steps": [
       "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",

@@ -6,19 +6,36 @@ const SEMVER_PATTERN = /^\d+\.\d+\.\d+(?:-[\w.-]+)?(?:\+[\w.-]+)?$/u;
 const LITERAL_PORT_IN_URL = /:\d{2,5}(?:\/|$)/u;
 const LOOPBACK_HOST = /(?:localhost|127\.0\.0\.1)/iu;
 const DISALLOWED_PLACEHOLDERS = /\$\{ARTYX_(?:ELECTRON|PLUGIN_ROOT)\}/u;
+const PLACEHOLDER_PATTERN = /\$\{([^}]+)\}/gu;
+const USER_VAR_KEY_PATTERN = /^[A-Z0-9_]+$/u;
+const PORT_DEFAULT_PATTERN = /^\d{2,5}$/u;
+const SECRET_PLACEHOLDER_NAME = /(?:TOKEN|KEY|SECRET|PASSWORD)/iu;
 const SERVER_CODE_ALLOWLIST = new Set();
 const PLATFORM_KEYS = new Set(['darwin', 'win32', 'linux']);
+const RESERVED_PLACEHOLDERS = new Set(['ARTYX_ELECTRON', 'ARTYX_PLUGIN_ROOT', 'LOCALAPPDATA']);
+const MCP_PLACEHOLDER_FIELDS = ['url', 'command', 'args', 'env', 'headers'];
+const RUNTIME_REQUIRE_COMMANDS = new Set(['npx', 'uvx']);
 const jsonOutput = process.argv.includes('--json');
 
 /** @type {string[]} */
 const failures = [];
+/** @type {string[]} */
+const warnings = [];
 
 function fail(message) {
   failures.push(message);
 }
 
+function warn(message) {
+  warnings.push(message);
+}
+
 function isAllowlisted(pluginName) {
   return SERVER_CODE_ALLOWLIST.has(pluginName);
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
 async function pathExists(targetPath) {
@@ -50,6 +67,250 @@ async function findFiles(directory, predicate) {
   }
 
   return matches;
+}
+
+function addPlaceholdersFromValue(placeholders, value) {
+  if (typeof value === 'string') {
+    for (const match of value.matchAll(PLACEHOLDER_PATTERN)) {
+      placeholders.add(match[1]);
+    }
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      addPlaceholdersFromValue(placeholders, item);
+    }
+    return;
+  }
+
+  if (isPlainObject(value)) {
+    for (const item of Object.values(value)) {
+      addPlaceholdersFromValue(placeholders, item);
+    }
+  }
+}
+
+function collectMcpPlaceholders(config) {
+  /** @type {Set<string>} */
+  const placeholders = new Set();
+
+  for (const fieldName of MCP_PLACEHOLDER_FIELDS) {
+    addPlaceholdersFromValue(placeholders, config[fieldName]);
+  }
+
+  if (isPlainObject(config.platform)) {
+    for (const override of Object.values(config.platform)) {
+      if (!isPlainObject(override)) continue;
+      for (const fieldName of MCP_PLACEHOLDER_FIELDS) {
+        addPlaceholdersFromValue(placeholders, override[fieldName]);
+      }
+    }
+  }
+
+  return placeholders;
+}
+
+function collectMcpUrlPlaceholders(config) {
+  /** @type {Set<string>} */
+  const placeholders = new Set();
+  addPlaceholdersFromValue(placeholders, config.url);
+
+  if (isPlainObject(config.platform)) {
+    for (const override of Object.values(config.platform)) {
+      if (isPlainObject(override)) {
+        addPlaceholdersFromValue(placeholders, override.url);
+      }
+    }
+  }
+
+  return placeholders;
+}
+
+function addSet(target, source) {
+  for (const item of source) {
+    target.add(item);
+  }
+}
+
+function normalizeRuntimeCommand(command) {
+  return path.basename(command).replace(/\.(?:cmd|exe)$/iu, '').toLowerCase();
+}
+
+function addRuntimeCommand(commands, command) {
+  if (typeof command !== 'string' || command.length === 0) {
+    return;
+  }
+
+  const normalized = normalizeRuntimeCommand(command);
+  if (RUNTIME_REQUIRE_COMMANDS.has(normalized)) {
+    commands.add(normalized);
+  }
+}
+
+function collectRuntimeCommands(config) {
+  /** @type {Set<string>} */
+  const commands = new Set();
+  const isHttp = config.type === 'http' || typeof config.url === 'string';
+  if (isHttp) {
+    return commands;
+  }
+
+  addRuntimeCommand(commands, config.command);
+  if (isPlainObject(config.platform)) {
+    for (const override of Object.values(config.platform)) {
+      if (isPlainObject(override)) {
+        addRuntimeCommand(commands, override.command);
+      }
+    }
+  }
+
+  return commands;
+}
+
+function validateArtyxFields(pluginName, manifest) {
+  const prefix = `${pluginName}: plugin.json`;
+  const metadata = {
+    userVars: undefined,
+    requires: new Set(),
+  };
+
+  if (manifest.artyx === undefined) {
+    return metadata;
+  }
+
+  if (!isPlainObject(manifest.artyx)) {
+    fail(`${prefix} artyx must be an object when present`);
+    return metadata;
+  }
+
+  const userVars = manifest.artyx.userVars;
+  if (userVars !== undefined) {
+    if (!isPlainObject(userVars)) {
+      fail(`${prefix} artyx.userVars must be an object when present`);
+    } else {
+      metadata.userVars = userVars;
+      validateUserVarsShape(prefix, userVars);
+    }
+  }
+
+  const requires = manifest.artyx.requires;
+  if (requires !== undefined) {
+    if (
+      !Array.isArray(requires) ||
+      requires.length === 0 ||
+      requires.some((requirement) => typeof requirement !== 'string' || requirement.trim() === '')
+    ) {
+      fail(`${prefix} artyx.requires must be a non-empty array of non-empty strings when present`);
+    } else {
+      metadata.requires = new Set(requires.map((requirement) => requirement.trim()));
+    }
+  }
+
+  return metadata;
+}
+
+function validateUserVarsShape(prefix, userVars) {
+  const allowedFields = new Set(['label', 'description', 'default', 'secret']);
+
+  for (const [key, value] of Object.entries(userVars)) {
+    if (!USER_VAR_KEY_PATTERN.test(key)) {
+      fail(`${prefix} artyx.userVars.${key} key must match /^[A-Z0-9_]+$/`);
+    }
+
+    if (!isPlainObject(value)) {
+      fail(`${prefix} artyx.userVars.${key} must be an object`);
+      continue;
+    }
+
+    for (const fieldName of Object.keys(value)) {
+      if (!allowedFields.has(fieldName)) {
+        fail(`${prefix} artyx.userVars.${key}.${fieldName} is not allowed`);
+      }
+    }
+
+    if (value.label !== undefined && typeof value.label !== 'string') {
+      fail(`${prefix} artyx.userVars.${key}.label must be a string when present`);
+    }
+    if (value.description !== undefined && typeof value.description !== 'string') {
+      fail(`${prefix} artyx.userVars.${key}.description must be a string when present`);
+    }
+    if (value.default !== undefined && typeof value.default !== 'string') {
+      fail(`${prefix} artyx.userVars.${key}.default must be a string when present`);
+    }
+    if (value.secret !== undefined && typeof value.secret !== 'boolean') {
+      fail(`${prefix} artyx.userVars.${key}.secret must be a boolean when present`);
+    }
+
+    if (key.endsWith('_PORT') && !PORT_DEFAULT_PATTERN.test(value.default ?? '')) {
+      fail(`${prefix} artyx.userVars.${key}.default must be a numeric string for _PORT variables`);
+    }
+  }
+}
+
+function isSecretPlaceholderName(name) {
+  return SECRET_PLACEHOLDER_NAME.test(name);
+}
+
+function isReservedPlaceholder(name) {
+  return RESERVED_PLACEHOLDERS.has(name);
+}
+
+function validateMcpMetadata(
+  pluginName,
+  manifest,
+  artyxMetadata,
+  placeholders,
+  urlPlaceholders,
+  runtimeCommands,
+) {
+  const prefix = `${pluginName}: plugin.json`;
+  const userVars = artyxMetadata.userVars ?? {};
+  const visiblePlaceholders = [...placeholders].filter((name) => !isReservedPlaceholder(name));
+
+  for (const placeholder of visiblePlaceholders.sort()) {
+    if (isSecretPlaceholderName(placeholder)) {
+      continue;
+    }
+
+    const userVar = userVars[placeholder];
+    if (
+      !isPlainObject(userVar) ||
+      typeof userVar.label !== 'string' ||
+      typeof userVar.description !== 'string'
+    ) {
+      const userVarPath = `artyx.userVars.${placeholder}`;
+      fail(
+        `${pluginName}: .mcp.json placeholder \${${placeholder}} requires ${userVarPath} ` +
+          'with label and description',
+      );
+    }
+  }
+
+  for (const userVarKey of Object.keys(userVars).sort()) {
+    if (!visiblePlaceholders.includes(userVarKey)) {
+      fail(`${prefix} artyx.userVars.${userVarKey} does not match any .mcp.json placeholder`);
+    }
+  }
+
+  for (const command of [...runtimeCommands].sort()) {
+    if (!artyxMetadata.requires.has(command)) {
+      warn(
+        `${pluginName}: .mcp.json stdio command "${command}" should be listed in ` +
+          'plugin.json artyx.requires',
+      );
+    }
+  }
+
+  if (urlPlaceholders.size > 0) {
+    const compatibility = manifest.compatibility;
+    if (!isPlainObject(compatibility) || typeof compatibility.artyx !== 'string') {
+      fail(
+        `${prefix} compatibility.artyx is required when .mcp.json url contains ` +
+          '${VAR} placeholders',
+      );
+    }
+  }
 }
 
 async function validatePluginJson(pluginName, manifest, pluginDir, pluginsRoot) {
@@ -243,9 +504,10 @@ function checkEnvLiterals(prefix, env) {
   }
 }
 
-async function validateMcpJson(pluginName, pluginDir) {
+async function validateMcpJson(pluginName, pluginDir, manifest, artyxMetadata) {
   const mcpPath = path.join(pluginDir, '.mcp.json');
   if (!(await pathExists(mcpPath))) {
+    validateMcpMetadata(pluginName, manifest, artyxMetadata, new Set(), new Set(), new Set());
     return;
   }
 
@@ -265,10 +527,33 @@ async function validateMcpJson(pluginName, pluginDir) {
     return;
   }
 
+  /** @type {Set<string>} */
+  const placeholders = new Set();
+  /** @type {Set<string>} */
+  const urlPlaceholders = new Set();
+  /** @type {Set<string>} */
+  const runtimeCommands = new Set();
+
   for (const [serverName, config] of Object.entries(parsed.mcpServers)) {
     validateMcpServerShape(pluginName, serverName, config);
+    if (!isPlainObject(config)) {
+      continue;
+    }
+
     validateMcpLiterals(pluginName, rawText, config);
+    addSet(placeholders, collectMcpPlaceholders(config));
+    addSet(urlPlaceholders, collectMcpUrlPlaceholders(config));
+    addSet(runtimeCommands, collectRuntimeCommands(config));
   }
+
+  validateMcpMetadata(
+    pluginName,
+    manifest,
+    artyxMetadata,
+    placeholders,
+    urlPlaceholders,
+    runtimeCommands,
+  );
 }
 
 async function validateNoBundledServerCode(pluginName, pluginDir) {
@@ -306,7 +591,8 @@ async function validatePlugin(pluginName, pluginsRoot, marketplaceByName) {
   }
 
   const category = await validatePluginJson(pluginName, manifest, pluginDir, pluginsRoot);
-  await validateMcpJson(pluginName, pluginDir);
+  const artyxMetadata = validateArtyxFields(pluginName, manifest);
+  await validateMcpJson(pluginName, pluginDir, manifest, artyxMetadata);
   await validateNoBundledServerCode(pluginName, pluginDir);
 
   const marketplaceEntry = marketplaceByName.get(pluginName);
@@ -368,10 +654,19 @@ async function validateMarketplace(marketplace, pluginNames) {
 
 function printResults() {
   if (jsonOutput) {
-    console.log(JSON.stringify({ failed: failures.length, failures }, null, 2));
+    console.log(
+      JSON.stringify(
+        { failed: failures.length, failures, warned: warnings.length, warnings },
+        null,
+        2,
+      ),
+    );
     return;
   }
 
+  for (const message of warnings) {
+    console.log(`WARN ${message}`);
+  }
   for (const message of failures) {
     console.log(`FAIL ${message}`);
   }

@@ -1,6 +1,6 @@
 {
   "name": "photoshop",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Connect Artyx to a Photoshop UXP MCP bridge for layer inspection, edits, adjustments, and export workflows.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/modelcontextprotocol/servers",
@@ -23,7 +23,7 @@
     ],
     "experimental": true
   },
-  "artyx": { "companion": {
+  "artyx": { "requires": ["npx"], "companion": {
     "title": "Finish setup inside Photoshop",
     "steps": [
       "Install the Photoshop UXP MCP plugin and enable it in Plugins.",

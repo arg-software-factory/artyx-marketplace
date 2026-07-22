@@ -1,6 +1,6 @@
 {
   "name": "blender",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Connect Artyx to Blender via the official Blender Lab MCP server for scene inspection, bpy automation, materials, animation, rendering, and verification loops.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://www.blender.org/lab/mcp-server/",
@@ -24,15 +24,24 @@
     ],
     "experimental": false
   },
-  "artyx": { "companion": {
-    "title": "Finish setup inside Blender",
-    "summary": "Install the official Blender Lab MCP add-on and blender-mcp server, then run it in HTTP mode.",
-    "steps": [
-      "In Blender, add the Blender Lab extensions repository https://lab.blender.org/ and install+enable the \"MCP\" add-on (its preferences panel configures host/port and optional auto-start).",
-      "Install the official MCP server: pip install \"git+https://projects.blender.org/lab/blender_mcp.git#subdirectory=mcp\" (requires Python 3.10+).",
-      "Run it in HTTP mode: blender-mcp --transport http --port 8000 (any free port; enter the same port when Artyx asks during install)."
-    ],
-    "docsUrl": "https://www.blender.org/lab/mcp-server/",
-    "prerequisites": ["Blender 4.x or newer", "Python 3.10+"]
-  } }
+  "artyx": {
+    "userVars": {
+      "BLENDER_MCP_PORT": {
+        "label": "Blender MCP port",
+        "description": "Port where blender-mcp is listening (step 3 of setup uses 8000).",
+        "default": "8000"
+      }
+    },
+    "companion": {
+      "title": "Finish setup inside Blender",
+      "summary": "Install the official Blender Lab MCP add-on and blender-mcp server, then run it in HTTP mode.",
+      "steps": [
+        "In Blender, add the Blender Lab extensions repository https://lab.blender.org/ and install+enable the \"MCP\" add-on (its preferences panel configures host/port and optional auto-start).",
+        "Install the official MCP server: pip install \"git+https://projects.blender.org/lab/blender_mcp.git#subdirectory=mcp\" (requires Python 3.10+).",
+        "Run it in HTTP mode: blender-mcp --transport http --port 8000 (any free port; enter the same port when Artyx asks during install)."
+      ],
+      "docsUrl": "https://www.blender.org/lab/mcp-server/",
+      "prerequisites": ["Blender 4.x or newer", "Python 3.10+"]
+    }
+  }
 }
