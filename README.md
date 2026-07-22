@@ -81,6 +81,35 @@ desktop):
 3. **Category consistency** — `interface.category` in `plugin.json` is the
    source of truth; `marketplace.json` must match (enforced by CI).
 
+## Agents
+
+Installable agent presets live in `agents/<name>/`, sibling to `plugins/`.
+The marketplace index (`.agents/plugins/marketplace.json`) may include an
+optional top-level `agents` array; older desktop builds ignore that key.
+
+Each agent folder contains:
+
+| Path | Required | Purpose |
+| --- | --- | --- |
+| `agent.md` | yes | YAML frontmatter + markdown system prompt (desktop subagent format) |
+| `logo.png` | optional | Square PNG logo (≤256KB) |
+| `README.md` | optional | Human summary for the marketplace |
+
+### `agent.md` frontmatter
+
+Common fields:
+
+- `name`, `description` — shown in the agent picker
+- `avatarColor` — UI accent token
+- `tools` — comma-separated list or YAML list of tool ids (must exist in the target desktop build)
+- `model`, `imageModel` — provider/model slugs (`provider/model-name`)
+- `minArtyxVersion` — semver gate such as `">=0.7.2"` when the preset needs newer desktop tools
+
+On install, the desktop copies `agent.md` into `~/.artyx/agents/<name>/`.
+Reinstalling the same preset overwrites that copy with the marketplace version.
+Tools and models are not validated here beyond shape checks — the desktop must
+actually ship them; use `minArtyxVersion` to steer users to a compatible build.
+
 ## Validation
 
 ```bash

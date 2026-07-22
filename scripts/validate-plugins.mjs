@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { lstat, readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +15,13 @@ const PLATFORM_KEYS = new Set(['darwin', 'win32', 'linux']);
 const RESERVED_PLACEHOLDERS = new Set(['ARTYX_ELECTRON', 'ARTYX_PLUGIN_ROOT', 'LOCALAPPDATA']);
 const MCP_PLACEHOLDER_FIELDS = ['url', 'command', 'args', 'env', 'headers'];
 const RUNTIME_REQUIRE_COMMANDS = new Set(['npx', 'uvx']);
+const KEBAB_CASE = /^[a-z0-9]+(-[a-z0-9]+)*$/u;
+const AGENT_TOOL_TOKEN = /^[a-z0-9_]+$/u;
+const AGENT_MODEL_PATTERN = /^[a-z0-9.-]+\/[a-z0-9._-]+$/u;
+const MIN_ARTYX_VERSION_PATTERN = /^>=\d+\.\d+\.\d+$/u;
+const AGENT_BODY_WARN_BYTES = 12 * 1024;
+const AGENT_LOGO_MAX_BYTES = 256 * 1024;
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const jsonOutput = process.argv.includes('--json');
 
 /** @type {string[]} */
@@ -652,6 +659,256 @@ async function validateMarketplace(marketplace, pluginNames) {
   return byName;
 }
 
+function parseAgentFrontmatter(rawText) {
+  const match = rawText.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?$/u);
+  if (!match) {
+    return null;
+  }
+
+  return { yaml: match[1], body: match[2] ?? '' };
+}
+
+function parseSimpleYamlFrontmatter(yamlText) {
+  /** @type {Record<string, string | string[]>} */
+  const data = {};
+  const lines = yamlText.split(/\r?\n/u);
+  let index = 0;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (line.trim() === '' || line.trim().startsWith('#')) {
+      index += 1;
+      continue;
+    }
+
+    const listKeyMatch = line.match(/^([A-Za-z0-9_]+):\s*$/u);
+    if (listKeyMatch) {
+      const key = listKeyMatch[1];
+      /** @type {string[]} */
+      const items = [];
+      index += 1;
+      while (index < lines.length && /^\s+-\s+/u.test(lines[index])) {
+        items.push(lines[index].replace(/^\s+-\s+/u, '').trim());
+        index += 1;
+      }
+      data[key] = items;
+      continue;
+    }
+
+    const keyValueMatch = line.match(/^([^:]+):\s*(.*)$/u);
+    if (keyValueMatch) {
+      let value = keyValueMatch[2].trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      data[keyValueMatch[1].trim()] = value;
+    }
+
+    index += 1;
+  }
+
+  return data;
+}
+
+function normalizeAgentTools(tools) {
+  if (typeof tools === 'string') {
+    return tools
+      .split(',')
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0);
+  }
+
+  if (Array.isArray(tools)) {
+    return tools.map((token) => String(token).trim()).filter((token) => token.length > 0);
+  }
+
+  return null;
+}
+
+async function isSymlink(targetPath) {
+  try {
+    const entry = await lstat(targetPath);
+    return entry.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+async function validateAgentLogo(agentName, agentDir) {
+  const logoPath = path.join(agentDir, 'logo.png');
+  if (!(await pathExists(logoPath))) {
+    return;
+  }
+
+  if (await isSymlink(logoPath)) {
+    fail(`${agentName}: logo.png must not be a symlink`);
+    return;
+  }
+
+  let logoBytes;
+  try {
+    logoBytes = await readFile(logoPath);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`${agentName}: logo.png unreadable (${reason})`);
+    return;
+  }
+
+  if (logoBytes.length < PNG_MAGIC.length || !logoBytes.subarray(0, PNG_MAGIC.length).equals(PNG_MAGIC)) {
+    fail(`${agentName}: logo.png is not a valid PNG (bad magic bytes)`);
+  }
+
+  if (logoBytes.length > AGENT_LOGO_MAX_BYTES) {
+    fail(`${agentName}: logo.png exceeds 256KB (${logoBytes.length} bytes)`);
+  }
+}
+
+async function validateAgentMd(agentName, agentDir) {
+  const agentMdPath = path.join(agentDir, 'agent.md');
+  const prefix = `${agentName}: agent.md`;
+
+  if (!(await pathExists(agentMdPath))) {
+    fail(`${agentName}: missing agent.md`);
+    return;
+  }
+
+  if (await isSymlink(agentMdPath)) {
+    fail(`${agentName}: agent.md must not be a symlink`);
+    return;
+  }
+
+  let rawText;
+  try {
+    rawText = await readFile(agentMdPath, 'utf8');
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(`${agentName}: agent.md unreadable (${reason})`);
+    return;
+  }
+
+  const parsed = parseAgentFrontmatter(rawText);
+  if (!parsed) {
+    fail(`${prefix} must start with YAML frontmatter fenced by ---`);
+    return;
+  }
+
+  const frontmatter = parseSimpleYamlFrontmatter(parsed.yaml);
+  if (Object.keys(frontmatter).length === 0) {
+    fail(`${prefix} frontmatter is empty or could not be parsed as YAML`);
+  }
+
+  const displayName = frontmatter.name;
+  if (typeof displayName !== 'string' || displayName.trim() === '') {
+    fail(`${prefix} missing required frontmatter field "name" (non-empty string)`);
+  }
+
+  const description = frontmatter.description;
+  if (typeof description !== 'string' || description.trim() === '') {
+    fail(`${prefix} missing required frontmatter field "description" (non-empty string)`);
+  }
+
+  const tools = normalizeAgentTools(frontmatter.tools);
+  if (!tools || tools.length === 0) {
+    fail(`${prefix} missing required frontmatter field "tools" (comma string or YAML list)`);
+  } else {
+    for (const token of tools) {
+      if (!AGENT_TOOL_TOKEN.test(token)) {
+        fail(`${prefix} tools token "${token}" must match /^[a-z0-9_]+$/`);
+      }
+    }
+  }
+
+  for (const modelField of ['model', 'imageModel']) {
+    const value = frontmatter[modelField];
+    if (value === undefined) {
+      continue;
+    }
+    if (typeof value !== 'string' || !AGENT_MODEL_PATTERN.test(value)) {
+      fail(
+        `${prefix} ${modelField} "${String(value)}" must match /^[a-z0-9.-]+\\/[a-z0-9._-]+$/`,
+      );
+    }
+  }
+
+  const minArtyxVersion = frontmatter.minArtyxVersion;
+  if (minArtyxVersion !== undefined) {
+    if (typeof minArtyxVersion !== 'string' || !MIN_ARTYX_VERSION_PATTERN.test(minArtyxVersion)) {
+      fail(`${prefix} minArtyxVersion must match /^>=\\d+\\.\\d+\\.\\d+$/ when present`);
+    }
+  }
+
+  if (parsed.body.trim().length === 0) {
+    fail(`${prefix} body after frontmatter must be non-empty`);
+  }
+
+  const bodyBytes = Buffer.byteLength(parsed.body, 'utf8');
+  if (bodyBytes > AGENT_BODY_WARN_BYTES) {
+    warn(`${agentName}: agent.md body exceeds 12KB (${bodyBytes} bytes)`);
+  }
+}
+
+async function validateAgent(agentName, agentsRoot) {
+  const agentDir = path.join(agentsRoot, agentName);
+  const prefix = `marketplace.json: agent "${agentName}"`;
+
+  if (!(await pathExists(agentDir))) {
+    fail(`${prefix} points to missing folder ./agents/${agentName}`);
+    return;
+  }
+
+  if (await isSymlink(agentDir)) {
+    fail(`${agentName}: agent directory must not be a symlink`);
+    return;
+  }
+
+  await validateAgentMd(agentName, agentDir);
+  await validateAgentLogo(agentName, agentDir);
+}
+
+async function validateMarketplaceAgents(marketplace, agentsRoot) {
+  const agents = marketplace.agents;
+  if (agents === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(agents)) {
+    fail('marketplace.json: "agents" must be an array when present');
+    return;
+  }
+
+  /** @type {Set<string>} */
+  const seenNames = new Set();
+
+  for (const entry of agents) {
+    if (!entry?.name) {
+      fail('marketplace.json: agent entry missing name');
+      continue;
+    }
+
+    const { name } = entry;
+    if (!KEBAB_CASE.test(name)) {
+      fail(`marketplace.json: agent name "${name}" must be kebab-case`);
+    }
+
+    if (seenNames.has(name)) {
+      fail(`marketplace.json: duplicate agent name "${name}"`);
+    }
+    seenNames.add(name);
+
+    const expectedPath = `./agents/${name}`;
+    if (entry.source?.path !== expectedPath) {
+      fail(
+        `${name}: marketplace path mismatch (got ${entry.source?.path ?? 'none'}, expected ${expectedPath})`,
+      );
+    }
+
+    await validateAgent(name, agentsRoot);
+  }
+}
+
 function printResults() {
   if (jsonOutput) {
     console.log(
@@ -670,13 +927,16 @@ function printResults() {
   for (const message of failures) {
     console.log(`FAIL ${message}`);
   }
-  console.log(`${failures.length === 0 ? 'OK' : `${failures.length} failed`} — plugin validation`);
+  console.log(
+    `${failures.length === 0 ? 'OK' : `${failures.length} failed`} — marketplace validation`,
+  );
 }
 
 async function main() {
   const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
   const repoRoot = path.resolve(scriptDirectory, '..');
   const pluginsRoot = path.join(repoRoot, 'plugins');
+  const agentsRoot = path.join(repoRoot, 'agents');
   const marketplacePath = path.join(repoRoot, '.agents', 'plugins', 'marketplace.json');
 
   let marketplace;
@@ -696,6 +956,8 @@ async function main() {
   for (const pluginName of pluginNames.sort()) {
     await validatePlugin(pluginName, pluginsRoot, marketplaceByName);
   }
+
+  await validateMarketplaceAgents(marketplace, agentsRoot);
 
   printResults();
   process.exitCode = failures.length === 0 ? 0 : 1;
