@@ -56,6 +56,12 @@ const REPO_ROOT = resolve(SELF_DIR, '..')
 const PLUGINS_DIR = join(REPO_ROOT, 'plugins')
 const CATALOG_PATH = join(REPO_ROOT, '.agents', 'plugins', 'marketplace.json')
 
+/**
+ * The desktop build that first shipped the Agent Plugins 1.0.0 loader. A new
+ * plugin cannot install on anything older, so every scaffold declares it.
+ */
+const ARTYX_VERSION_FLOOR = '>=0.7.91'
+
 const PLUGIN_SCHEMA_URL = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json'
 const MCP_SCHEMA_URL = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json'
 
@@ -379,7 +385,7 @@ function buildPluginManifest({ name, display, tagline, category, experimental, r
       capabilities: ['Interactive', 'Write'],
       ...(experimental ? { experimental: true } : {})
     },
-    compatibility: { artyx: '>=0.8.0' }
+    compatibility: { artyx: ARTYX_VERSION_FLOOR }
   }
   if (requires.length > 0) extension.requires = requires
   if (Object.keys(userVars).length > 0) extension.userVars = userVars

@@ -22,7 +22,7 @@
         ],
         "experimental": true
       },
-      "compatibility": { "artyx": ">=0.8.0" },
+      "compatibility": { "artyx": ">=0.7.91" },
       "userVars": {
         "UNREAL_MCP_PORT": {
           "label": "Unreal MCP port",

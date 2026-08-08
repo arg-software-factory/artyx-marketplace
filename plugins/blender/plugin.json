@@ -21,7 +21,7 @@
           "Build a small treasure-room scene in Blender and animate the chest lid opening over 30 frames."
         ]
       },
-      "compatibility": { "artyx": ">=0.8.0" },
+      "compatibility": { "artyx": ">=0.7.91" },
       "userVars": {
         "BLENDER_MCP_PORT": {
           "label": "Blender MCP port",
