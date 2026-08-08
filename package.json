@@ -1,0 +1,24 @@
+{
+  "name": "artyx-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Curated Agent Plugins 1.0.0 packages for Artyx Desktop.",
+  "license": "MIT",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "validate": "node scripts/validate.mjs",
+    "validate:spec": "node scripts/validate.mjs --spec-report",
+    "new-plugin": "node scripts/new-plugin.mjs",
+    "schemas:verify": "node scripts/verify-schemas.mjs",
+    "links": "node scripts/check-doc-links.mjs",
+    "test": "node --test scripts/__tests__/*.test.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "yaml": "^2.7.0"
+  }
+}

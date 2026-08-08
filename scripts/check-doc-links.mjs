@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,19 +10,35 @@ const USER_AGENT =
   'Mozilla/5.0 (compatible; artyx-marketplace-doc-link-checker/1.0; +https://github.com)';
 const jsonOutput = process.argv.includes('--json');
 
-async function findMarkdownFiles(directory) {
+async function findMarkdownFilesInDirectory(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = await Promise.all(
     entries.map((entry) => {
       const entryPath = path.join(directory, entry.name);
       if (entry.isDirectory()) {
-        return findMarkdownFiles(entryPath);
+        return findMarkdownFilesInDirectory(entryPath);
       }
       return entry.isFile() && entry.name.endsWith('.md') ? [entryPath] : [];
     }),
   );
 
   return files.flat();
+}
+
+/**
+ * A root is either a single markdown file (README.md, CONTRIBUTING.md) or a
+ * directory walked recursively (plugins/, docs/). A missing root is not an
+ * error — not every checkout has a docs/ directory yet.
+ */
+async function findMarkdownFiles(rootPath) {
+  let stats;
+  try {
+    stats = await stat(rootPath);
+  } catch {
+    return [];
+  }
+  if (stats.isDirectory()) return findMarkdownFilesInDirectory(rootPath);
+  return stats.isFile() && rootPath.endsWith('.md') ? [rootPath] : [];
 }
 
 function normalizeUrl(value) {
@@ -32,6 +48,15 @@ function normalizeUrl(value) {
 }
 
 function isSkippedUrl(value) {
+  // A "${VAR}" placeholder means this is example text showing the overlay
+  // pattern (see CONTRIBUTING.md), not a link — nothing this checker fetches
+  // resolves a template.
+  if (value.includes('${')) return true;
+  // A git clone endpoint is not a web page. Forges routinely answer a browser
+  // GET on one with 403 or 404 while `git clone` against it works fine, so
+  // fetching it here reports a broken link that is not broken. These appear
+  // inside install commands, never as documentation hyperlinks.
+  if (value.startsWith('git+') || value.endsWith('.git')) return true;
   try {
     const { hostname } = new URL(value);
     return hostname === 'localhost' || hostname === '127.0.0.1';
@@ -40,8 +65,8 @@ function isSkippedUrl(value) {
   }
 }
 
-async function collectUrls(pluginDirectory) {
-  const markdownFiles = await findMarkdownFiles(pluginDirectory);
+async function collectUrls(roots) {
+  const markdownFiles = (await Promise.all(roots.map(findMarkdownFiles))).flat();
   const urlSets = await Promise.all(
     markdownFiles.map(async (file) => {
       const contents = await readFile(file, 'utf8');
@@ -134,8 +159,14 @@ function printResults(checked, failures, redirects = []) {
 
 async function main() {
   const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const pluginDirectory = path.resolve(scriptDirectory, '..', 'plugins');
-  const urls = await collectUrls(pluginDirectory);
+  const repoRoot = path.resolve(scriptDirectory, '..');
+  const roots = [
+    path.join(repoRoot, 'plugins'),
+    path.join(repoRoot, 'README.md'),
+    path.join(repoRoot, 'CONTRIBUTING.md'),
+    path.join(repoRoot, 'docs'),
+  ];
+  const urls = await collectUrls(roots);
   const results = await checkUrls(urls);
   const failures = results.filter((result) => !result.ok);
   const redirects = results.filter((result) => result.ok && result.redirectedTo);

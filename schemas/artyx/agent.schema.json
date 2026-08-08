@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://artyx.ai/schemas/agent-preset/1.json",
+  "title": "Artyx agent preset frontmatter",
+  "description": "YAML frontmatter of agents/<name>/agent.md. An agent preset is an Artyx subagent, not an Agent Plugin: the 1.0.0 specification defines exactly two component types, skills and MCP servers, and deliberately leaves agents out. Presets therefore live beside plugins/ rather than inside a plugin, and this schema is entirely our own.",
+  "type": "object",
+  "required": ["name", "description", "tools"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "Display name in the agent picker. Free-form prose, unlike a skill name: this is a label, not an identifier. The directory name is the identifier."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "What the agent does and when to reach for it."
+    },
+    "tools": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+(?:\\s*,\\s*[a-z0-9_]+)*$",
+          "description": "Comma-separated tool ids."
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          }
+        }
+      ],
+      "description": "Tool ids the preset may call. Only their shape is checked here: the catalog lives in the desktop build, so a name that does not exist there is rejected at install time. Use minArtyxVersion to steer users to a build that has them."
+    },
+    "avatarColor": {
+      "enum": ["accent", "success", "warning", "danger", "neutral"],
+      "description": "Accent token for the avatar. Absent means accent. These are the desktop's five semantic tokens, not free colors."
+    },
+    "model": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+/[a-z0-9._-]+$",
+      "description": "Text model as provider/model, e.g. anthropic/claude-sonnet-5."
+    },
+    "imageModel": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+/[a-z0-9._-]+$",
+      "description": "Image model as provider/model."
+    },
+    "minArtyxVersion": {
+      "type": "string",
+      "pattern": "^>=\\d+\\.\\d+\\.\\d+$",
+      "description": "Minimum desktop version, required when the preset calls a tool older builds do not ship."
+    }
+  }
+}

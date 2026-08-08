@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://artyx.ai/schemas/marketplace/1.json",
+  "title": "Artyx marketplace index",
+  "description": "The catalog at .agents/plugins/marketplace.json. Agent Plugins deliberately says nothing about registries, distribution, or installation, so this file is entirely Artyx's own. It lists what the desktop may offer; each entry's presentation comes from the plugin's own manifest.",
+  "type": "object",
+  "required": ["$schema", "name", "interface", "plugins"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "const": "https://artyx.ai/schemas/marketplace/1.json"
+    },
+    "name": {
+      "const": "artyx-official"
+    },
+    "interface": {
+      "type": "object",
+      "required": ["displayName"],
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "policy"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^(?!.*(?:--|\\.\\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$",
+            "description": "Must equal the directory name under plugins/ and the `name` in that plugin's manifest."
+          },
+          "source": {
+            "$ref": "#/$defs/localSource"
+          },
+          "policy": {
+            "type": "object",
+            "required": ["installation", "authentication"],
+            "additionalProperties": false,
+            "properties": {
+              "installation": {
+                "enum": ["AVAILABLE", "NOT_AVAILABLE"],
+                "description": "NOT_AVAILABLE keeps the entry visible but refuses to install it."
+              },
+              "authentication": {
+                "enum": ["ON_INSTALL", "ON_USE"],
+                "description": "When the desktop asks for the plugin's userVars."
+              }
+            }
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "source", "category"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Must equal the directory name under agents/ ."
+          },
+          "source": {
+            "$ref": "#/$defs/localSource"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Agent presets carry their category here because agent.md has no place for it. Plugins do not: theirs lives in the manifest, which is the one source of truth."
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "localSource": {
+      "type": "object",
+      "required": ["source", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "const": "local"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^\\./(plugins|agents)/[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+          "description": "Repository-relative path. Everything ships inside this repository, so `local` is the only source kind."
+        }
+      }
+    }
+  }
+}

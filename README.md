@@ -1,119 +1,44 @@
 # Artyx Marketplace
 
-Curated plugins for [Artyx](https://artyx.ai).
+Artyx Marketplace is the curated catalog of plugins that [Artyx
+Desktop](https://artyx.ai) offers to install. The desktop checks the commit at
+the head of `main`, downloads that snapshot, and reads the catalog at
+`.agents/plugins/marketplace.json`. A merge to `main` is a publish — there is
+no separate release step.
 
-The marketplace index is `.agents/plugins/marketplace.json`. Each plugin lives
-in `plugins/<name>/` and is self-contained client configuration — **no plugin
-ships MCP server code**.
+Each plugin lives in its own directory under `plugins/`. A plugin is
+configuration and documentation, never code: it points Artyx at an MCP
+server and, optionally, ships skills that teach the agent how to use it.
 
-## Plugin format
+## Plugins
 
-Every plugin directory contains:
-
-| Path | Required | Purpose |
+| Plugin | Category | Tagline |
 | --- | --- | --- |
-| `.artyx-plugin/plugin.json` | yes | Manifest (name, version, description, skills path, interface metadata) |
-| `skills/` | if declared | Expert skill bundles for the agent |
-| `.mcp.json` | optional | **Client-only** MCP connection config (how Artyx reaches an external server) |
-| `README.md` | recommended | Human setup notes (companion steps are also in `plugin.json`) |
+| [Blender](plugins/blender) | Creativity | Build and animate 3D scenes in a live Blender session. |
+| [Unity](plugins/unity) | Developer Tools | Drive the Unity Editor: scenes, GameObjects, scripts, play-mode. |
+| [Unreal Engine](plugins/unreal-engine) | Developer Tools | Automate the Unreal Editor: actors, Blueprints, levels. |
+| [Godot](plugins/godot) | Developer Tools | Launch Godot, run projects, and read debug output over MCP. |
 
-### `plugin.json` fields
+## The format
 
-- `name`, `version` (semver), `description`, `license`
-- `skills` — path to the skills directory (must exist)
-- `mcpServers` — path to `.mcp.json` when the plugin connects to MCP
-- `interface.displayName`, `interface.category` — shown in the Artyx plugin UI
-- `interface.longDescription`, `interface.capabilities`, `interface.brandColor`, …
-- `artyx.companion` — install-time setup steps shown in the desktop client
-- `artyx.userVars` — labels, descriptions, and optional defaults for
-  `${VAR}` placeholders in `.mcp.json`; required for non-secret placeholders so
-  the desktop config dialog is pre-filled with useful copy
-- `artyx.userVars.<VAR>` supports `label`, `description`, `default` (strings)
-  and `secret` (boolean); secret-like names containing TOKEN, KEY, SECRET, or
-  PASSWORD can omit `userVars` because the desktop treats them as password
-  inputs automatically
-- `artyx.requires` — advisory runtime prerequisites such as `["npx"]` or
-  `["uvx"]`; the desktop may preflight-check these before starting stdio MCP
-  servers
-- `icon: "./logo.png"` — **upcoming mandatory field**; plugin logos land in a
-  follow-up wave
+Every plugin here is an [Agent Plugins
+1.0.0](https://agent-plugins.org/) package: a `plugin.json` manifest, an
+optional `mcp.json`, and optional `skills/`. That format is not Artyx-specific
+— any client that implements the specification can install these plugins,
+because a plugin's portable files carry no Artyx-only data. Artyx's own
+storefront data (display name, tagline, install-time prompts) lives in one
+namespaced extension block, `extensions["ai.artyx.desktop"]`, which the
+specification says every other client must ignore.
 
-### `.mcp.json` — client config only
-
-Plugins **connect** to external MCP servers. Supported transports (current
-desktop):
-
-**stdio** — spawn a third-party binary:
-
-```json
-{
-  "mcpServers": {
-    "example": {
-      "command": "npx",
-      "args": ["-y", "some-mcp-package"],
-      "env": { "API_KEY": "${API_KEY}" }
-    }
-  }
-}
-```
-
-**http** — reach a local or remote HTTP MCP endpoint:
-
-```json
-{
-  "mcpServers": {
-    "example": {
-      "type": "http",
-      "url": "http://${HOST}:${PORT}/mcp",
-      "headers": { "Authorization": "Bearer ${TOKEN}" }
-    }
-  }
-}
-```
-
-### Hard rules
-
-1. **No server code in plugins** — no `server/` directory, no bundled `.mjs`
-   launchers. Point `.mcp.json` at official or third-party packages instead.
-2. **Parameterized host/port** — use `${VAR}` placeholders for hosts, ports,
-   tokens, and paths. Artyx substitutes them during install and prompts the user
-   when needed. Never hard-code loopback ports in `.mcp.json`.
-3. **Category consistency** — `interface.category` in `plugin.json` is the
-   source of truth; `marketplace.json` must match (enforced by CI).
-
-## Agents
-
-Installable agent presets live in `agents/<name>/`, sibling to `plugins/`.
-The marketplace index (`.agents/plugins/marketplace.json`) may include an
-optional top-level `agents` array; older desktop builds ignore that key.
-
-Each agent folder contains:
-
-| Path | Required | Purpose |
-| --- | --- | --- |
-| `agent.md` | yes | YAML frontmatter + markdown system prompt (desktop subagent format) |
-| `logo.png` | optional | Square PNG logo (≤256KB) |
-| `README.md` | optional | Human summary for the marketplace |
-
-### `agent.md` frontmatter
-
-Common fields:
-
-- `name`, `description` — shown in the agent picker
-- `avatarColor` — UI accent token
-- `tools` — comma-separated list or YAML list of tool ids (must exist in the target desktop build)
-- `model`, `imageModel` — provider/model slugs (`provider/model-name`)
-- `minArtyxVersion` — semver gate such as `">=0.7.2"` when the preset needs newer desktop tools
-
-On install, the desktop copies `agent.md` into `~/.artyx/agents/<name>/`.
-Reinstalling the same preset overwrites that copy with the marketplace version.
-Tools and models are not validated here beyond shape checks — the desktop must
-actually ship them; use `minArtyxVersion` to steer users to a compatible build.
-
-## Validation
+## Quickstart
 
 ```bash
-node scripts/validate-plugins.mjs
+npm ci
+npm run validate  # Agent Plugins 1.0.0 + Artyx publishing policy
+npm test          # the validator's own test suite
 ```
 
-Runs on every PR and push to `main` via `.github/workflows/validate-plugins.yml`.
+`npm run validate` is what CI runs on every pull request. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for how to add or change a plugin, and
+[docs/spec-conformance.md](docs/spec-conformance.md) for where and why this
+repository is stricter than the specification.

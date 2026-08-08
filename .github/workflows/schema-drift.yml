@@ -1,0 +1,69 @@
+name: Schema drift
+
+# Checks the vendored Agent Plugins schemas (schemas/1.0.0/) against the
+# canonical upstream copies. This never runs on a pull request and never
+# blocks one: an upstream edit has nothing to do with the change a
+# contributor is proposing, and the specification itself says a client must
+# validate from a local copy, never a live fetch. Drift is a signal for
+# maintainers, not a merge gate.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  schema-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - name: Compare vendored schemas to upstream
+        id: verify
+        run: npm run schemas:verify
+        continue-on-error: true
+      - name: Open an issue on drift
+        if: steps.verify.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Vendored Agent Plugins schema drift detected'
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'schema-drift'
+            })
+            if (existing.length > 0) {
+              core.info(`An open drift issue already exists: ${existing[0].html_url}`)
+              return
+            }
+            const runUrl =
+              `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              labels: ['schema-drift'],
+              body: [
+                'The weekly `schema-drift` workflow found that the vendored copy of the',
+                'Agent Plugins 1.0.0 schemas (`schemas/1.0.0/`) no longer matches the',
+                'canonical upstream files.',
+                '',
+                'Run `npm run schemas:verify` locally, review what changed, and update',
+                '`schemas/1.0.0/` and `schemas/1.0.0/UPSTREAM.md` together — see',
+                '`schemas/1.0.0/UPSTREAM.md` for the upgrade steps.',
+                '',
+                `Failed run: ${runUrl}`
+              ].join('\n')
+            })
+      - name: Mark this run failed so drift is visible in the Actions tab
+        if: steps.verify.outcome == 'failure'
+        run: exit 1
