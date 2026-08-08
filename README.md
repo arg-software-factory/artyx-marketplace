@@ -1,9 +1,10 @@
 # Artyx Marketplace
 
 Artyx Marketplace is the curated catalog of plugins that [Artyx
-Desktop](https://artyx.ai) offers to install. The desktop reads the catalog at
-`.agents/plugins/marketplace.json` over plain git. A merge to `main` is a
-publish — there is no separate release step.
+Desktop](https://artyx.ai) offers to install. The desktop checks the commit at
+the head of `main`, downloads that snapshot, and reads the catalog at
+`.agents/plugins/marketplace.json`. A merge to `main` is a publish — there is
+no separate release step.
 
 Each plugin lives in its own directory under `plugins/`. A plugin is
 configuration and documentation, never code: it points Artyx at an MCP
