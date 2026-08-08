@@ -55,10 +55,18 @@ plugins/<name>/
 
 ## `plugin.json` fields
 
-The schema is closed — `additionalProperties: false` — so a field not in
-this table is not just unused, it makes a conformant client report and then
-ignore the whole file. `$schema` and `name` are the only fields the
-specification itself requires.
+The schema is closed — `additionalProperties: false` — so a field not in this
+table has no meaning. A conformant client reports it and ignores **that
+field**, then keeps loading the plugin; the data is simply invisible, which is
+worse than an error because nothing tells the user. Artyx's publishing policy
+is stricter and fails the build, so this repository never ships a package with
+one. `$schema` and `name` are the only fields the specification itself
+requires.
+
+Two other rules are worth knowing here, because they are easy to get
+backwards. An unknown key **inside `author`** is fatal, unlike an unknown key
+at the top level. And a non-object `extensions` is ignored, but a non-object
+*value inside* `extensions` is fatal — only the outer field is forgiven.
 
 | Field | Required | Notes |
 | --- | --- | --- |
