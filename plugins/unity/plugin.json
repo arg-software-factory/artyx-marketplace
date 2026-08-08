@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "unity",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Operate a live Unity Editor over MCP: build scene hierarchies, add components, author C# scripts, manage assets, and smoke-test in Play Mode. The bundled skills' guardrails stop a build from wiping its own scene.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/CoplayDev/unity-mcp",
@@ -15,6 +15,7 @@
         "displayName": "Unity",
         "tagline": "Drive the Unity Editor: scenes, GameObjects, scripts, play-mode.",
         "category": "Developer Tools",
+        "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
         "capabilities": ["Interactive", "Write"],
         "brandColor": "#222C37",
         "prompts": [
@@ -23,18 +24,7 @@
         "experimental": true
       },
       "compatibility": { "artyx": ">=0.7.91" },
-      "requires": ["uvx"],
-      "companion": {
-        "title": "Finish setup inside Unity",
-        "steps": [
-          "Unity → Window → Package Manager → Add package from git URL: https://github.com/CoplayDev/unity-mcp.git",
-          "Open the Unity MCP window and start the bridge.",
-          "Approve the auto-install of the Python server if prompted."
-        ],
-        "docsUrl": "https://github.com/CoplayDev/unity-mcp#readme",
-        "downloadUrl": "https://github.com/CoplayDev/unity-mcp",
-        "prerequisites": ["Install uv / uvx — https://astral.sh/uv"]
-      }
+      "requires": ["uvx"]
     }
   }
 }

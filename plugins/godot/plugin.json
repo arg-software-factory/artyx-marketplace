@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "godot",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Drive the Godot engine over the published @coding-solo/godot-mcp server: launch its own headless Godot to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/Coding-Solo/godot-mcp",
@@ -15,6 +15,7 @@
         "displayName": "Godot",
         "tagline": "Launch Godot, run projects, and read debug output over MCP.",
         "category": "Developer Tools",
+        "docsUrl": "https://github.com/Coding-Solo/godot-mcp#readme",
         "capabilities": ["Interactive", "Write"],
         "brandColor": "#478CBF",
         "prompts": [
@@ -29,17 +30,6 @@
           "label": "Godot executable path",
           "description": "Full path to your Godot 4 binary. On macOS that is /Applications/Godot.app/Contents/MacOS/Godot; on Windows, something like C:\\Program Files\\Godot\\Godot.exe."
         }
-      },
-      "companion": {
-        "title": "Point Artyx at your Godot",
-        "summary": "Node.js and npx must be on PATH; paste the full path to your Godot 4 executable when prompted for GODOT_PATH.",
-        "steps": [
-          "Ensure Node.js and npx are available on your PATH (the server is launched via npx @coding-solo/godot-mcp).",
-          "Locate your Godot 4 executable (macOS: /Applications/Godot.app/Contents/MacOS/Godot; Windows: C:\\Godot\\Godot_v4.x.exe; Linux: the extracted Godot_v4.x binary).",
-          "Paste that full path when Artyx prompts for GODOT_PATH during install."
-        ],
-        "docsUrl": "https://github.com/Coding-Solo/godot-mcp#readme",
-        "prerequisites": ["Godot 4.x installed", "Node.js + npx on PATH"]
       },
       "mcp": {
         "godot": { "env": { "GODOT_PATH": "${GODOT_PATH}" } }

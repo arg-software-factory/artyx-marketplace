@@ -45,7 +45,8 @@ function basePlugin(name) {
         interface: {
           displayName: 'Demo',
           tagline: 'A demo package.',
-          category: 'Developer Tools'
+          category: 'Developer Tools',
+          docsUrl: 'https://example.com/demo-mcp'
         }
       }
     }
@@ -407,6 +408,35 @@ test('a SKILL.md nested deeper than one level is not discovered', async () => {
     f.extraFiles['skills/group/nested/SKILL.md'] = baseSkill.replace('name: demo', 'name: nested')
   })
   assert.ok(codes(result).includes('skill.file.missing'), 'discovery is exactly one level deep')
+})
+
+// ---------------------------------------------------------------------------
+// The Artyx storefront face.
+// ---------------------------------------------------------------------------
+
+test('a plugin without an install docs URL is fatal', async () => {
+  const result = await validate((f) => {
+    delete f.plugin.extensions['ai.artyx.desktop'].interface.docsUrl
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+  assert.equal(result.ok, false)
+})
+
+test('an install docs URL that is not https is fatal', async () => {
+  const result = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].interface.docsUrl = 'http://example.com/docs'
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+})
+
+test('setup prose in the manifest is rejected, docsUrl is the only channel', async () => {
+  const result = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].companion = {
+      title: 'Finish setup',
+      steps: ['Install the thing.']
+    }
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
 })
 
 // ---------------------------------------------------------------------------

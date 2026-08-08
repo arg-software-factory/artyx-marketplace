@@ -4,7 +4,9 @@ import { fileURLToPath } from 'node:url';
 
 const CONCURRENCY = 12;
 const REQUEST_TIMEOUT_MS = 20_000;
-const TRAILING_PUNCTUATION = /[.,;:!?)}\]}>]+$/u;
+// Includes `*` and `_`: a link wrapped in markdown emphasis ends `...)**`, and
+// stopping at the paren would leave the asterisks glued to the URL.
+const TRAILING_PUNCTUATION = /[.,;:!?)}\]}>*_]+$/u;
 const URL_PATTERN = /https?:\/\/[^\s<>"'`]+/gu;
 const USER_AGENT =
   'Mozilla/5.0 (compatible; artyx-marketplace-doc-link-checker/1.0; +https://github.com)';
@@ -59,10 +61,41 @@ function isSkippedUrl(value) {
   if (value.startsWith('git+') || value.endsWith('.git')) return true;
   try {
     const { hostname } = new URL(value);
-    return hostname === 'localhost' || hostname === '127.0.0.1';
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    // RFC 2606 reserved names. These appear in CONTRIBUTING's worked examples
+    // as stand-ins for a real vendor URL; only the root of example.com answers
+    // 200, so fetching one reports a broken link that was never a link.
+    return /(^|\.)(example\.(com|org|net))$/u.test(hostname);
   } catch {
     return false;
   }
+}
+
+/**
+ * `interface.docsUrl` is the only install instruction the desktop shows, so a
+ * rotted one is worse than a rotted link in prose: the user is left with a
+ * button that goes nowhere and no steps anywhere else to fall back on. It
+ * lives in JSON, which the markdown walk above never sees.
+ */
+async function collectManifestDocsUrls(pluginsDir) {
+  const entries = await readdir(pluginsDir, { withFileTypes: true }).catch(() => []);
+  const urls = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const manifestPath = path.join(pluginsDir, entry.name, 'plugin.json');
+        try {
+          const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+          const docsUrl =
+            manifest?.extensions?.['ai.artyx.desktop']?.interface?.docsUrl;
+          return typeof docsUrl === 'string' ? [normalizeUrl(docsUrl)] : [];
+        } catch {
+          return [];
+        }
+      }),
+  );
+
+  return urls.flat().filter((url) => !isSkippedUrl(url));
 }
 
 async function collectUrls(roots) {
@@ -166,7 +199,11 @@ async function main() {
     path.join(repoRoot, 'CONTRIBUTING.md'),
     path.join(repoRoot, 'docs'),
   ];
-  const urls = await collectUrls(roots);
+  const [markdownUrls, manifestUrls] = await Promise.all([
+    collectUrls(roots),
+    collectManifestDocsUrls(path.join(repoRoot, 'plugins')),
+  ]);
+  const urls = [...new Set([...markdownUrls, ...manifestUrls])];
   const results = await checkUrls(urls);
   const failures = results.filter((result) => !result.ok);
   const redirects = results.filter((result) => result.ok && result.redirectedTo);

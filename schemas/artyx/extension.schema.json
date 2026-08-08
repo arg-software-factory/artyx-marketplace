@@ -30,9 +30,6 @@
     "userVars": {
       "$ref": "#/$defs/userVars"
     },
-    "companion": {
-      "$ref": "#/$defs/companion"
-    },
     "mcp": {
       "$ref": "#/$defs/mcpOverlay"
     }
@@ -41,7 +38,7 @@
     "interface": {
       "title": "Storefront presentation",
       "type": "object",
-      "required": ["displayName", "tagline", "category"],
+      "required": ["displayName", "tagline", "category", "docsUrl"],
       "additionalProperties": false,
       "properties": {
         "displayName": {
@@ -59,6 +56,11 @@
         "category": {
           "enum": ["Creativity", "Developer Tools"],
           "description": "Closed on purpose. A curated marketplace gains nothing from free-form categories, and an open string is how the catalog and the manifest drifted apart before."
+        },
+        "docsUrl": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Where the user learns to install and run whatever this plugin connects to. Required, and it must point UPSTREAM — at the vendor's or server author's own page, not at anything Artyx writes. The desktop renders it as one \"How to install\" button and opens it in the system browser; it ships no setup prose of its own. That is the whole point: the party that owns the software owns the instructions, so the day they change, the next marketplace poll picks it up and nothing in Artyx has to be edited or released."
         },
         "capabilities": {
           "type": "array",
@@ -147,51 +149,6 @@
             "type": "boolean",
             "description": "Renders a password input and keeps the value out of every log and error. Absent means false. Declare it explicitly; the desktop no longer guesses from the variable's name."
           }
-        }
-      }
-    },
-    "companion": {
-      "title": "Setup the user performs outside Artyx",
-      "type": "object",
-      "required": ["title", "steps"],
-      "additionalProperties": false,
-      "properties": {
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 60
-        },
-        "summary": {
-          "type": "string",
-          "minLength": 1
-        },
-        "steps": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": "Ordered actions in the other application. One action per step."
-        },
-        "docsUrl": {
-          "type": "string",
-          "pattern": "^https://",
-          "description": "Upstream documentation for the MCP server this plugin connects to."
-        },
-        "downloadUrl": {
-          "type": "string",
-          "pattern": "^https://"
-        },
-        "prerequisites": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": "What must already be installed, such as \"Blender 4.x or newer\"."
         }
       }
     },

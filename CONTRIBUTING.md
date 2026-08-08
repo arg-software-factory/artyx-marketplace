@@ -125,7 +125,6 @@ ignores it.
 | `compatibility` | no | `{ artyx, platforms }`. `artyx` is a `">=X.Y.Z"` floor — the desktop compares one floor and nothing else, so only that form is accepted. `platforms` is a subset of `["darwin", "win32", "linux"]`; absent means all three. |
 | `requires` | no | Advisory runtime executables, e.g. `["npx"]` or `["uvx"]`. The desktop preflights these before it spawns a stdio server, so a missing runtime fails with a clear message instead of `ENOENT`. |
 | `userVars` | no | Declares every `${VAR}` the `mcp` overlay uses. See below. |
-| `companion` | no | Setup the user performs outside Artyx. See below. |
 | `mcp` | no | The per-server overlay patch described above. |
 
 `interface`:
@@ -135,6 +134,7 @@ ignores it.
 | `displayName` | yes | 1-40 characters. The vendor's own product name, written the way the vendor writes it — not a mechanical prettifying of `name`. `"unreal-engine"` becomes `"Unreal Engine"` because that is genuinely how Epic writes it. |
 | `tagline` | yes | 1-100 characters. One line for the storefront card. The long prose is the portable `description`; do not repeat it here. |
 | `category` | yes | `"Creativity"` or `"Developer Tools"`, nothing else. Closed on purpose — a free-form string is how the catalog and the manifest drifted apart before. |
+| `docsUrl` | yes | `https://` link to the **upstream** install instructions. See "Install instructions live upstream" below. |
 | `capabilities` | no | Subset of `["Interactive", "Read", "Write"]`, shown as badges. |
 | `brandColor` | no | `#rrggbb`, the vendor's own brand hex, shown behind the logo — the one place the Artyx palette does not apply. |
 | `prompts` | no | Array of suggested opening messages, offered right after install. |
@@ -152,16 +152,39 @@ lists must match exactly, in both directions.
 | `default` | policy | Pre-fills the field. Required, and must be 2-5 digits, when `NAME` ends in `_PORT`. |
 | `secret` | no | Renders a password input and keeps the value out of every log and error. Absent means false — declare it explicitly; the desktop no longer guesses from the name. |
 
-`companion`:
+## Install instructions live upstream
 
-| Field | Required | Notes |
-| --- | --- | --- |
-| `title` | yes | 1-60 characters. |
-| `summary` | no | One paragraph of context. |
-| `steps` | yes | Ordered array. One action per step, performed in the other application. |
-| `docsUrl` | no | Must start with `https://`. |
-| `downloadUrl` | no | Must start with `https://`. |
-| `prerequisites` | no | Array of strings, e.g. `["Blender 4.x or newer"]`. |
+`interface.docsUrl` is required, and it is the **only** place a user is sent
+to learn how to install and run whatever the plugin connects to. The desktop
+renders it as one "How to install" button and opens it in the system
+browser. It ships no steps, no prerequisites list, and no summary of its
+own — for any plugin, including the ones authored here.
+
+This replaced a `companion` block that carried a title, a summary, an
+ordered list of steps and a prerequisites array in the manifest. Two things
+were wrong with it. It coupled Artyx to a third party's install procedure:
+Blender changes a pip command, and the fix is a manifest edit, a marketplace
+merge, and a wait for every desktop to re-poll — meanwhile the app is
+confidently printing wrong instructions in its own voice. And it does not
+scale to a community catalog, where nobody here can keep N vendors' steps
+accurate. A URL has neither problem: the party that owns the software owns
+the page, and the next poll picks up whatever they changed.
+
+So:
+
+- Point `docsUrl` at the **vendor's or server author's** page, not at
+  anything in this repository and not at an Artyx page.
+- Pick the page a user landing cold can actually follow — a README anchor
+  (`#readme`, `#installation`) beats a repository root.
+- Do not restate the steps in `description`, in `tagline`, or in a
+  `userVars` description. A `userVars` description says where a value comes
+  from ("the port blender-mcp was started on"), never what to type to get
+  there.
+- `plugins/<name>/README.md` is for reviewers and contributors of *this*
+  package. It is not shipped to users, so it is not a place to smuggle setup
+  prose back in.
+- `node scripts/check-doc-links.mjs` fetches every `docsUrl` along with the
+  markdown links, so a page that rots or silently relocates is reported.
 
 ## Authoring a skill
 
@@ -265,6 +288,7 @@ node scripts/new-plugin.mjs \
   --name my-tool --display "My Tool" \
   --tagline "One line for the storefront card." \
   --category "Developer Tools" \
+  --docs "https://my-tool.example.com/docs/mcp#installation" \
   --transport stdio --command npx --arg -y --arg my-tool-mcp \
   --user-var MY_TOOL_PATH \
   --skill my-tool-mcp
@@ -272,7 +296,7 @@ node scripts/new-plugin.mjs \
 # The scaffolder prints a checklist, then runs the validator for you. Work
 # through what it cannot generate: plugins/my-tool/logo.png, the skill body
 # in skills/my-tool-mcp/SKILL.md, plugin.json's top-level "description",
-# extensions["ai.artyx.desktop"].companion, and README.md.
+# and README.md.
 
 npm run validate                    # Agent Plugins 1.0.0 + Artyx policy
 npm test                            # the validator's own test suite

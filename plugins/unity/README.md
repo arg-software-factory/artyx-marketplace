@@ -1,15 +1,22 @@
-# Finish setup inside Unity
+# Unity
 
-## Prerequisites
+Connects Artyx to the **CoplayDev Unity MCP** bridge running inside a live
+Unity Editor. Artyx launches the Python server through `uvx`; the editor-side
+package is installed from Unity's own Package Manager.
 
-- Install uv / uvx — https://astral.sh/uv
+**Install instructions: [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp#readme)**
 
-## Steps
+That URL is `interface.docsUrl` in `plugin.json`, and it is what the desktop's
+"How to install" button opens. The steps are not mirrored here or in the
+manifest — the bridge's authors own them.
 
-1. Unity → Window → Package Manager → Add package from git URL: `https://github.com/CoplayDev/unity-mcp.git`
-2. Open the Unity MCP window and start the bridge.
-3. Approve the auto-install of the Python server if prompted.
+This plugin needs no install-time input: `mcp.json` is literal, so there are no
+`userVars` and no overlay. `uvx` must be on PATH, which the desktop preflights
+via `requires`.
 
-Docs: https://github.com/CoplayDev/unity-mcp#readme
+## Troubleshooting
 
-Download: https://github.com/CoplayDev/unity-mcp
+- **`uvx` not found** — Install uv (https://astral.sh/uv) and restart Artyx so
+  the PATH change is picked up.
+- **Tools connect but do nothing** — The Unity-side bridge window is closed, or
+  the editor is compiling.

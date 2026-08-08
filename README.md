@@ -10,6 +10,13 @@ Each plugin lives in its own directory under `plugins/`. A plugin is
 configuration and documentation, never code: it points Artyx at an MCP
 server and, optionally, ships skills that teach the agent how to use it.
 
+A plugin also owns its **install instructions**, and it owns them by
+reference: `interface.docsUrl` points at the upstream page, and that single
+button is everything the desktop shows. Artyx ships no setup steps of its
+own for anything in this catalog. When a vendor changes how their server is
+installed, they change their own page, the next marketplace poll picks the
+URL up, and no Artyx release is involved.
+
 ## Plugins
 
 | Plugin | Category | Tagline |

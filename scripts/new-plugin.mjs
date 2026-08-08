@@ -4,19 +4,27 @@
  *
  * This script writes the files a plugin needs to pass the validator on the
  * parts a machine can decide, and leaves everything else as a TODO for a
- * human: the logo, the skill instructions, the companion setup steps, the
- * README prose, and the long-form plugin.json description. Run the validator
- * after scaffolding — it prints exactly what is left.
+ * human: the logo, the skill instructions, the README prose, and the
+ * long-form plugin.json description. Run the validator after scaffolding —
+ * it prints exactly what is left.
+ *
+ * --docs is required and must point at the UPSTREAM install page, never at
+ * anything written here. It is the only setup instruction the desktop ever
+ * shows, as a single "How to install" button, so a plugin without one leaves
+ * the user with nowhere to go.
  *
  *   node scripts/new-plugin.mjs --name blender --display Blender \
  *     --tagline "Build and animate 3D scenes in a live Blender session." \
- *     --category Creativity --transport streamable-http \
+ *     --category Creativity --docs https://www.blender.org/lab/mcp-server/ \
+ *     --transport streamable-http \
  *     --url http://127.0.0.1:8000/ --user-var BLENDER_MCP_PORT=8000 \
  *     --skill blender-mcp
  *
  *   node scripts/new-plugin.mjs --name godot --display Godot \
  *     --tagline "Launch Godot, run projects, and read debug output." \
- *     --category "Developer Tools" --transport stdio \
+ *     --category "Developer Tools" \
+ *     --docs https://github.com/Coding-Solo/godot-mcp#readme \
+ *     --transport stdio \
  *     --command npx --arg -y --arg @coding-solo/godot-mcp \
  *     --user-var GODOT_PATH --skill godot-mcp
  *
@@ -81,6 +89,7 @@ function escapeRegExp(value) {
 function usage() {
   return `Usage: node scripts/new-plugin.mjs --name <name> --display <name> \\
   --tagline <text> --category <Creativity|Developer Tools> \\
+  --docs <https://upstream-install-docs> \\
   --transport <streamable-http|stdio|none> \\
   [--url <url>] [--command <cmd>] [--arg <token>]... \\
   [--user-var NAME[=default]]... [--skill <slug>]... [--experimental] \\
@@ -101,6 +110,7 @@ function parseArgs(argv) {
     display: null,
     tagline: null,
     category: null,
+    docs: null,
     transport: null,
     url: null,
     command: null,
@@ -121,6 +131,7 @@ function parseArgs(argv) {
       case '--display': options.display = next(); break
       case '--tagline': options.tagline = next(); break
       case '--category': options.category = next(); break
+      case '--docs': options.docs = next(); break
       case '--transport': options.transport = next(); break
       case '--url': options.url = next(); break
       case '--command': options.command = next(); break
@@ -165,6 +176,9 @@ async function fillInteractive(options) {
     if (!options.category) {
       options.category = await ask(`Category (${CATEGORIES.join(' | ')}):`, CATEGORIES[1])
     }
+    if (!options.docs) {
+      options.docs = await ask("Upstream install docs URL (the vendor's own page):")
+    }
     if (!options.transport) {
       options.transport = await ask(`Transport (${TRANSPORTS.join(' | ')}):`, 'stdio')
     }
@@ -206,6 +220,7 @@ function validateOptions(options) {
   if (!options.display) missing.push('--display')
   if (!options.tagline) missing.push('--tagline')
   if (!options.category) missing.push('--category')
+  if (!options.docs) missing.push('--docs')
   if (!options.transport) missing.push('--transport')
   if (missing.length > 0) {
     throw new ScaffoldError(
@@ -228,6 +243,12 @@ function validateOptions(options) {
   }
   if (!CATEGORIES.includes(options.category)) {
     throw new ScaffoldError(`--category must be one of: ${CATEGORIES.join(', ')}.`)
+  }
+  if (!options.docs.startsWith('https://')) {
+    throw new ScaffoldError(
+      '--docs must be an https:// URL (extension.schema.json /interface/docsUrl). Point it at ' +
+        "the upstream install page — the server author's own docs, not a page written here."
+    )
   }
   if (!TRANSPORTS.includes(options.transport)) {
     throw new ScaffoldError(`--transport must be one of: ${TRANSPORTS.join(', ')}.`)
@@ -375,13 +396,14 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
 // File content builders
 // ---------------------------------------------------------------------------
 
-function buildPluginManifest({ name, display, tagline, category, experimental, requires, userVars, overlayServer, serverName }) {
+function buildPluginManifest({ name, display, tagline, category, docs, experimental, requires, userVars, overlayServer, serverName }) {
   const extension = {
     schemaVersion: 1,
     interface: {
       displayName: display,
       tagline,
       category,
+      docsUrl: docs,
       capabilities: ['Interactive', 'Write'],
       ...(experimental ? { experimental: true } : {})
     },
@@ -436,13 +458,15 @@ function buildSkillFile(slug) {
   ].join('\n')
 }
 
-function buildPluginReadme({ display, transport }) {
+function buildPluginReadme({ display, transport, docs }) {
   const lines = [`# ${display}`, '']
   if (transport !== 'none') {
     lines.push(
-      'TODO: describe the setup a user performs outside Artyx to run the ' +
-        `${display} MCP server. Mirror the same steps in plugin.json under `,
-      '`extensions["ai.artyx.desktop"].companion`.',
+      `TODO: summarize what a user needs running before this plugin connects. The`,
+      `install instructions themselves stay upstream at ${docs} — that URL is`,
+      '`extensions["ai.artyx.desktop"].interface.docsUrl`, and it is the only thing',
+      'the desktop shows. Do not restate the steps here or in the manifest; they go',
+      'stale the moment the vendor changes them.',
       ''
     )
   }
@@ -452,10 +476,8 @@ function buildPluginReadme({ display, transport }) {
     '- [ ] Add a real `logo.png` at the package root.',
     '- [ ] Write the top-level `description` in `plugin.json`.',
     '- [ ] Write the skill body under `skills/` (replace every TODO).',
-    ...(transport !== 'none'
-      ? ['- [ ] Add `extensions["ai.artyx.desktop"].companion` setup steps.']
-      : []),
-    '- [ ] Rewrite this README with real setup and troubleshooting notes.',
+    '- [ ] Confirm `interface.docsUrl` really lands on the install instructions.',
+    '- [ ] Rewrite this README with real context and troubleshooting notes.',
     ''
   )
   return lines.join('\n')
@@ -518,6 +540,7 @@ function buildPlan(options, userVarSpecs) {
     display: options.display,
     tagline: options.tagline,
     category: options.category,
+    docs: options.docs,
     experimental: options.experimental,
     requires,
     userVars,
@@ -535,7 +558,11 @@ function buildPlan(options, userVarSpecs) {
   })
 
   const skillFiles = new Map(options.skills.map((slug) => [slug, buildSkillFile(slug)]))
-  const readme = buildPluginReadme({ display: options.display, transport: options.transport })
+  const readme = buildPluginReadme({
+    display: options.display,
+    transport: options.transport,
+    docs: options.docs
+  })
 
   return { pluginManifest, mcpManifest, skillFiles, readme }
 }
@@ -596,7 +623,6 @@ function printChecklist(options) {
   console.log(`\nWrote plugins/${options.name}/. This script cannot generate:\n`)
   console.log('  - a real logo.png (256x256 or larger, <=256KB, at the package root)')
   console.log('  - the skill body/bodies under skills/ (every SKILL.md TODO)')
-  console.log('  - plugin.json /extensions/ai.artyx.desktop/companion (setup steps in the other app)')
   console.log('  - plugin.json /description (the storefront detail-view prose)')
   console.log('  - this plugin\'s README.md prose')
   console.log('\nRunning the validator now so the rest of the list is exact:\n')
