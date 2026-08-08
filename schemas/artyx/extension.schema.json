@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://artyx.ai/schemas/agent-plugins/ai.artyx.desktop/1.json",
+  "title": "Artyx Desktop plugin extension",
+  "description": "Contents of extensions[\"ai.artyx.desktop\"] in an Agent Plugins 1.0.0 manifest. Agent Plugins assigns no meaning to this object; Artyx Desktop owns it completely and every other client must ignore it without validating it.",
+  "type": "object",
+  "required": ["schemaVersion", "interface"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of THIS object only. Independent of the plugin's own version and of the Agent Plugins version."
+    },
+    "interface": {
+      "$ref": "#/$defs/interface"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "requires": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Advisory runtime executables the desktop preflights before it spawns a stdio server, such as [\"npx\"] or [\"uvx\"]."
+    },
+    "userVars": {
+      "$ref": "#/$defs/userVars"
+    },
+    "companion": {
+      "$ref": "#/$defs/companion"
+    },
+    "mcp": {
+      "$ref": "#/$defs/mcpOverlay"
+    }
+  },
+  "$defs": {
+    "interface": {
+      "title": "Storefront presentation",
+      "type": "object",
+      "required": ["displayName", "tagline", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Product name as written by its vendor. Authored, never derived: prettifying the plugin name yields \"Unreal-engine\", not \"Unreal Engine\"."
+        },
+        "tagline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "One line for the storefront card. The long prose lives in the portable top-level `description`; do not repeat it here."
+        },
+        "category": {
+          "enum": ["Creativity", "Developer Tools"],
+          "description": "Closed on purpose. A curated marketplace gains nothing from free-form categories, and an open string is how the catalog and the manifest drifted apart before."
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 1,
+          "items": {
+            "enum": ["Interactive", "Read", "Write"]
+          },
+          "description": "What the plugin does to the user's project, shown as badges."
+        },
+        "brandColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "The vendor's own brand hex, used behind the logo. A third-party brand mark is the one place the Artyx palette does not apply."
+        },
+        "prompts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Suggested opening messages offered after install."
+        },
+        "experimental": {
+          "type": "boolean",
+          "description": "Marks the integration as unproven. Absent means false."
+        }
+      }
+    },
+    "compatibility": {
+      "title": "Desktop runtime gate",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "properties": {
+        "artyx": {
+          "type": "string",
+          "pattern": "^>=\\d+\\.\\d+\\.\\d+$",
+          "description": "Minimum Artyx Desktop version. Only the >= form is supported, because the desktop compares one floor and nothing else."
+        },
+        "platforms": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["darwin", "win32", "linux"]
+          },
+          "description": "Operating systems the plugin can install on. Absent means all of them."
+        }
+      }
+    },
+    "userVars": {
+      "title": "Values the user supplies at install time",
+      "type": "object",
+      "minProperties": 1,
+      "description": "Declares every ${VAR} used in the `mcp` overlay. The desktop prompts for these, stores them encrypted, and substitutes them at connect time. A name declared here but never referenced, or referenced but never declared, is a validation error.",
+      "propertyNames": {
+        "pattern": "^[A-Z][A-Z0-9_]*$",
+        "not": {
+          "enum": ["PLUGIN_ROOT", "PLUGIN_DATA"]
+        }
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["label", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "description": "Field label in the install dialog."
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Helper text under the field. Say where the value comes from, not what the field is called."
+          },
+          "default": {
+            "type": "string",
+            "description": "Pre-fills the field. Required when the name ends in _PORT."
+          },
+          "secret": {
+            "type": "boolean",
+            "description": "Renders a password input and keeps the value out of every log and error. Absent means false. Declare it explicitly; the desktop no longer guesses from the variable's name."
+          }
+        }
+      }
+    },
+    "companion": {
+      "title": "Setup the user performs outside Artyx",
+      "type": "object",
+      "required": ["title", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Ordered actions in the other application. One action per step."
+        },
+        "docsUrl": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Upstream documentation for the MCP server this plugin connects to."
+        },
+        "downloadUrl": {
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "prerequisites": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "What must already be installed, such as \"Blender 4.x or newer\"."
+        }
+      }
+    },
+    "mcpOverlay": {
+      "title": "Per-server patch applied on top of the portable mcp.json",
+      "type": "object",
+      "minProperties": 1,
+      "description": "Every key MUST name a server that exists in mcp.json; this is a patch, never a new server. It exists because the specification forbids placeholder expansion in `url`, `command`, and header values, and forbids secrets in `headers` and `env`. So mcp.json ships literal, working defaults, and anything the user configures lives here. `env` and `headers` merge key by key; every other field replaces.",
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "headers": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "not": {
+                "enum": ["PLUGIN_ROOT", "PLUGIN_DATA"]
+              }
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "cwd": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
