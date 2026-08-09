@@ -31,6 +31,9 @@
  *   node scripts/new-plugin.mjs --interactive
  *   node scripts/new-plugin.mjs --name foo ... --dry-run
  *
+ *   Asset adapter descriptors are JSON objects loaded with --asset-adapter.
+ *   They remain declarations: no adapter executable is copied into the plugin.
+ *
  * ## The two overlay patterns this script wires automatically
  *
  * The portable mcp.json must be literal and working on its own — a client
@@ -48,9 +51,9 @@
  *    has no default and so no entry in the portable env at all).
  *
  * Anything else — a non-port var on an HTTP transport, more than one port
- * var, a var with --transport none — has no safe automatic mapping, so the
- * script refuses and tells you why instead of writing something that fails
- * `artyx.overlay.default-drift` or `artyx.uservar.orphan` on the first run.
+ * var, or a var with --transport none and no asset adapter — has no safe
+ * automatic mapping, so the script refuses instead of writing something that
+ * fails `artyx.overlay.default-drift` or `artyx.uservar.orphan`.
  */
 
 import { mkdir, writeFile, readFile, rm, lstat } from 'node:fs/promises'
@@ -78,7 +81,7 @@ const SKILL_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const USER_VAR_NAME_PATTERN = /^[A-Z][A-Z0-9_]*$/
 const CATEGORIES = ['Creativity', 'Developer Tools']
 const TRANSPORTS = ['streamable-http', 'stdio', 'none']
-const RUNTIME_COMMANDS = new Set(['npx', 'uvx', 'bunx', 'pipx'])
+const RUNTIME_COMMANDS = new Set(['npx', 'uvx', 'bunx', 'pipx', 'dotnet'])
 
 class ScaffoldError extends Error {}
 
@@ -92,7 +95,8 @@ function usage() {
   --docs <https://upstream-install-docs> \\
   --transport <streamable-http|stdio|none> \\
   [--url <url>] [--command <cmd>] [--arg <token>]... \\
-  [--user-var NAME[=default]]... [--skill <slug>]... [--experimental] \\
+  [--user-var NAME[=default]]... [--asset-adapter <descriptor.json>]... \\
+  [--skill <slug>]... [--experimental] \\
   [--interactive] [--dry-run]
 
 Run with --interactive to be prompted for anything missing.
@@ -116,6 +120,7 @@ function parseArgs(argv) {
     command: null,
     args: [],
     userVarsRaw: [],
+    assetAdapterFiles: [],
     skills: [],
     experimental: false,
     interactive: false,
@@ -137,6 +142,7 @@ function parseArgs(argv) {
       case '--command': options.command = next(); break
       case '--arg': options.args.push(next()); break
       case '--user-var': options.userVarsRaw.push(next()); break
+      case '--asset-adapter': options.assetAdapterFiles.push(next()); break
       case '--skill': options.skills.push(next()); break
       case '--experimental': options.experimental = true; break
       case '--interactive': options.interactive = true; break
@@ -196,7 +202,8 @@ async function fillInteractive(options) {
       const line = await ask('Skill slugs, comma-separated (blank for none):')
       if (line) options.skills = line.split(',').map((s) => s.trim()).filter(Boolean)
     }
-    if (options.transport !== 'none' && options.userVarsRaw.length === 0) {
+    const canUseUserVars = options.transport !== 'none' || options.assetAdapterFiles.length > 0
+    if (canUseUserVars && options.userVarsRaw.length === 0) {
       const line = await ask('User vars as NAME or NAME=default, comma-separated (blank for none):')
       if (line) options.userVarsRaw = line.split(',').map((s) => s.trim()).filter(Boolean)
     }
@@ -266,9 +273,9 @@ function validateOptions(options) {
     if (options.url || options.command || options.args.length > 0) {
       throw new ScaffoldError('--transport none takes no --url, --command, or --arg.')
     }
-    if (options.userVarsRaw.length > 0) {
+    if (options.userVarsRaw.length > 0 && options.assetAdapterFiles.length === 0) {
       throw new ScaffoldError(
-        '--transport none has no mcp.json for a --user-var to patch. Drop --user-var or pick a transport.'
+        '--transport none accepts --user-var only when --asset-adapter declares where it is used.'
       )
     }
   }
@@ -324,6 +331,19 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
   const portableEnv = {}
 
   if (userVarSpecs.length === 0) return { userVars, overlayServer, portableEnv }
+
+  if (transport === 'none') {
+    for (const spec of userVarSpecs) {
+      userVars[spec.name] = {
+        label: humanizeVarName(spec.name),
+        description: spec.default
+          ? `Value consumed by the external asset adapter. Defaults to "${spec.default}".`
+          : 'Value consumed by the external asset adapter. TODO: describe where it comes from.',
+        ...(spec.default ? { default: spec.default } : {})
+      }
+    }
+    return { userVars, overlayServer, portableEnv }
+  }
 
   if (transport === 'streamable-http') {
     const portVars = userVarSpecs.filter((v) => v.name.endsWith('_PORT'))
@@ -396,9 +416,21 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
 // File content builders
 // ---------------------------------------------------------------------------
 
-function buildPluginManifest({ name, display, tagline, category, docs, experimental, requires, userVars, overlayServer, serverName }) {
+function buildPluginManifest({
+  name,
+  display,
+  tagline,
+  category,
+  docs,
+  experimental,
+  requires,
+  userVars,
+  overlayServer,
+  serverName,
+  assetAdapters
+}) {
   const extension = {
-    schemaVersion: 1,
+    schemaVersion: assetAdapters.length > 0 ? 2 : 1,
     interface: {
       displayName: display,
       tagline,
@@ -412,6 +444,7 @@ function buildPluginManifest({ name, display, tagline, category, docs, experimen
   if (requires.length > 0) extension.requires = requires
   if (Object.keys(userVars).length > 0) extension.userVars = userVars
   if (Object.keys(overlayServer).length > 0) extension.mcp = { [serverName]: overlayServer }
+  if (assetAdapters.length > 0) extension.assetAdapters = assetAdapters
 
   return {
     $schema: PLUGIN_SCHEMA_URL,
@@ -458,7 +491,7 @@ function buildSkillFile(slug) {
   ].join('\n')
 }
 
-function buildPluginReadme({ display, transport, docs }) {
+function buildPluginReadme({ display, transport, docs, hasAssetAdapters }) {
   const lines = [`# ${display}`, '']
   if (transport !== 'none') {
     lines.push(
@@ -467,6 +500,14 @@ function buildPluginReadme({ display, transport, docs }) {
       '`extensions["ai.artyx.desktop"].interface.docsUrl`, and it is the only thing',
       'the desktop shows. Do not restate the steps here or in the manifest; they go',
       'stale the moment the vendor changes them.',
+      ''
+    )
+  }
+  if (hasAssetAdapters) {
+    lines.push(
+      'This package declares one or more external asset adapters. It contains no',
+      'adapter executable; the transport in `plugin.json` starts software installed',
+      'outside the marketplace package.',
       ''
     )
   }
@@ -520,12 +561,42 @@ async function appendCatalogEntry(name) {
 // Plan assembly
 // ---------------------------------------------------------------------------
 
-function buildPlan(options, userVarSpecs) {
+async function loadAssetAdapters(files) {
+  const adapters = []
+  for (const file of files) {
+    const path = resolve(REPO_ROOT, file)
+    let parsed
+    try {
+      parsed = JSON.parse(await readFile(path, 'utf8'))
+    } catch (error) {
+      throw new ScaffoldError(`Cannot read --asset-adapter "${file}": ${error.message}`)
+    }
+    const entries = Array.isArray(parsed) ? parsed : [parsed]
+    const invalid = entries.some(
+      (entry) => !entry || typeof entry !== 'object' || Array.isArray(entry)
+    )
+    if (entries.length === 0 || invalid) {
+      throw new ScaffoldError(
+        `--asset-adapter "${file}" must contain one descriptor object or a non-empty array of them.`
+      )
+    }
+    adapters.push(...entries)
+  }
+  return adapters
+}
+
+function buildPlan(options, userVarSpecs, assetAdapters) {
   const serverName = options.name
-  const requires = []
+  const requires = new Set()
   if (options.transport === 'stdio') {
     const token = options.command.split('/').pop()
-    if (RUNTIME_COMMANDS.has(token)) requires.push(token)
+    if (RUNTIME_COMMANDS.has(token)) requires.add(token)
+  }
+  for (const adapter of assetAdapters) {
+    const command = adapter?.transport?.command
+    if (typeof command !== 'string' || command.includes('${')) continue
+    const token = command.replaceAll('\\', '/').split('/').pop()
+    if (RUNTIME_COMMANDS.has(token)) requires.add(token)
   }
 
   const { userVars, overlayServer, portableEnv } = planOverlay({
@@ -542,10 +613,11 @@ function buildPlan(options, userVarSpecs) {
     category: options.category,
     docs: options.docs,
     experimental: options.experimental,
-    requires,
+    requires: [...requires],
     userVars,
     overlayServer,
-    serverName
+    serverName,
+    assetAdapters
   })
 
   const mcpManifest = buildMcpManifest({
@@ -561,7 +633,8 @@ function buildPlan(options, userVarSpecs) {
   const readme = buildPluginReadme({
     display: options.display,
     transport: options.transport,
-    docs: options.docs
+    docs: options.docs,
+    hasAssetAdapters: assetAdapters.length > 0
   })
 
   return { pluginManifest, mcpManifest, skillFiles, readme }
@@ -657,7 +730,8 @@ async function main() {
     )
   }
 
-  const plan = buildPlan(options, userVarSpecs)
+  const assetAdapters = await loadAssetAdapters(options.assetAdapterFiles)
+  const plan = buildPlan(options, userVarSpecs, assetAdapters)
 
   if (options.dryRun) {
     printDryRun(options, plan)

@@ -7,13 +7,14 @@ the head of `main`, downloads that snapshot, and reads the catalog at
 no separate release step.
 
 Each plugin lives in its own directory under `plugins/`. A plugin is
-configuration and documentation, never code: it points Artyx at an MCP
-server and, optionally, ships skills that teach the agent how to use it.
+configuration and documentation, never code: it points Artyx at an MCP server
+or external asset adapter and optionally ships skills that teach the agent how
+to use those capabilities.
 
 A plugin also owns its **install instructions**, and it owns them by
 reference: `interface.docsUrl` points at the upstream page, and that single
 button is everything the desktop shows. Artyx ships no setup steps of its
-own for anything in this catalog. When a vendor changes how their server is
+own for anything in this catalog. When a vendor changes how their software is
 installed, they change their own page, the next marketplace poll picks the
 URL up, and no Artyx release is involved.
 
@@ -25,6 +26,7 @@ URL up, and no Artyx release is involved.
 | [Unity](plugins/unity) | Developer Tools | Drive the Unity Editor: scenes, GameObjects, scripts, play-mode. |
 | [Unreal Engine](plugins/unreal-engine) | Developer Tools | Automate the Unreal Editor: actors, Blueprints, levels. |
 | [Godot](plugins/godot) | Developer Tools | Launch Godot, run projects, and read debug output over MCP. |
+| [GTA V RAGE Assets](plugins/gta-v) | Creativity | Import, retexture, and export local GTA V asset bundles. |
 
 ## The format
 
@@ -36,6 +38,11 @@ because a plugin's portable files carry no Artyx-only data. Artyx's own
 storefront data (display name, tagline, install-time prompts) lives in one
 namespaced extension block, `extensions["ai.artyx.desktop"]`, which the
 specification says every other client must ignore.
+
+Artyx extension `schemaVersion: 2` can additionally register code-free external
+asset adapters. Their format, process boundary, and install-ledger semantics are
+documented in [docs/asset-adapters.md](docs/asset-adapters.md). Version 1
+manifests remain valid without migration.
 
 ## Quickstart
 

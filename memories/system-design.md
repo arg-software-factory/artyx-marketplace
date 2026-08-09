@@ -10,4 +10,5 @@
 
 ## Rules / invariants
 - (what must always hold; what not to break)
-- Marketplace plugins are pure-client: connect to external MCP servers only; never ship bundled server code
+- Marketplace plugins are pure-client: connect to external MCP servers or schema-v2 asset adapters; never ship bundled executable code
+- Asset adapters are derived registrations owned by the installed plugin ledger entry; no parallel adapter catalog or independently versioned install record

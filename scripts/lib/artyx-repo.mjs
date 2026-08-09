@@ -18,7 +18,7 @@ const MAX_AGENT_BODY_BYTES = 12 * 1024
 
 /**
  * A plugin is client configuration. It points at an official or third-party
- * MCP server; it never ships one. Bundled code would mean this repository
+ * MCP server or asset adapter; it never ships executable code. Bundled code would mean this repository
  * distributes executables straight into a user's machine through a git
  * checkout, with no review surface beyond a diff.
  */
@@ -95,8 +95,8 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
         'plugin.bundled-server',
         target,
         entry.rel,
-        'A plugin connects to an MCP server; it never ships one. Point mcp.json at an ' +
-          'official or third-party package instead.'
+        'A plugin connects to an external MCP server or asset adapter; it never ships one. ' +
+          'Point the manifest at an externally installed runtime instead.'
       )
       continue
     }

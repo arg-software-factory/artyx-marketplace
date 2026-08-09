@@ -76,6 +76,18 @@ absent from the specification.
 
 Neither check runs under `--spec-report`; both are `artyx`-axis.
 
+## Asset adapters live only in Artyx's namespace
+
+`assetAdapters` in extension `schemaVersion: 2` is another Artyx publishing and
+runtime contract, not an Agent Plugins component. A portable client ignores it
+without validation and can still load the package's skills or MCP servers.
+Artyx Desktop additionally registers the declared external process as a direct,
+deterministic asset capability. See [asset-adapters.md](asset-adapters.md).
+
+The distinction is intentional: Agent Plugins stays portable and this
+marketplace stays code-free, while Artyx can extend native object and image
+handling without pretending those operations are MCP tools.
+
 ## Plugins dropped in the rebuild
 
 Four plugins existed before this repository's Agent Plugins 1.0.0 rebuild and

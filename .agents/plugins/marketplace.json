@@ -24,6 +24,11 @@
       "name": "godot",
       "source": { "source": "local", "path": "./plugins/godot" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
+    },
+    {
+      "name": "gta-v",
+      "source": { "source": "local", "path": "./plugins/gta-v" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" }
     }
   ],
   "agents": [

@@ -117,18 +117,18 @@ async function validateOnePlugin({ repoRoot, contentRoot, name, report, manifest
   }
 
   const skills = await validateSpecSkills({ target, pluginRoot, report })
-  if (skills.length === 0 && !mcp) {
+  const artyx = await validateArtyxExtension({ repoRoot, target, extension, mcp, report })
+  if (skills.length === 0 && !mcp && artyx.assetAdapterCount === 0) {
     report.fatal(
       'plugin.no-components',
       target,
       '',
-      'Neither a discoverable skill nor an MCP server. The package does nothing.'
+      'No discoverable skill, MCP server, or asset adapter. The package does nothing.'
       ,
       AXIS.ARTYX
     )
   }
 
-  await validateArtyxExtension({ repoRoot, target, extension, mcp, report })
   await validatePluginAssets({ target, pluginRoot, report })
 }
 

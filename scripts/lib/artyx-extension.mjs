@@ -24,7 +24,9 @@ import Ajv from 'ajv/dist/2020.js'
 import { AXIS } from './report.mjs'
 
 const PLACEHOLDER = /\$\{([A-Z][A-Z0-9_]*)\}/g
-const RUNTIME_COMMANDS = new Set(['npx', 'uvx', 'bunx', 'pipx'])
+const ANY_PLACEHOLDER = /\$\{([^}]*)\}/g
+const HOST_VARS = new Set(['PLUGIN_ROOT', 'PLUGIN_DATA'])
+const RUNTIME_COMMANDS = new Set(['npx', 'uvx', 'bunx', 'pipx', 'dotnet'])
 
 let compiledExtensionValidator = null
 
@@ -49,6 +51,15 @@ function* overlayStrings(server) {
   for (const [index, arg] of (server.args ?? []).entries()) yield [`args/${index}`, arg]
   for (const [key, value] of Object.entries(server.headers ?? {})) yield [`headers/${key}`, value]
   for (const [key, value] of Object.entries(server.env ?? {})) yield [`env/${key}`, value]
+}
+
+/** Walk every process string an asset adapter can carry. */
+function* adapterTransportStrings(adapter) {
+  const transport = adapter.transport
+  if (typeof transport.command === 'string') yield ['command', transport.command]
+  if (typeof transport.cwd === 'string') yield ['cwd', transport.cwd]
+  for (const [index, arg] of (transport.args ?? []).entries()) yield [`args/${index}`, arg]
+  for (const [key, value] of Object.entries(transport.env ?? {})) yield [`env/${key}`, value]
 }
 
 /**
@@ -109,7 +120,7 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
       'No extensions["ai.artyx.desktop"]. Every plugin in this marketplace needs one — it ' +
         'carries the storefront name, tagline, and category the desktop renders.'
     )
-    return
+    return { assetAdapterCount: 0 }
   }
 
   const validate = await loadExtensionValidator(repoRoot)
@@ -122,7 +133,7 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
         describeError(error)
       )
     }
-    return
+    return { assetAdapterCount: 0 }
   }
 
   const userVars = extension.userVars ?? {}
@@ -187,14 +198,106 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
     }
   }
 
+  const adapterIds = new Set()
+  for (const [index, adapter] of (extension.assetAdapters ?? []).entries()) {
+    const pointer = `plugin.json /extensions/ai.artyx.desktop/assetAdapters/${index}`
+
+    if (adapterIds.has(adapter.id)) {
+      report.fatal(
+        'artyx.adapter.duplicate-id',
+        target,
+        `${pointer}/id`,
+        `Adapter id "${adapter.id}" is declared more than once. Adapter runtime identity is ` +
+          'plugin-name:id, so ids must be unique inside a plugin.'
+      )
+    }
+    adapterIds.add(adapter.id)
+
+    const hintedExtensions = new Set()
+    for (const [acceptIndex, accept] of adapter.accepts.entries()) {
+      for (const extensionName of accept.extensions) {
+        if (hintedExtensions.has(extensionName)) {
+          report.fatal(
+            'artyx.adapter.duplicate-extension',
+            target,
+            `${pointer}/accepts/${acceptIndex}/extensions`,
+            `Extension hint "${extensionName}" appears in more than one accepts entry for ` +
+              `adapter "${adapter.id}". Put every applicable kind on one hint instead.`
+          )
+        }
+        hintedExtensions.add(extensionName)
+      }
+    }
+
+    for (const [field, value] of adapterTransportStrings(adapter)) {
+      const matches = [...String(value).matchAll(ANY_PLACEHOLDER)]
+      for (const match of matches) {
+        const name = match[1]
+        if (!/^[A-Z][A-Z0-9_]*$/.test(name)) {
+          report.fatal(
+            'artyx.adapter.placeholder.invalid',
+            target,
+            `${pointer}/transport/${field}`,
+            `Placeholder "${match[0]}" is invalid. Use an uppercase declared userVar, ` +
+              '${PLUGIN_ROOT}, or ${PLUGIN_DATA}.'
+          )
+          continue
+        }
+        if (HOST_VARS.has(name)) {
+          if (field === 'command') {
+            report.fatal(
+              'artyx.adapter.command.host-var',
+              target,
+              `${pointer}/transport/${field}`,
+              `${match[0]} is not expanded in adapter command. Use a literal executable or a ` +
+                'declared userVar for the executable path; host paths are available only in ' +
+                'args, env values, and cwd.'
+            )
+          }
+          continue
+        }
+        referenced.add(name)
+        if (!userVars[name]) {
+          report.fatal(
+            'artyx.adapter.undeclared-var',
+            target,
+            `${pointer}/transport/${field}`,
+            `\${${name}} is not declared in userVars, so the adapter process would receive ` +
+              'an unresolved placeholder.'
+          )
+        }
+      }
+
+      const withoutPlaceholders = String(value).replace(ANY_PLACEHOLDER, '')
+      if (withoutPlaceholders.includes('${')) {
+        report.fatal(
+          'artyx.adapter.placeholder.invalid',
+          target,
+          `${pointer}/transport/${field}`,
+          'Malformed placeholder. Every "${" must have a closing "}".'
+        )
+      }
+    }
+
+    if (!adapter.transport.command.includes('${') && /\s/.test(adapter.transport.command)) {
+      report.fatal(
+        'artyx.adapter.command.tokens',
+        target,
+        `${pointer}/transport/command`,
+        'command is one executable token. Put arguments in transport.args; the host never ' +
+          'invokes a shell.'
+      )
+    }
+  }
+
   for (const [name, spec] of Object.entries(userVars)) {
     if (!referenced.has(name)) {
       report.fatal(
         'artyx.uservar.orphan',
         target,
         `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`,
-        `Declared but never used in the mcp overlay. The desktop would prompt the user for a ` +
-          'value it then throws away.'
+        `Declared but never used in the MCP overlay or an asset-adapter transport. The ` +
+          'desktop would prompt the user for a value it then throws away.'
       )
     }
     if (name.endsWith('_PORT') && !/^\d{2,5}$/.test(spec.default ?? '')) {
@@ -203,7 +306,7 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
         target,
         `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`,
         'A port variable needs a numeric "default" so the install dialog is pre-filled and ' +
-          'the portable mcp.json has a literal port to match.'
+          'the default transport configuration is deterministic.'
       )
     }
   }
@@ -225,4 +328,20 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
       )
     }
   }
+  for (const [index, adapter] of (extension.assetAdapters ?? []).entries()) {
+    const command = adapter.transport.command
+    if (command.includes('${')) continue
+    const executable = command.replaceAll('\\', '/').split('/').pop()
+    if (RUNTIME_COMMANDS.has(executable) && !requires.has(executable)) {
+      report.warn(
+        'artyx.requires.missing',
+        target,
+        'plugin.json /extensions/ai.artyx.desktop/requires',
+        `Asset adapter "${adapter.id}" launches through "${executable}". List it in ` +
+          '"requires" so the desktop can fail preflight with a clear diagnostic.'
+      )
+    }
+  }
+
+  return { assetAdapterCount: extension.assetAdapters?.length ?? 0 }
 }

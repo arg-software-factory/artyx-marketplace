@@ -62,6 +62,30 @@ function baseMcp() {
   }
 }
 
+function baseAssetAdapter() {
+  return {
+    id: 'demo-assets',
+    protocol: 'artyx.asset-adapter/1',
+    transport: { type: 'stdio', command: 'demo-asset-adapter' },
+    accepts: [
+      {
+        extensions: ['demo'],
+        mediaTypes: ['application/x-demo-asset'],
+        kinds: ['object3d']
+      }
+    ],
+    operations: ['probe', 'import', 'preview.3d'],
+    fidelity: ['preview-only']
+  }
+}
+
+function enableAssetAdapters(files, adapters = [baseAssetAdapter()]) {
+  const extension = files.plugin.extensions['ai.artyx.desktop']
+  extension.schemaVersion = 2
+  extension.assetAdapters = adapters
+  return extension
+}
+
 const baseSkill = ['---', 'name: demo', 'description: Demonstrates the test fixture.', '---', '', 'Do the thing.', ''].join('\n')
 
 /**
@@ -83,7 +107,9 @@ async function validate(mutate, { mode = 'strict' } = {}) {
     if (files.mcp !== null) {
       await writeFile(join(pluginDir, 'mcp.json'), JSON.stringify(files.mcp, null, 2))
     }
-    await writeFile(join(pluginDir, 'skills', 'demo', 'SKILL.md'), files.skill)
+    if (files.skill !== null) {
+      await writeFile(join(pluginDir, 'skills', 'demo', 'SKILL.md'), files.skill)
+    }
     await writeFile(join(pluginDir, 'logo.png'), PNG)
     for (const [rel, content] of Object.entries(files.extraFiles)) {
       await mkdir(dirname(join(pluginDir, rel)), { recursive: true })
@@ -440,6 +466,135 @@ test('setup prose in the manifest is rejected, docsUrl is the only channel', asy
 })
 
 // ---------------------------------------------------------------------------
+// Artyx extension v2: external asset adapters.
+// ---------------------------------------------------------------------------
+
+test('the frozen v1 extension remains valid', async () => {
+  const result = await validate(() => {})
+  assert.equal(result.ok, true, JSON.stringify(result.findings))
+})
+
+test('v1 cannot silently opt into v2 asset adapters', async () => {
+  const result = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].assetAdapters = [baseAssetAdapter()]
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+})
+
+test('v2 requires at least one asset adapter', async () => {
+  const result = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].schemaVersion = 2
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+})
+
+for (const [label, mutate] of [
+  ['an unsupported adapter protocol', (adapter) => { adapter.protocol = 'artyx.asset-adapter/2' }],
+  ['a non-stdio adapter transport', (adapter) => { adapter.transport.type = 'http' }],
+  ['an unknown adapter operation', (adapter) => { adapter.operations.push('geometry.rewrite') }],
+  ['an extension hint with a leading dot', (adapter) => { adapter.accepts[0].extensions = ['.demo'] }]
+]) {
+  test(`${label} is rejected by extension v2`, async () => {
+    const result = await validate((f) => {
+      const adapter = baseAssetAdapter()
+      mutate(adapter)
+      enableAssetAdapters(f, [adapter])
+    })
+    assert.ok(codes(result).includes('artyx.extension.violation'))
+  })
+}
+
+test('an adapter-only v2 package is a real installable component', async () => {
+  const result = await validate((f) => {
+    f.mcp = null
+    f.skill = null
+    enableAssetAdapters(f)
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
+  assert.ok(!codes(result).includes('plugin.no-components'))
+})
+
+test('adapter ids are unique inside a plugin', async () => {
+  const result = await validate((f) => {
+    enableAssetAdapters(f, [baseAssetAdapter(), baseAssetAdapter()])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.duplicate-id'))
+})
+
+test('adapter extension hints cannot be duplicated across accepts entries', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.accepts.push({ extensions: ['demo'], kinds: ['image'] })
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.duplicate-extension'))
+})
+
+test('an adapter placeholder with no declared userVar is fatal', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.transport.command = '${ADAPTER_COMMAND}'
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.undeclared-var'))
+})
+
+test('a userVar referenced only by an adapter is not orphaned', async () => {
+  const result = await validate((f) => {
+    f.mcp = null
+    f.skill = null
+    const adapter = baseAssetAdapter()
+    adapter.transport.command = '${ADAPTER_COMMAND}'
+    const extension = enableAssetAdapters(f, [adapter])
+    extension.userVars = {
+      ADAPTER_COMMAND: {
+        label: 'Adapter executable',
+        description: 'Absolute path to the externally installed adapter executable.'
+      }
+    }
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
+  assert.ok(!codes(result).includes('artyx.uservar.orphan'))
+})
+
+test('host-provided plugin paths need no userVar declaration', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.transport.args = ['--data', '${PLUGIN_DATA}/adapter-cache']
+    adapter.transport.cwd = '${PLUGIN_ROOT}'
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
+})
+
+test('host-provided paths are rejected in adapter command', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.transport.command = '${PLUGIN_DATA}/adapter'
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.command.host-var'))
+})
+
+test('malformed adapter placeholders are rejected', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.transport.args = ['${lowercase}']
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.placeholder.invalid'))
+})
+
+test('adapter command is one executable token because no shell is involved', async () => {
+  const result = await validate((f) => {
+    const adapter = baseAssetAdapter()
+    adapter.transport.command = 'demo-asset-adapter --stdio'
+    enableAssetAdapters(f, [adapter])
+  })
+  assert.ok(codes(result).includes('artyx.adapter.command.tokens'))
+})
+
+// ---------------------------------------------------------------------------
 // The Artyx overlay.
 // ---------------------------------------------------------------------------
 
@@ -518,7 +673,7 @@ test('the pre-1.0.0 layout is rejected outright', async () => {
 test('a package with neither a skill nor a server is rejected', async () => {
   const result = await validate((f) => {
     f.mcp = null
-    f.skill = 'not a skill file'
+    f.skill = null
   })
   assert.ok(codes(result).includes('plugin.no-components'))
 })

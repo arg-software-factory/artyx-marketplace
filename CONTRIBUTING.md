@@ -120,12 +120,13 @@ ignores it.
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `schemaVersion` | yes | `1`. Versions this object only — independent of the plugin's own `version` and of the Agent Plugins version. |
+| `schemaVersion` | yes | `1` for the frozen storefront/MCP contract; `2` when the package declares external `assetAdapters`. Versions this object only — independent of plugin semver, Agent Plugins, and the adapter protocol. |
 | `interface` | yes | Storefront presentation. See below. |
 | `compatibility` | no | `{ artyx, platforms }`. `artyx` is a `">=X.Y.Z"` floor — the desktop compares one floor and nothing else, so only that form is accepted. `platforms` is a subset of `["darwin", "win32", "linux"]`; absent means all three. |
 | `requires` | no | Advisory runtime executables, e.g. `["npx"]` or `["uvx"]`. The desktop preflights these before it spawns a stdio server, so a missing runtime fails with a clear message instead of `ENOENT`. |
-| `userVars` | no | Declares every `${VAR}` the `mcp` overlay uses. See below. |
+| `userVars` | no | Declares every `${VAR}` the `mcp` overlay or an asset-adapter transport uses. See below. |
 | `mcp` | no | The per-server overlay patch described above. |
+| `assetAdapters` | v2 requires it | Code-free declarations of external loaders/exporters invoked directly by Desktop. See [docs/asset-adapters.md](docs/asset-adapters.md). |
 
 `interface`:
 
@@ -142,8 +143,8 @@ ignores it.
 
 `userVars.<NAME>` — `NAME` must match `^[A-Z][A-Z0-9_]*$` and must not be
 `PLUGIN_ROOT` or `PLUGIN_DATA`. Every declared name must appear in the `mcp`
-overlay, and every `${VAR}` the overlay uses must be declared here — the two
-lists must match exactly, in both directions.
+overlay or an asset-adapter transport, and every user placeholder used by
+either surface must be declared here — the lists must match in both directions.
 
 | Field | Required | Notes |
 | --- | --- | --- |
@@ -218,8 +219,8 @@ the shape.
 1. **No server code.** No `server/` directory anywhere in the plugin, and no
    file with a code extension (`.js`, `.cjs`, `.mjs`, `.ts`, `.mts`, `.cts`,
    `.py`, `.rb`, `.sh`, `.bash`, `.zsh`, `.ps1`, `.bat`, `.cmd`, `.exe`,
-   `.dll`, `.dylib`, `.so`). A plugin points at an official or third-party
-   MCP server; it never ships one. Bundled code would mean this repository
+   `.dll`, `.dylib`, `.so`). A plugin points at an official or third-party MCP
+   server or asset adapter; it never ships either executable. Bundled code would mean this repository
    hands an executable to a user's machine through a git checkout, with no
    review surface beyond a diff.
 2. **No secret in the portable file.** `mcp.json` is committed, plain text,

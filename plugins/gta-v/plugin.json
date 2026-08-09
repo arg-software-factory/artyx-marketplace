@@ -1,0 +1,84 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gta-v",
+  "version": "0.1.0",
+  "description": "Connect an externally installed Artyx RAGE asset adapter to local Grand Theft Auto V files. The experimental integration discovers YTD texture dictionaries and YDR, YDD, or YFT model bundles, creates Artyx-compatible previews, applies texture patches without treating GLB as a lossless native format, and exports through the adapter's negotiated validation path.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/dexyfex/CodeWalker",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["3d", "gta-v", "rage", "textures", "modding"],
+  "extensions": {
+    "ai.artyx.desktop": {
+      "schemaVersion": 2,
+      "interface": {
+        "displayName": "GTA V RAGE Assets",
+        "tagline": "Import, retexture, and export local GTA V asset bundles.",
+        "category": "Creativity",
+        "docsUrl": "https://github.com/dexyfex/CodeWalker/blob/master/README.md",
+        "capabilities": ["Interactive", "Read", "Write"],
+        "brandColor": "#315C46",
+        "prompts": [
+          "Import a local GTA V YDR or YFT bundle, show its editable texture slots, and prepare a safe retexture export."
+        ],
+        "experimental": true
+      },
+      "compatibility": {
+        "artyx": ">=0.7.91",
+        "platforms": ["win32"]
+      },
+      "requires": ["dotnet"],
+      "userVars": {
+        "RAGE_ADAPTER_ASSEMBLY": {
+          "label": "RAGE adapter assembly",
+          "description": "Absolute path to the externally built Artyx.Rage.Sidecar.dll adapter assembly."
+        },
+        "GTA_V_PATH": {
+          "label": "GTA V installation",
+          "description": "Root directory of the local Grand Theft Auto V installation whose user-owned assets the adapter may read."
+        }
+      },
+      "assetAdapters": [
+        {
+          "id": "rage",
+          "protocol": "artyx.asset-adapter/1",
+          "transport": {
+            "type": "stdio",
+            "command": "dotnet",
+            "args": ["${RAGE_ADAPTER_ASSEMBLY}", "--asset-adapter-stdio"],
+            "env": {
+              "GTA_V_PATH": "${GTA_V_PATH}"
+            }
+          },
+          "accepts": [
+            {
+              "extensions": ["ytd"],
+              "mediaTypes": ["application/x-rockstar-rage-texture-dictionary"],
+              "kinds": ["texture-collection"]
+            },
+            {
+              "extensions": ["ydr"],
+              "mediaTypes": ["application/x-rockstar-rage-drawable"],
+              "kinds": ["object3d"]
+            },
+            {
+              "extensions": ["ydd", "yft"],
+              "kinds": ["compound"]
+            }
+          ],
+          "operations": [
+            "probe",
+            "import",
+            "preview.3d",
+            "preview.image",
+            "texture.read",
+            "texture.patch",
+            "export.native",
+            "validate"
+          ],
+          "fidelity": ["targeted-patch", "preview-only"]
+        }
+      ]
+    }
+  }
+}

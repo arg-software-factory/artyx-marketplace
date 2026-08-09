@@ -47,11 +47,11 @@
             "properties": {
               "installation": {
                 "enum": ["AVAILABLE", "NOT_AVAILABLE"],
-                "description": "NOT_AVAILABLE keeps the entry visible but refuses to install it."
+                "description": "AVAILABLE installs one complete plugin package and derives every skill, MCP server, and asset-adapter registration from that installed manifest. NOT_AVAILABLE keeps the entry visible but refuses the whole installation."
               },
               "authentication": {
                 "enum": ["ON_INSTALL", "ON_USE"],
-                "description": "When the desktop asks for the plugin's userVars."
+                "description": "When the desktop asks for the plugin's userVars, including values consumed by MCP overlays or external asset-adapter transports."
               }
             }
           }
