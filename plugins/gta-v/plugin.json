@@ -43,7 +43,8 @@
           "label": "GTA V installation",
           "description": "Root directory of the local Grand Theft Auto V installation whose user-owned assets the adapter may read.",
           "required": true,
-          "mustExist": true
+          "mustExist": true,
+          "contains": ["GTA5.exe", "update/update.rpf"]
         }
       },
       "nativeRuntimes": [
@@ -79,7 +80,7 @@
               "kinds": ["compound"]
             }
           ],
-          "sourceKinds": ["local-file", "engine-package-entry"],
+          "sourceKinds": ["local-file", "engine-package-entry", "rpf-entry"],
           "methods": [
             "handshake",
             "probe",

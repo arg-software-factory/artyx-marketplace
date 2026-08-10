@@ -82,7 +82,7 @@
             {
               "id": "goldsrc/model-retexture-v1",
               "semantic": "texture-replacement",
-              "fidelity": "semantic-rebuild",
+              "fidelity": "targeted-patch",
               "supportsCreate": false,
               "supportsModify": true
             },
