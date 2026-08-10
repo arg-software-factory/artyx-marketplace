@@ -27,8 +27,9 @@
     "preview.image",
     "texture.read",
     "texture.patch",
+    "projection.author",
     "export.native",
     "validate"
   ],
-  "fidelity": ["targeted-patch", "preview-only"]
+  "fidelity": ["targeted-patch", "semantic-rebuild", "preview-only"]
 }

@@ -38,8 +38,14 @@ protocol are three independent decisions.
       "kinds": ["object3d"]
     }
   ],
-  "operations": ["probe", "import", "preview.3d", "texture.read"],
-  "fidelity": ["targeted-patch", "preview-only"]
+  "operations": [
+    "probe",
+    "import",
+    "preview.3d",
+    "texture.read",
+    "projection.author"
+  ],
+  "fidelity": ["targeted-patch", "semantic-rebuild", "preview-only"]
 }
 ```
 
@@ -54,7 +60,8 @@ protocol are three independent decisions.
 
 Accepted kinds are `object3d`, `image`, `texture-collection`, and `compound`.
 Accepted operations are `probe`, `import`, `preview.3d`, `preview.image`,
-`texture.read`, `texture.patch`, `export.native`, and `validate`.
+`texture.read`, `texture.patch`, `projection.author`, `export.native`, and
+`validate`.
 
 `accepts`, `operations`, and `fidelity` are catalog-time claims. Runtime
 handshake and `probe` are authoritative. An extension match must never bypass

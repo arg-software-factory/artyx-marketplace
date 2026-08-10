@@ -207,6 +207,7 @@
               "preview.image",
               "texture.read",
               "texture.patch",
+              "projection.author",
               "export.native",
               "validate"
             ]

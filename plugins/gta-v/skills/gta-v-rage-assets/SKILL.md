@@ -47,6 +47,12 @@ write support.
 For the exact retexture loop and verification gates, load
 [safe-retexture-workflow.md](references/safe-retexture-workflow.md).
 
+When the request applies an orthographic design to a GTA V vehicle and asks
+for native output, load
+[native-livery-workflow.md](references/native-livery-workflow.md). Only use
+that path when the runtime advertises projection authoring for the imported
+document; a preview overlay alone is not export authority.
+
 ## Refuse unsafe shortcuts
 
 - Do not save a native container merely to test whether it can be read again.
@@ -54,5 +60,8 @@ For the exact retexture loop and verification gates, load
 - Do not replace a texture by name when multiple materials can share that name.
 - Do not promise native geometry export when the negotiated fidelity is
   `preview-only`.
+- Do not route an orthographic vehicle design through a shared texture slot.
+  Native livery authoring must produce an asset-local texture and export every
+  changed native owner together.
 - Do not install output into game archives automatically. Hand the validated
   staging output to the user.

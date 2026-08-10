@@ -26,7 +26,7 @@ URL up, and no Artyx release is involved.
 | [Unity](plugins/unity) | Developer Tools | Drive the Unity Editor: scenes, GameObjects, scripts, play-mode. |
 | [Unreal Engine](plugins/unreal-engine) | Developer Tools | Automate the Unreal Editor: actors, Blueprints, levels. |
 | [Godot](plugins/godot) | Developer Tools | Launch Godot, run projects, and read debug output over MCP. |
-| [GTA V RAGE Assets](plugins/gta-v) | Creativity | Import, retexture, and export local GTA V asset bundles. |
+| [GTA V RAGE Assets](plugins/gta-v) | Creativity | Import, retexture, author liveries, and export GTA V bundles. |
 
 ## The format
 

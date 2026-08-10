@@ -26,6 +26,12 @@ Always use its dependency graph instead of guessing adjacent files.
 A single adapter can advertise several levels because support can differ by
 format and operation. The per-asset probe/handshake result is authoritative.
 
+The initial RAGE semantic-rebuild profile is deliberately narrow: one top-view
+vehicle livery on an imported YFT with supported paint materials. It may
+rewrite paint shader bindings and UV1, and it emits an asset-local YTD beside
+the changed YFT. It is not evidence that arbitrary geometry creation or a
+six-view full wrap is supported.
+
 ## Why GLB is not the native source of truth
 
 A GLB projection can carry geometry, normals, UVs, materials, images, skins,
