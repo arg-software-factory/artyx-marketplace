@@ -17,6 +17,7 @@ import { tmpdir } from 'node:os'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
+import { createHash } from 'node:crypto'
 
 const run = promisify(execFile)
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
@@ -41,7 +42,8 @@ function basePlugin(name) {
     license: 'MIT',
     extensions: {
       'ai.artyx.desktop': {
-        schemaVersion: 1,
+        schemaVersion: 3,
+        pluginClass: 'conversational',
         interface: {
           displayName: 'Demo',
           tagline: 'A demo package.',
@@ -65,8 +67,8 @@ function baseMcp() {
 function baseAssetAdapter() {
   return {
     id: 'demo-assets',
-    protocol: 'artyx.asset-adapter/1',
-    transport: { type: 'stdio', command: 'demo-asset-adapter' },
+    protocol: 'artyx.asset-adapter/2',
+    runtime: 'demo-runtime',
     accepts: [
       {
         extensions: ['demo'],
@@ -74,14 +76,36 @@ function baseAssetAdapter() {
         kinds: ['object3d']
       }
     ],
-    operations: ['probe', 'import', 'preview.3d'],
-    fidelity: ['preview-only']
+    sourceKinds: ['local-file'],
+    methods: ['handshake', 'probe', 'import'],
+    fidelity: ['preview-only'],
+    profiles: []
   }
 }
 
-function enableAssetAdapters(files, adapters = [baseAssetAdapter()]) {
+function baseNativeRuntime() {
+  return {
+    id: 'demo-runtime',
+    delivery: 'external',
+    transport: { type: 'stdio', command: 'demo-asset-adapter' }
+  }
+}
+
+function userVar(overrides = {}) {
+  return {
+    type: 'string',
+    label: 'Value',
+    description: 'A configured value.',
+    required: true,
+    ...overrides
+  }
+}
+
+function enableAssetAdapters(files, adapters = [baseAssetAdapter()], runtimes = [baseNativeRuntime()]) {
   const extension = files.plugin.extensions['ai.artyx.desktop']
-  extension.schemaVersion = 2
+  extension.schemaVersion = 3
+  extension.pluginClass = 'native-asset'
+  extension.nativeRuntimes = runtimes
   extension.assetAdapters = adapters
   return extension
 }
@@ -466,35 +490,29 @@ test('setup prose in the manifest is rejected, docsUrl is the only channel', asy
 })
 
 // ---------------------------------------------------------------------------
-// Artyx extension v2: external asset adapters.
+// Artyx extension v3: explicit conversational and native-asset plugins.
 // ---------------------------------------------------------------------------
 
-test('the frozen v1 extension remains valid', async () => {
-  const result = await validate(() => {})
-  assert.equal(result.ok, true, JSON.stringify(result.findings))
-})
-
-test('v1 cannot silently opt into v2 asset adapters', async () => {
+test('a conversational plugin cannot silently opt into native adapters', async () => {
   const result = await validate((f) => {
     f.plugin.extensions['ai.artyx.desktop'].assetAdapters = [baseAssetAdapter()]
   })
   assert.ok(codes(result).includes('artyx.extension.violation'))
 })
 
-test('v2 requires at least one asset adapter', async () => {
+test('a native-asset plugin requires runtimes and adapters', async () => {
   const result = await validate((f) => {
-    f.plugin.extensions['ai.artyx.desktop'].schemaVersion = 2
+    f.plugin.extensions['ai.artyx.desktop'].pluginClass = 'native-asset'
   })
   assert.ok(codes(result).includes('artyx.extension.violation'))
 })
 
 for (const [label, mutate] of [
-  ['an unsupported adapter protocol', (adapter) => { adapter.protocol = 'artyx.asset-adapter/2' }],
-  ['a non-stdio adapter transport', (adapter) => { adapter.transport.type = 'http' }],
-  ['an unknown adapter operation', (adapter) => { adapter.operations.push('geometry.rewrite') }],
+  ['an unsupported adapter protocol', (adapter) => { adapter.protocol = 'artyx.asset-adapter/1' }],
+  ['an unknown adapter method', (adapter) => { adapter.methods.push('geometry.rewrite') }],
   ['an extension hint with a leading dot', (adapter) => { adapter.accepts[0].extensions = ['.demo'] }]
 ]) {
-  test(`${label} is rejected by extension v2`, async () => {
+  test(`${label} is rejected by extension v3`, async () => {
     const result = await validate((f) => {
       const adapter = baseAssetAdapter()
       mutate(adapter)
@@ -504,7 +522,7 @@ for (const [label, mutate] of [
   })
 }
 
-test('an adapter-only v2 package is a real installable component', async () => {
+test('an adapter-only v3 package is a real installable component', async () => {
   const result = await validate((f) => {
     f.mcp = null
     f.skill = null
@@ -532,25 +550,27 @@ test('adapter extension hints cannot be duplicated across accepts entries', asyn
 
 test('an adapter placeholder with no declared userVar is fatal', async () => {
   const result = await validate((f) => {
-    const adapter = baseAssetAdapter()
-    adapter.transport.command = '${ADAPTER_COMMAND}'
-    enableAssetAdapters(f, [adapter])
+    const runtime = baseNativeRuntime()
+    runtime.transport.command = '${ADAPTER_COMMAND}'
+    enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
   })
-  assert.ok(codes(result).includes('artyx.adapter.undeclared-var'))
+  assert.ok(codes(result).includes('artyx.runtime.undeclared-var'))
 })
 
 test('a userVar referenced only by an adapter is not orphaned', async () => {
   const result = await validate((f) => {
     f.mcp = null
     f.skill = null
-    const adapter = baseAssetAdapter()
-    adapter.transport.command = '${ADAPTER_COMMAND}'
-    const extension = enableAssetAdapters(f, [adapter])
+    const runtime = baseNativeRuntime()
+    runtime.transport.command = '${ADAPTER_COMMAND}'
+    const extension = enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
     extension.userVars = {
-      ADAPTER_COMMAND: {
+      ADAPTER_COMMAND: userVar({
+        type: 'file',
         label: 'Adapter executable',
-        description: 'Absolute path to the externally installed adapter executable.'
-      }
+        description: 'Absolute path to the externally installed adapter executable.',
+        mustExist: true
+      })
     }
   })
   assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
@@ -559,39 +579,87 @@ test('a userVar referenced only by an adapter is not orphaned', async () => {
 
 test('host-provided plugin paths need no userVar declaration', async () => {
   const result = await validate((f) => {
-    const adapter = baseAssetAdapter()
-    adapter.transport.args = ['--data', '${PLUGIN_DATA}/adapter-cache']
-    adapter.transport.cwd = '${PLUGIN_ROOT}'
-    enableAssetAdapters(f, [adapter])
+    const runtime = baseNativeRuntime()
+    runtime.transport.args = ['--data', '${PLUGIN_DATA}/adapter-cache']
+    runtime.transport.cwd = '${PLUGIN_ROOT}'
+    enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
   })
   assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
 })
 
-test('host-provided paths are rejected in adapter command', async () => {
+test('host-provided paths are rejected in runtime command', async () => {
   const result = await validate((f) => {
-    const adapter = baseAssetAdapter()
-    adapter.transport.command = '${PLUGIN_DATA}/adapter'
-    enableAssetAdapters(f, [adapter])
+    const runtime = baseNativeRuntime()
+    runtime.transport.command = '${PLUGIN_DATA}/adapter'
+    enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
   })
-  assert.ok(codes(result).includes('artyx.adapter.command.host-var'))
+  assert.ok(codes(result).includes('artyx.runtime.command.host-var'))
 })
 
 test('malformed adapter placeholders are rejected', async () => {
   const result = await validate((f) => {
-    const adapter = baseAssetAdapter()
-    adapter.transport.args = ['${lowercase}']
-    enableAssetAdapters(f, [adapter])
+    const runtime = baseNativeRuntime()
+    runtime.transport.args = ['${lowercase}']
+    enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
   })
-  assert.ok(codes(result).includes('artyx.adapter.placeholder.invalid'))
+  assert.ok(codes(result).includes('artyx.runtime.placeholder.invalid'))
 })
 
-test('adapter command is one executable token because no shell is involved', async () => {
+test('runtime command is one executable token because no shell is involved', async () => {
+  const result = await validate((f) => {
+    const runtime = baseNativeRuntime()
+    runtime.transport.command = 'demo-asset-adapter --stdio'
+    enableAssetAdapters(f, [baseAssetAdapter()], [runtime])
+  })
+  assert.ok(codes(result).includes('artyx.runtime.command.tokens'))
+})
+
+test('an adapter cannot reference an unknown native runtime', async () => {
   const result = await validate((f) => {
     const adapter = baseAssetAdapter()
-    adapter.transport.command = 'demo-asset-adapter --stdio'
+    adapter.runtime = 'missing-runtime'
     enableAssetAdapters(f, [adapter])
   })
-  assert.ok(codes(result).includes('artyx.adapter.command.tokens'))
+  assert.ok(codes(result).includes('artyx.adapter.unknown-runtime'))
+})
+
+test('an official bundled runtime must match its declared hash', async () => {
+  const bytes = 'signed-runtime-fixture'
+  const sha256 = createHash('sha256').update(bytes).digest('hex')
+  const result = await validate((f) => {
+    f.extraFiles['runtime/adapter.exe'] = bytes
+    enableAssetAdapters(f, [baseAssetAdapter()], [{
+      id: 'demo-runtime',
+      delivery: 'bundled',
+      artifacts: [{
+        platform: 'win32',
+        arch: 'x64',
+        path: './runtime/adapter.exe',
+        sha256,
+        signature: 'a'.repeat(64),
+        keyId: 'artyx-release-1'
+      }]
+    }])
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
+})
+
+test('a non-official publisher cannot bundle a native runtime', async () => {
+  const bytes = 'signed-runtime-fixture'
+  const sha256 = createHash('sha256').update(bytes).digest('hex')
+  const result = await validate((f) => {
+    f.plugin.author.name = 'Third Party'
+    f.extraFiles['runtime/adapter.exe'] = bytes
+    enableAssetAdapters(f, [baseAssetAdapter()], [{
+      id: 'demo-runtime',
+      delivery: 'bundled',
+      artifacts: [{
+        platform: 'win32', arch: 'x64', path: './runtime/adapter.exe', sha256,
+        signature: 'a'.repeat(64), keyId: 'third-party'
+      }]
+    }])
+  })
+  assert.ok(codes(result).includes('plugin.bundled-code.publisher'))
 })
 
 // ---------------------------------------------------------------------------
@@ -602,7 +670,7 @@ test('an overlay naming a server that does not exist is fatal', async () => {
   const result = await validate((f) => {
     f.plugin.extensions['ai.artyx.desktop'].mcp = { typo: { env: { A: '${A}' } } }
     f.plugin.extensions['ai.artyx.desktop'].userVars = {
-      A: { label: 'A', description: 'A value.' }
+      A: userVar({ label: 'A', description: 'A value.' })
     }
   })
   assert.ok(codes(result).includes('artyx.overlay.unknown-server'))
@@ -618,7 +686,7 @@ test('an overlay placeholder with no declared userVar is fatal', async () => {
 test('a declared userVar nothing references is fatal', async () => {
   const result = await validate((f) => {
     f.plugin.extensions['ai.artyx.desktop'].userVars = {
-      UNUSED: { label: 'Unused', description: 'Never referenced.' }
+      UNUSED: userVar({ label: 'Unused', description: 'Never referenced.' })
     }
   })
   assert.ok(codes(result).includes('artyx.uservar.orphan'))
@@ -630,7 +698,7 @@ test('the portable file must equal the overlay with defaults applied', async () 
     const ext = f.plugin.extensions['ai.artyx.desktop']
     ext.mcp = { demo: { url: 'http://127.0.0.1:${DEMO_PORT}/' } }
     ext.userVars = {
-      DEMO_PORT: { label: 'Port', description: 'The port.', default: '8000' }
+      DEMO_PORT: userVar({ label: 'Port', description: 'The port.', default: '8000' })
     }
   })
   assert.ok(
@@ -644,7 +712,7 @@ test('a port userVar without a numeric default is fatal', async () => {
     f.mcp.mcpServers.demo = { type: 'streamable-http', url: 'http://127.0.0.1:8000/' }
     const ext = f.plugin.extensions['ai.artyx.desktop']
     ext.mcp = { demo: { url: 'http://127.0.0.1:${DEMO_PORT}/' } }
-    ext.userVars = { DEMO_PORT: { label: 'Port', description: 'The port.' } }
+    ext.userVars = { DEMO_PORT: userVar({ label: 'Port', description: 'The port.' }) }
   })
   assert.ok(codes(result).includes('artyx.uservar.port-default'))
 })

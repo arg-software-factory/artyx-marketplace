@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "gta-v",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Connect an externally installed Artyx RAGE asset adapter to local Grand Theft Auto V files. The experimental integration discovers YTD texture dictionaries and YDR, YDD, or YFT model bundles, creates Artyx-compatible previews, applies targeted texture patches, authors validated vehicle-livery projections, and exports native bundles without treating GLB as a lossless source format.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/dexyfex/CodeWalker",
@@ -10,7 +10,8 @@
   "keywords": ["3d", "gta-v", "rage", "textures", "modding"],
   "extensions": {
     "ai.artyx.desktop": {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
+      "pluginClass": "native-asset",
       "interface": {
         "displayName": "GTA V RAGE Assets",
         "tagline": "Import, retexture, author liveries, and export GTA V bundles.",
@@ -30,26 +31,38 @@
       "requires": ["dotnet"],
       "userVars": {
         "RAGE_ADAPTER_ASSEMBLY": {
+          "type": "file",
           "label": "RAGE adapter assembly",
-          "description": "Absolute path to the externally built Artyx.Rage.Sidecar.dll adapter assembly."
+          "description": "Absolute path to the externally built Artyx.Rage.Sidecar.dll adapter assembly.",
+          "required": true,
+          "mustExist": true,
+          "extensions": ["dll"]
         },
         "GTA_V_PATH": {
+          "type": "directory",
           "label": "GTA V installation",
-          "description": "Root directory of the local Grand Theft Auto V installation whose user-owned assets the adapter may read."
+          "description": "Root directory of the local Grand Theft Auto V installation whose user-owned assets the adapter may read.",
+          "required": true,
+          "mustExist": true
         }
       },
-      "assetAdapters": [
+      "nativeRuntimes": [
         {
-          "id": "rage",
-          "protocol": "artyx.asset-adapter/1",
+          "id": "rage-dotnet",
+          "delivery": "external",
           "transport": {
             "type": "stdio",
             "command": "dotnet",
             "args": ["${RAGE_ADAPTER_ASSEMBLY}", "--asset-adapter-stdio"],
-            "env": {
-              "GTA_V_PATH": "${GTA_V_PATH}"
-            }
-          },
+            "env": { "GTA_V_PATH": "${GTA_V_PATH}" }
+          }
+        }
+      ],
+      "assetAdapters": [
+        {
+          "id": "rage",
+          "protocol": "artyx.asset-adapter/2",
+          "runtime": "rage-dotnet",
           "accepts": [
             {
               "extensions": ["ytd"],
@@ -66,18 +79,39 @@
               "kinds": ["compound"]
             }
           ],
-          "operations": [
+          "sourceKinds": ["local-file", "engine-package-entry"],
+          "methods": [
+            "handshake",
             "probe",
+            "browseSources",
             "import",
-            "preview.3d",
-            "preview.image",
-            "texture.read",
-            "texture.patch",
-            "projection.author",
-            "export.native",
-            "validate"
+            "resolve",
+            "prepareMutation",
+            "compileNative",
+            "export",
+            "validate",
+            "commit",
+            "abandon",
+            "dispose",
+            "cancel"
           ],
-          "fidelity": ["targeted-patch", "semantic-rebuild", "preview-only"]
+          "fidelity": ["exact-passthrough", "targeted-patch", "semantic-rebuild", "preview-only"],
+          "profiles": [
+            {
+              "id": "gta5/texture-replacement-v1",
+              "semantic": "texture-replacement",
+              "fidelity": "targeted-patch",
+              "supportsCreate": false,
+              "supportsModify": true
+            },
+            {
+              "id": "gta5/vehicle-paint3-top-v1",
+              "semantic": "vehicle-livery",
+              "fidelity": "semantic-rebuild",
+              "supportsCreate": false,
+              "supportsModify": true
+            }
+          ]
         }
       ]
     }

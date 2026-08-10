@@ -129,7 +129,7 @@ async function validateOnePlugin({ repoRoot, contentRoot, name, report, manifest
     )
   }
 
-  await validatePluginAssets({ target, pluginRoot, report })
+  await validatePluginAssets({ target, pluginRoot, report, manifest, extension })
 }
 
 async function main() {

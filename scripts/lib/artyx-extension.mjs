@@ -53,9 +53,9 @@ function* overlayStrings(server) {
   for (const [key, value] of Object.entries(server.env ?? {})) yield [`env/${key}`, value]
 }
 
-/** Walk every process string an asset adapter can carry. */
-function* adapterTransportStrings(adapter) {
-  const transport = adapter.transport
+/** Walk every process string an external native runtime can carry. */
+function* runtimeTransportStrings(runtime) {
+  const transport = runtime.transport
   if (typeof transport.command === 'string') yield ['command', transport.command]
   if (typeof transport.cwd === 'string') yield ['cwd', transport.cwd]
   for (const [index, arg] of (transport.args ?? []).entries()) yield [`args/${index}`, arg]
@@ -198,6 +198,80 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
     }
   }
 
+  const runtimeIds = new Set()
+  const runtimes = new Map()
+  for (const [index, runtime] of (extension.nativeRuntimes ?? []).entries()) {
+    const pointer = `plugin.json /extensions/ai.artyx.desktop/nativeRuntimes/${index}`
+    if (runtimeIds.has(runtime.id)) {
+      report.fatal(
+        'artyx.runtime.duplicate-id',
+        target,
+        `${pointer}/id`,
+        `Native runtime id "${runtime.id}" is declared more than once.`
+      )
+    }
+    runtimeIds.add(runtime.id)
+    runtimes.set(runtime.id, runtime)
+
+    if (runtime.delivery === 'bundled') {
+      if (extension.pluginClass !== 'native-asset') {
+        report.fatal(
+          'artyx.runtime.bundled-class',
+          target,
+          pointer,
+          'Bundled runtimes are legal only for native-asset plugins.'
+        )
+      }
+      continue
+    }
+
+    for (const [field, value] of runtimeTransportStrings(runtime)) {
+      const matches = [...String(value).matchAll(ANY_PLACEHOLDER)]
+      for (const match of matches) {
+        const name = match[1]
+        if (!/^[A-Z][A-Z0-9_]*$/.test(name)) {
+          report.fatal(
+            'artyx.runtime.placeholder.invalid',
+            target,
+            `${pointer}/transport/${field}`,
+            `Placeholder "${match[0]}" is invalid. Use an uppercase declared userVar, ` +
+              '${PLUGIN_ROOT}, or ${PLUGIN_DATA}.'
+          )
+          continue
+        }
+        if (HOST_VARS.has(name)) {
+          if (field === 'command') {
+            report.fatal(
+              'artyx.runtime.command.host-var',
+              target,
+              `${pointer}/transport/${field}`,
+              `${match[0]} is not expanded in a runtime command. Use a literal executable or a declared userVar.`
+            )
+          }
+          continue
+        }
+        referenced.add(name)
+        if (!userVars[name]) {
+          report.fatal(
+            'artyx.runtime.undeclared-var',
+            target,
+            `${pointer}/transport/${field}`,
+            `\${${name}} is not declared in userVars.`
+          )
+        }
+      }
+    }
+
+    if (!runtime.transport.command.includes('${') && /\s/.test(runtime.transport.command)) {
+      report.fatal(
+        'artyx.runtime.command.tokens',
+        target,
+        `${pointer}/transport/command`,
+        'command is one executable token. Put arguments in transport.args; the host never invokes a shell.'
+      )
+    }
+  }
+
   const adapterIds = new Set()
   for (const [index, adapter] of (extension.assetAdapters ?? []).entries()) {
     const pointer = `plugin.json /extensions/ai.artyx.desktop/assetAdapters/${index}`
@@ -212,6 +286,15 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
       )
     }
     adapterIds.add(adapter.id)
+
+    if (!runtimes.has(adapter.runtime)) {
+      report.fatal(
+        'artyx.adapter.unknown-runtime',
+        target,
+        `${pointer}/runtime`,
+        `Adapter "${adapter.id}" references unknown native runtime "${adapter.runtime}".`
+      )
+    }
 
     const hintedExtensions = new Set()
     for (const [acceptIndex, accept] of adapter.accepts.entries()) {
@@ -229,64 +312,17 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
       }
     }
 
-    for (const [field, value] of adapterTransportStrings(adapter)) {
-      const matches = [...String(value).matchAll(ANY_PLACEHOLDER)]
-      for (const match of matches) {
-        const name = match[1]
-        if (!/^[A-Z][A-Z0-9_]*$/.test(name)) {
-          report.fatal(
-            'artyx.adapter.placeholder.invalid',
-            target,
-            `${pointer}/transport/${field}`,
-            `Placeholder "${match[0]}" is invalid. Use an uppercase declared userVar, ` +
-              '${PLUGIN_ROOT}, or ${PLUGIN_DATA}.'
-          )
-          continue
-        }
-        if (HOST_VARS.has(name)) {
-          if (field === 'command') {
-            report.fatal(
-              'artyx.adapter.command.host-var',
-              target,
-              `${pointer}/transport/${field}`,
-              `${match[0]} is not expanded in adapter command. Use a literal executable or a ` +
-                'declared userVar for the executable path; host paths are available only in ' +
-                'args, env values, and cwd.'
-            )
-          }
-          continue
-        }
-        referenced.add(name)
-        if (!userVars[name]) {
-          report.fatal(
-            'artyx.adapter.undeclared-var',
-            target,
-            `${pointer}/transport/${field}`,
-            `\${${name}} is not declared in userVars, so the adapter process would receive ` +
-              'an unresolved placeholder.'
-          )
-        }
-      }
-
-      const withoutPlaceholders = String(value).replace(ANY_PLACEHOLDER, '')
-      if (withoutPlaceholders.includes('${')) {
+    const profileIds = new Set()
+    for (const profile of adapter.profiles) {
+      if (profileIds.has(profile.id)) {
         report.fatal(
-          'artyx.adapter.placeholder.invalid',
+          'artyx.adapter.duplicate-profile',
           target,
-          `${pointer}/transport/${field}`,
-          'Malformed placeholder. Every "${" must have a closing "}".'
+          `${pointer}/profiles`,
+          `Profile "${profile.id}" is declared more than once.`
         )
       }
-    }
-
-    if (!adapter.transport.command.includes('${') && /\s/.test(adapter.transport.command)) {
-      report.fatal(
-        'artyx.adapter.command.tokens',
-        target,
-        `${pointer}/transport/command`,
-        'command is one executable token. Put arguments in transport.args; the host never ' +
-          'invokes a shell.'
-      )
+      profileIds.add(profile.id)
     }
   }
 
@@ -328,8 +364,9 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
       )
     }
   }
-  for (const [index, adapter] of (extension.assetAdapters ?? []).entries()) {
-    const command = adapter.transport.command
+  for (const [index, runtime] of (extension.nativeRuntimes ?? []).entries()) {
+    if (runtime.delivery !== 'external') continue
+    const command = runtime.transport.command
     if (command.includes('${')) continue
     const executable = command.replaceAll('\\', '/').split('/').pop()
     if (RUNTIME_COMMANDS.has(executable) && !requires.has(executable)) {
@@ -337,7 +374,7 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
         'artyx.requires.missing',
         target,
         'plugin.json /extensions/ai.artyx.desktop/requires',
-        `Asset adapter "${adapter.id}" launches through "${executable}". List it in ` +
+        `Native runtime "${runtime.id}" launches through "${executable}". List it in ` +
           '"requires" so the desktop can fail preflight with a clear diagnostic.'
       )
     }

@@ -23,7 +23,7 @@ function baseArgs() {
   ]
 }
 
-test('the scaffolder embeds an external adapter as extension schema v2', async () => {
+test('the scaffolder embeds an external adapter as extension schema v3', async () => {
   const { stdout } = await run(process.execPath, [
     ...baseArgs(),
     '--asset-adapter', FIXTURE,
@@ -32,9 +32,11 @@ test('the scaffolder embeds an external adapter as extension schema v2', async (
     '--skill', 'rage-assets'
   ], { cwd: REPO_ROOT })
 
-  assert.match(stdout, /"schemaVersion": 2/)
+  assert.match(stdout, /"schemaVersion": 3/)
+  assert.match(stdout, /"pluginClass": "native-asset"/)
+  assert.match(stdout, /"nativeRuntimes": \[/)
   assert.match(stdout, /"assetAdapters": \[/)
-  assert.match(stdout, /"protocol": "artyx\.asset-adapter\/1"/)
+  assert.match(stdout, /"protocol": "artyx\.asset-adapter\/2"/)
   assert.match(stdout, /"requires": \[\s*"dotnet"\s*\]/)
   assert.doesNotMatch(stdout, /adapter-scaffold-test\/mcp\.json/)
   assert.match(stdout, /Nothing was written/)

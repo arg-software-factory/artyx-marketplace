@@ -1,145 +1,82 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://artyx.ai/schemas/agent-plugins/ai.artyx.desktop/2.json",
-  "title": "Artyx Desktop plugin extension",
-  "description": "Contents of extensions[\"ai.artyx.desktop\"] in an Agent Plugins 1.0.0 manifest. This schema accepts the frozen version 1 storefront/MCP contract and version 2, which adds code-free external asset adapter declarations.",
-  "oneOf": [
-    { "$ref": "#/$defs/version1" },
-    { "$ref": "#/$defs/version2" }
+  "$id": "https://artyx.ai/schemas/agent-plugins/ai.artyx.desktop/3.json",
+  "title": "Artyx Desktop plugin extension v3",
+  "description": "Explicit conversational and native-asset plugin contract for Artyx Desktop.",
+  "type": "object",
+  "required": ["schemaVersion", "pluginClass", "interface"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 3 },
+    "pluginClass": { "enum": ["conversational", "native-asset"] },
+    "interface": { "$ref": "#/$defs/interface" },
+    "compatibility": { "$ref": "#/$defs/compatibility" },
+    "requires": { "$ref": "#/$defs/requires" },
+    "userVars": { "$ref": "#/$defs/userVars" },
+    "mcp": { "$ref": "#/$defs/mcpOverlay" },
+    "nativeRuntimes": { "$ref": "#/$defs/nativeRuntimes" },
+    "assetAdapters": { "$ref": "#/$defs/assetAdapters" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "pluginClass": { "const": "conversational" } } },
+      "then": {
+        "not": { "anyOf": [{ "required": ["nativeRuntimes"] }, { "required": ["assetAdapters"] }] }
+      }
+    },
+    {
+      "if": { "properties": { "pluginClass": { "const": "native-asset" } } },
+      "then": { "required": ["nativeRuntimes", "assetAdapters"] }
+    }
   ],
   "$defs": {
-    "version1": {
-      "title": "Artyx Desktop extension version 1",
-      "type": "object",
-      "required": ["schemaVersion", "interface"],
-      "additionalProperties": false,
-      "properties": {
-        "schemaVersion": {
-          "const": 1,
-          "description": "Version of this extension object only."
-        },
-        "interface": { "$ref": "#/$defs/interface" },
-        "compatibility": { "$ref": "#/$defs/compatibility" },
-        "requires": { "$ref": "#/$defs/requires" },
-        "userVars": { "$ref": "#/$defs/userVars" },
-        "mcp": { "$ref": "#/$defs/mcpOverlay" }
-      }
-    },
-    "version2": {
-      "title": "Artyx Desktop extension version 2",
-      "type": "object",
-      "required": ["schemaVersion", "interface", "assetAdapters"],
-      "additionalProperties": false,
-      "properties": {
-        "schemaVersion": {
-          "const": 2,
-          "description": "Version of this extension object only. Version 2 adds external asset adapters."
-        },
-        "interface": { "$ref": "#/$defs/interface" },
-        "compatibility": { "$ref": "#/$defs/compatibility" },
-        "requires": { "$ref": "#/$defs/requires" },
-        "userVars": { "$ref": "#/$defs/userVars" },
-        "mcp": { "$ref": "#/$defs/mcpOverlay" },
-        "assetAdapters": { "$ref": "#/$defs/assetAdapters" }
-      }
-    },
     "interface": {
-      "title": "Storefront presentation",
       "type": "object",
       "required": ["displayName", "tagline", "category", "docsUrl"],
       "additionalProperties": false,
       "properties": {
-        "displayName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 40,
-          "description": "Product name as written by its vendor."
-        },
-        "tagline": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 100,
-          "description": "One line for the storefront card."
-        },
-        "category": {
-          "enum": ["Creativity", "Developer Tools"],
-          "description": "Closed storefront category set."
-        },
-        "docsUrl": {
-          "type": "string",
-          "pattern": "^https://",
-          "description": "Upstream installation and runtime documentation."
-        },
-        "capabilities": {
-          "type": "array",
-          "uniqueItems": true,
-          "minItems": 1,
-          "items": { "enum": ["Interactive", "Read", "Write"] }
-        },
-        "brandColor": {
-          "type": "string",
-          "pattern": "^#[0-9a-fA-F]{6}$"
-        },
-        "prompts": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1 }
-        },
-        "experimental": {
-          "type": "boolean",
-          "description": "Marks the integration as unproven. Absent means false."
-        }
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "tagline": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "category": { "enum": ["Creativity", "Developer Tools"] },
+        "docsUrl": { "type": "string", "pattern": "^https://" },
+        "capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["Interactive", "Read", "Write"] } },
+        "brandColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "prompts": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "experimental": { "type": "boolean" }
       }
     },
     "compatibility": {
-      "title": "Desktop runtime gate",
       "type": "object",
       "minProperties": 1,
       "additionalProperties": false,
       "properties": {
-        "artyx": {
-          "type": "string",
-          "pattern": "^>=\\d+\\.\\d+\\.\\d+$"
-        },
-        "platforms": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": { "enum": ["darwin", "win32", "linux"] }
-        }
+        "artyx": { "type": "string", "pattern": "^>=\\d+\\.\\d+\\.\\d+$" },
+        "platforms": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["darwin", "win32", "linux"] } }
       }
     },
-    "requires": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 },
-      "description": "Advisory runtime executables the desktop preflights before process spawn."
-    },
+    "requires": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
     "userVars": {
-      "title": "Values the user supplies at install time",
       "type": "object",
       "minProperties": 1,
-      "description": "Declares every user placeholder used by the MCP overlay or an asset adapter transport. PLUGIN_ROOT and PLUGIN_DATA are host-provided for adapter args, env values, and cwd and must not be declared.",
-      "propertyNames": {
-        "pattern": "^[A-Z][A-Z0-9_]*$",
-        "not": { "enum": ["PLUGIN_ROOT", "PLUGIN_DATA"] }
-      },
-      "additionalProperties": {
-        "type": "object",
-        "required": ["label", "description"],
-        "additionalProperties": false,
-        "properties": {
-          "label": { "type": "string", "minLength": 1, "maxLength": 60 },
-          "description": { "type": "string", "minLength": 1 },
-          "default": { "type": "string" },
-          "secret": { "type": "boolean" }
-        }
+      "propertyNames": { "pattern": "^[A-Z][A-Z0-9_]*$", "not": { "enum": ["PLUGIN_ROOT", "PLUGIN_DATA"] } },
+      "additionalProperties": { "$ref": "#/$defs/userVar" }
+    },
+    "userVar": {
+      "type": "object",
+      "required": ["type", "label", "description", "required"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["directory", "file", "string", "secret", "boolean"] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "description": { "type": "string", "minLength": 1 },
+        "required": { "type": "boolean" },
+        "default": { "type": ["string", "boolean"] },
+        "mustExist": { "type": "boolean" },
+        "extensions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9+_-]*$" } },
+        "pattern": { "type": "string" }
       }
     },
     "mcpOverlay": {
-      "title": "Per-server patch applied on top of portable mcp.json",
       "type": "object",
       "minProperties": 1,
       "additionalProperties": {
@@ -148,148 +85,120 @@
         "additionalProperties": false,
         "properties": {
           "url": { "type": "string", "minLength": 1 },
-          "headers": {
-            "type": "object",
-            "minProperties": 1,
-            "additionalProperties": { "type": "string" }
-          },
+          "headers": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
           "command": { "type": "string", "minLength": 1 },
           "args": { "type": "array", "items": { "type": "string" } },
-          "env": {
-            "type": "object",
-            "minProperties": 1,
-            "propertyNames": { "not": { "enum": ["PLUGIN_ROOT", "PLUGIN_DATA"] } },
-            "additionalProperties": { "type": "string" }
-          },
+          "env": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
           "cwd": { "type": "string", "minLength": 1 }
         }
       }
     },
-    "assetAdapters": {
-      "title": "External asset adapter registrations",
+    "nativeRuntimes": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/assetAdapter" },
-      "description": "Code-free declarations consumed directly by Artyx Desktop. Adapter handshake and probe results are authoritative; accepts entries are discovery hints."
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/nativeRuntime" }
     },
-    "assetAdapter": {
-      "type": "object",
-      "required": ["id", "protocol", "transport", "accepts", "operations", "fidelity"],
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 64,
-          "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
-          "description": "Plugin-local adapter identifier. Runtime identity is plugin-name:id."
+    "nativeRuntime": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["id", "delivery", "transport"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "delivery": { "const": "external" },
+            "transport": { "$ref": "#/$defs/stdioTransport" }
+          }
         },
-        "protocol": {
-          "const": "artyx.asset-adapter/1",
-          "description": "Direct host protocol spoken over the declared stdio transport."
-        },
-        "transport": { "$ref": "#/$defs/assetAdapterTransport" },
-        "accepts": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/assetAdapterAccept" },
-          "description": "Static discovery hints. They never bypass runtime probe."
-        },
-        "operations": {
-          "type": "array",
-          "minItems": 2,
-          "uniqueItems": true,
-          "items": {
-            "enum": [
-              "probe",
-              "import",
-              "preview.3d",
-              "preview.image",
-              "texture.read",
-              "texture.patch",
-              "projection.author",
-              "export.native",
-              "validate"
-            ]
-          },
-          "allOf": [
-            { "contains": { "const": "probe" } },
-            { "contains": { "const": "import" } }
-          ],
-          "description": "Advertised static upper bound. Runtime handshake narrows it per installation and asset."
-        },
-        "fidelity": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "enum": [
-              "exact-passthrough",
-              "targeted-patch",
-              "semantic-rebuild",
-              "preview-only"
-            ]
+        {
+          "type": "object",
+          "required": ["id", "delivery", "artifacts"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "$ref": "#/$defs/id" },
+            "delivery": { "const": "bundled" },
+            "artifacts": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["platform", "arch", "path", "sha256", "signature", "keyId"],
+                "additionalProperties": false,
+                "properties": {
+                  "platform": { "enum": ["darwin", "win32", "linux"] },
+                  "arch": { "enum": ["x64", "arm64"] },
+                  "path": { "type": "string", "pattern": "^\\./" },
+                  "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                  "signature": { "type": "string", "minLength": 64 },
+                  "keyId": { "type": "string", "minLength": 1 }
+                }
+              }
+            }
           }
         }
-      }
+      ]
     },
-    "assetAdapterTransport": {
+    "stdioTransport": {
       "type": "object",
       "required": ["type", "command"],
       "additionalProperties": false,
       "properties": {
         "type": { "const": "stdio" },
-        "command": {
-          "type": "string",
-          "minLength": 1,
-          "description": "External executable token or path. May use a declared userVar, but not PLUGIN_ROOT or PLUGIN_DATA. Never executed through a shell."
-        },
-        "args": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "env": {
-          "type": "object",
-          "minProperties": 1,
-          "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
-          "additionalProperties": { "type": "string" }
-        },
+        "command": { "type": "string", "minLength": 1 },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "env": { "type": "object", "additionalProperties": { "type": "string" } },
         "cwd": { "type": "string", "minLength": 1 }
       }
     },
-    "assetAdapterAccept": {
+    "assetAdapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/assetAdapter" }
+    },
+    "assetAdapter": {
+      "type": "object",
+      "required": ["id", "protocol", "runtime", "accepts", "sourceKinds", "methods", "fidelity", "profiles"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "protocol": { "const": "artyx.asset-adapter/2" },
+        "runtime": { "$ref": "#/$defs/id" },
+        "accepts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/accept" } },
+        "sourceKinds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "methods": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["handshake", "probe", "browseSources", "import", "resolve", "prepareMutation", "compileNative", "export", "validate", "commit", "abandon", "dispose", "cancel"] },
+          "allOf": [{ "contains": { "const": "handshake" } }, { "contains": { "const": "probe" } }, { "contains": { "const": "import" } }]
+        },
+        "fidelity": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["exact-passthrough", "targeted-patch", "semantic-rebuild", "preview-only"] } },
+        "profiles": { "type": "array", "items": { "$ref": "#/$defs/profile" } }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": ["id", "semantic", "fidelity", "supportsCreate", "supportsModify"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "semantic": { "type": "string", "minLength": 1 },
+        "fidelity": { "enum": ["exact-passthrough", "targeted-patch", "semantic-rebuild", "preview-only"] },
+        "supportsCreate": { "type": "boolean" },
+        "supportsModify": { "type": "boolean" }
+      }
+    },
+    "accept": {
       "type": "object",
       "required": ["extensions", "kinds"],
       "additionalProperties": false,
       "properties": {
-        "extensions": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9+_-]*$",
-            "description": "Lowercase extension without a leading dot."
-          }
-        },
-        "mediaTypes": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9!#$&^_.+-]*/[a-z0-9][a-z0-9!#$&^_.+-]*$"
-          }
-        },
-        "kinds": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "enum": ["object3d", "image", "texture-collection", "compound"]
-          }
-        }
+        "extensions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9+_-]*$" } },
+        "mediaTypes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 3 } },
+        "kinds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["object3d", "image", "texture-collection", "compound"] } }
       }
-    }
+    },
+    "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$" }
   }
 }

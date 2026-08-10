@@ -1,0 +1,101 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "goldsrc",
+  "version": "0.1.0",
+  "description": "Inspect, preview, retexture, restore, and semantically compile authorized GoldSrc Studio Model MDL v10 assets through a local external adapter. Exact restoration preserves the opaque native bundle; edited exports use explicit StudioMDL profiles and structural validation rather than pretending GLB is a universal inverse format.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://developer.valvesoftware.com/wiki/StudioMDL",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["3d", "goldsrc", "half-life", "counter-strike", "mdl", "modding"],
+  "extensions": {
+    "ai.artyx.desktop": {
+      "schemaVersion": 3,
+      "pluginClass": "native-asset",
+      "interface": {
+        "displayName": "GoldSrc Studio Models",
+        "tagline": "Inspect, retexture, and compile GoldSrc MDL v10 assets.",
+        "category": "Creativity",
+        "docsUrl": "https://developer.valvesoftware.com/wiki/StudioMDL",
+        "capabilities": ["Interactive", "Read", "Write"],
+        "brandColor": "#D7812B",
+        "prompts": [
+          "Import an authorized GoldSrc MDL, show its indexed texture surfaces, and prepare a validated native export."
+        ],
+        "experimental": true
+      },
+      "compatibility": {
+        "artyx": ">=0.8.0",
+        "platforms": ["darwin", "win32", "linux"]
+      },
+      "userVars": {
+        "GOLDSRC_PYTHON": {
+          "type": "file",
+          "label": "Python executable",
+          "description": "Python 3.11 or newer used to run the external GoldSrc adapter.",
+          "required": true,
+          "mustExist": true
+        },
+        "GOLDSRC_ADAPTER_ROOT": {
+          "type": "directory",
+          "label": "GoldSrc adapter root",
+          "description": "Root of the locally installed goldsrc-roundtrip-lab adapter source.",
+          "required": true,
+          "mustExist": true
+        },
+        "STUDIOMDL_PATH": {
+          "type": "file",
+          "label": "StudioMDL executable",
+          "description": "Optional user-supplied compiler required only by semantic compile profiles.",
+          "required": false,
+          "mustExist": true
+        }
+      },
+      "nativeRuntimes": [
+        {
+          "id": "goldsrc-python",
+          "delivery": "external",
+          "transport": {
+            "type": "stdio",
+            "command": "${GOLDSRC_PYTHON}",
+            "args": ["${GOLDSRC_ADAPTER_ROOT}/scripts/asset_adapter_stdio.py"],
+            "env": { "STUDIOMDL_PATH": "${STUDIOMDL_PATH}" }
+          }
+        }
+      ],
+      "assetAdapters": [
+        {
+          "id": "goldsrc-mdl-v10",
+          "protocol": "artyx.asset-adapter/2",
+          "runtime": "goldsrc-python",
+          "accepts": [
+            {
+              "extensions": ["mdl"],
+              "mediaTypes": ["application/x-goldsrc-studio-model"],
+              "kinds": ["object3d", "compound"]
+            }
+          ],
+          "sourceKinds": ["local-file", "directory-entry"],
+          "methods": ["handshake", "probe", "browseSources", "import", "resolve", "prepareMutation", "compileNative", "export", "validate", "commit", "abandon", "dispose", "cancel"],
+          "fidelity": ["exact-passthrough", "targeted-patch", "semantic-rebuild", "preview-only"],
+          "profiles": [
+            {
+              "id": "goldsrc/model-retexture-v1",
+              "semantic": "texture-replacement",
+              "fidelity": "semantic-rebuild",
+              "supportsCreate": false,
+              "supportsModify": true
+            },
+            {
+              "id": "goldsrc/static-prop-from-glb-v1",
+              "semantic": "static-prop",
+              "fidelity": "semantic-rebuild",
+              "supportsCreate": true,
+              "supportsModify": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

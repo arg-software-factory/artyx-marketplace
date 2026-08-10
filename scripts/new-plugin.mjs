@@ -335,10 +335,12 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
   if (transport === 'none') {
     for (const spec of userVarSpecs) {
       userVars[spec.name] = {
+        type: 'string',
         label: humanizeVarName(spec.name),
         description: spec.default
           ? `Value consumed by the external asset adapter. Defaults to "${spec.default}".`
           : 'Value consumed by the external asset adapter. TODO: describe where it comes from.',
+        required: true,
         ...(spec.default ? { default: spec.default } : {})
       }
     }
@@ -379,9 +381,12 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
     }
     overlayServer.url = url.replace(portRegex, `:\${${portVar.name}}`)
     userVars[portVar.name] = {
+      type: 'string',
       label: humanizeVarName(portVar.name),
       description: `Port where the ${serverName} server is listening. Defaults to ${portVar.default}.`,
-      default: portVar.default
+      required: true,
+      default: portVar.default,
+      pattern: '^[0-9]{2,5}$'
     }
     return { userVars, overlayServer, portableEnv }
   }
@@ -398,12 +403,14 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
     }
     env[spec.name] = `\${${spec.name}}`
     userVars[spec.name] = {
+      type: 'string',
       label: humanizeVarName(spec.name),
       description: spec.default
         ? `Value for ${spec.name}, passed to the ${serverName} server as an environment ` +
           `variable. Defaults to "${spec.default}".`
         : `Value for ${spec.name}, passed to the ${serverName} server as an environment ` +
           'variable. TODO: describe where this value comes from.',
+      required: true,
       ...(spec.default ? { default: spec.default } : {})
     }
     if (spec.default) portableEnv[spec.name] = spec.default
@@ -427,10 +434,12 @@ function buildPluginManifest({
   userVars,
   overlayServer,
   serverName,
-  assetAdapters
+  assetAdapters,
+  nativeRuntimes
 }) {
   const extension = {
-    schemaVersion: assetAdapters.length > 0 ? 2 : 1,
+    schemaVersion: 3,
+    pluginClass: assetAdapters.length > 0 ? 'native-asset' : 'conversational',
     interface: {
       displayName: display,
       tagline,
@@ -444,7 +453,10 @@ function buildPluginManifest({
   if (requires.length > 0) extension.requires = requires
   if (Object.keys(userVars).length > 0) extension.userVars = userVars
   if (Object.keys(overlayServer).length > 0) extension.mcp = { [serverName]: overlayServer }
-  if (assetAdapters.length > 0) extension.assetAdapters = assetAdapters
+  if (assetAdapters.length > 0) {
+    extension.nativeRuntimes = nativeRuntimes
+    extension.assetAdapters = assetAdapters
+  }
 
   return {
     $schema: PLUGIN_SCHEMA_URL,
@@ -563,6 +575,7 @@ async function appendCatalogEntry(name) {
 
 async function loadAssetAdapters(files) {
   const adapters = []
+  const runtimes = []
   for (const file of files) {
     const path = resolve(REPO_ROOT, file)
     let parsed
@@ -580,20 +593,28 @@ async function loadAssetAdapters(files) {
         `--asset-adapter "${file}" must contain one descriptor object or a non-empty array of them.`
       )
     }
-    adapters.push(...entries)
+    for (const entry of entries) {
+      if (!entry.runtime || !entry.adapter) {
+        throw new ScaffoldError(
+          `--asset-adapter "${file}" must contain { runtime, adapter } Protocol v2 descriptors.`
+        )
+      }
+      runtimes.push(entry.runtime)
+      adapters.push(entry.adapter)
+    }
   }
-  return adapters
+  return { adapters, runtimes }
 }
 
-function buildPlan(options, userVarSpecs, assetAdapters) {
+function buildPlan(options, userVarSpecs, assetAdapters, nativeRuntimes) {
   const serverName = options.name
   const requires = new Set()
   if (options.transport === 'stdio') {
     const token = options.command.split('/').pop()
     if (RUNTIME_COMMANDS.has(token)) requires.add(token)
   }
-  for (const adapter of assetAdapters) {
-    const command = adapter?.transport?.command
+  for (const runtime of nativeRuntimes) {
+    const command = runtime?.delivery === 'external' ? runtime?.transport?.command : null
     if (typeof command !== 'string' || command.includes('${')) continue
     const token = command.replaceAll('\\', '/').split('/').pop()
     if (RUNTIME_COMMANDS.has(token)) requires.add(token)
@@ -617,7 +638,8 @@ function buildPlan(options, userVarSpecs, assetAdapters) {
     userVars,
     overlayServer,
     serverName,
-    assetAdapters
+    assetAdapters,
+    nativeRuntimes
   })
 
   const mcpManifest = buildMcpManifest({
@@ -730,8 +752,8 @@ async function main() {
     )
   }
 
-  const assetAdapters = await loadAssetAdapters(options.assetAdapterFiles)
-  const plan = buildPlan(options, userVarSpecs, assetAdapters)
+  const { adapters: assetAdapters, runtimes: nativeRuntimes } = await loadAssetAdapters(options.assetAdapterFiles)
+  const plan = buildPlan(options, userVarSpecs, assetAdapters, nativeRuntimes)
 
   if (options.dryRun) {
     printDryRun(options, plan)

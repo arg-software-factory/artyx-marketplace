@@ -6,6 +6,7 @@
 
 import { readdir, readFile, lstat, stat } from 'node:fs/promises'
 import { join, extname } from 'node:path'
+import { createHash } from 'node:crypto'
 
 import Ajv from 'ajv/dist/2020.js'
 import { parse as parseYaml } from 'yaml'
@@ -72,9 +73,17 @@ async function walk(dir, base = '') {
   return out
 }
 
-export async function validatePluginAssets({ target, pluginRoot, report: reportRaw }) {
+export async function validatePluginAssets({ target, pluginRoot, report: reportRaw, manifest, extension }) {
   const report = reportRaw.scoped(AXIS.ARTYX)
   const entries = await walk(pluginRoot)
+  const bundled = new Map()
+  for (const runtime of extension?.nativeRuntimes ?? []) {
+    if (runtime.delivery !== 'bundled') continue
+    for (const artifact of runtime.artifacts) {
+      bundled.set(artifact.path.replace(/^\.\//, ''), artifact)
+    }
+  }
+  const officialPublisher = manifest?.author?.name === 'Artyx'
 
   for (const entry of entries) {
     if (entry.kind === 'symlink') {
@@ -101,12 +110,42 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
       continue
     }
     if (entry.kind === 'file' && CODE_EXTENSIONS.has(extname(entry.rel).toLowerCase())) {
+      const declaration = bundled.get(entry.rel)
+      if (declaration && officialPublisher) continue
       report.fatal(
         'plugin.bundled-code',
         target,
         entry.rel,
         `Executable code (${extname(entry.rel)}) must not ship inside a plugin. Plugins are ` +
           'configuration and documentation only.'
+      )
+    }
+  }
+
+  for (const [rel, declaration] of bundled) {
+    if (!officialPublisher) {
+      report.fatal(
+        'plugin.bundled-code.publisher',
+        target,
+        rel,
+        'Bundled native runtimes are restricted to the Artyx official publisher.'
+      )
+      continue
+    }
+    let bytes
+    try {
+      bytes = await readFile(join(pluginRoot, rel))
+    } catch {
+      report.fatal('plugin.bundled-code.missing', target, rel, 'Declared bundled artifact is missing.')
+      continue
+    }
+    const actual = createHash('sha256').update(bytes).digest('hex')
+    if (actual !== declaration.sha256) {
+      report.fatal(
+        'plugin.bundled-code.hash',
+        target,
+        rel,
+        `Bundled artifact SHA-256 is ${actual}, manifest declares ${declaration.sha256}.`
       )
     }
   }
