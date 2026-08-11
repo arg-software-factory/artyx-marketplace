@@ -13,14 +13,14 @@
  * shows, as a single "How to install" button, so a plugin without one leaves
  * the user with nowhere to go.
  *
- *   node scripts/new-plugin.mjs --name blender --display Blender \
+ *   node tooling/scripts/new-plugin.mjs --name blender --display Blender \
  *     --tagline "Build and animate 3D scenes in a live Blender session." \
  *     --category Creativity --docs https://www.blender.org/lab/mcp-server/ \
  *     --transport streamable-http \
  *     --url http://127.0.0.1:8000/ --user-var BLENDER_MCP_PORT=8000 \
  *     --skill blender-mcp
  *
- *   node scripts/new-plugin.mjs --name godot --display Godot \
+ *   node tooling/scripts/new-plugin.mjs --name godot --display Godot \
  *     --tagline "Launch Godot, run projects, and read debug output." \
  *     --category "Developer Tools" \
  *     --docs https://github.com/Coding-Solo/godot-mcp#readme \
@@ -28,8 +28,8 @@
  *     --command npx --arg -y --arg @coding-solo/godot-mcp \
  *     --user-var GODOT_PATH --skill godot-mcp
  *
- *   node scripts/new-plugin.mjs --interactive
- *   node scripts/new-plugin.mjs --name foo ... --dry-run
+ *   node tooling/scripts/new-plugin.mjs --interactive
+ *   node tooling/scripts/new-plugin.mjs --name foo ... --dry-run
  *
  *   Asset adapter descriptors are JSON objects loaded with --asset-adapter.
  *   They remain declarations: no adapter executable is copied into the plugin.
@@ -63,7 +63,7 @@ import { spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
 
 const SELF_DIR = dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = resolve(SELF_DIR, '..')
+const REPO_ROOT = resolve(SELF_DIR, '..', '..')
 const PLUGINS_DIR = join(REPO_ROOT, 'plugins')
 const CATALOG_PATH = join(REPO_ROOT, '.agents', 'plugins', 'marketplace.json')
 
@@ -90,7 +90,7 @@ function escapeRegExp(value) {
 }
 
 function usage() {
-  return `Usage: node scripts/new-plugin.mjs --name <name> --display <name> \\
+  return `Usage: node tooling/scripts/new-plugin.mjs --name <name> --display <name> \\
   --tagline <text> --category <Creativity|Developer Tools> \\
   --docs <https://upstream-install-docs> \\
   --transport <streamable-http|stdio|none> \\
@@ -724,7 +724,7 @@ function printChecklist(options) {
 }
 
 async function runValidator(name) {
-  const result = spawnSync(process.execPath, [join(REPO_ROOT, 'scripts', 'validate.mjs'), '--plugin', name], {
+  const result = spawnSync(process.execPath, [join(REPO_ROOT, 'tooling', 'scripts', 'validate.mjs'), '--plugin', name], {
     cwd: REPO_ROOT,
     stdio: 'inherit'
   })
@@ -767,7 +767,7 @@ async function main() {
   console.log(
     `\nvalidator exit code: ${validatorStatus}. A nonzero code here is expected right after ` +
       'scaffolding — work through the checklist above, then re-run ' +
-      `"node scripts/validate.mjs --plugin ${options.name}" until it is 0.`
+      `"node tooling/scripts/validate.mjs --plugin ${options.name}" until it is 0.`
   )
 }
 

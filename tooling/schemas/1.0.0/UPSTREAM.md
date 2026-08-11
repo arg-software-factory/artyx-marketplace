@@ -25,7 +25,7 @@ Run the schema first, then apply the rules it cannot express.
 files set `additionalProperties: false`, so a validator reports an unknown
 top-level field in `plugin.json` as an error. The specification says to report
 that field and ignore it, then keep loading. The same applies to a non-object
-`extensions` value. `scripts/lib/spec-plugin.mjs` re-classifies those two error
+`extensions` value. `tooling/scripts/lib/spec-plugin.mjs` re-classifies those two error
 shapes and treats every other error as fatal.
 
 **The schema is looser than the specification everywhere else.** It cannot
@@ -34,7 +34,7 @@ carries no user information and no fragment, and uses HTTPS off loopback; that
 two header names must not collide when compared case-insensitively; that
 `mcp.json` must target the same specification version as `plugin.json`; or that
 `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` are the only placeholders. Those rules
-live in `scripts/lib/spec-mcp.mjs`.
+live in `tooling/scripts/lib/spec-mcp.mjs`.
 
 ## Checking for drift
 
@@ -52,8 +52,8 @@ work that has nothing to do with it.
 A published canonical schema identifier is never reassigned to different
 contents, so a new version always arrives as a new directory.
 
-1. Add `schemas/<version>/` with both files and a new `UPSTREAM.md`.
-2. Teach `scripts/lib/spec-plugin.mjs` and `spec-mcp.mjs` the new identifier.
+1. Add `tooling/schemas/<version>/` with both files and a new `UPSTREAM.md`.
+2. Teach `tooling/scripts/lib/spec-plugin.mjs` and `spec-mcp.mjs` the new identifier.
 3. Migrate each plugin's `$schema` pair. Both files in one plugin must always
    name the same version.
 

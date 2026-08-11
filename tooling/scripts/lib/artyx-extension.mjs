@@ -2,7 +2,7 @@
  * extensions["ai.artyx.desktop"].
  *
  * Agent Plugins gives this namespace no meaning, so everything here is our own
- * contract. The structural half lives in schemas/artyx/extension.schema.json;
+ * contract. The structural half lives in tooling/schemas/artyx/extension.schema.json;
  * this file adds the rules that tie the overlay back to the portable mcp.json.
  *
  * The overlay exists for one reason. The specification forbids expanding
@@ -32,7 +32,7 @@ let compiledExtensionValidator = null
 
 async function loadExtensionValidator(repoRoot) {
   if (compiledExtensionValidator) return compiledExtensionValidator
-  const schemaPath = join(repoRoot, 'schemas', 'artyx', 'extension.schema.json')
+  const schemaPath = join(repoRoot, 'tooling', 'schemas', 'artyx', 'extension.schema.json')
   const schema = JSON.parse(await readFile(schemaPath, 'utf8'))
   const ajv = new Ajv({ allErrors: true, strict: false })
   compiledExtensionValidator = ajv.compile(schema)

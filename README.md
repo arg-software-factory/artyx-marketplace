@@ -43,7 +43,7 @@ specification says every other client must ignore.
 Artyx extension `schemaVersion: 3` explicitly classifies packages as
 `conversational` or `native-asset`. Native runtimes, adapters, typed setup and
 semantic authoring profiles are documented in
-[docs/asset-adapters.md](docs/asset-adapters.md).
+[tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md).
 
 ## Quickstart
 
@@ -55,5 +55,10 @@ npm test          # the validator's own test suite
 
 `npm run validate` is what CI runs on every pull request. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for how to add or change a plugin, and
-[docs/spec-conformance.md](docs/spec-conformance.md) for where and why this
+[tooling/docs/spec-conformance.md](tooling/docs/spec-conformance.md) for where and why this
 repository is stricter than the specification.
+
+The repository intentionally has five content surfaces: `.agents/` is the
+catalog, `plugins/` and `agents/` are installable packages, `.github/` is CI,
+and `tooling/` contains every schema, validator and maintainer document. No
+adapter executable or session-specific development state belongs here.

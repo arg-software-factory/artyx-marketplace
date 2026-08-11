@@ -19,7 +19,7 @@ The specification requires `plugin.json` to be a JSON object; beyond that,
 plugin for using a non-semver value, or none.
 
 This repository's validator requires `X.Y.Z` semantic versioning as
-**publishing policy**, not client behavior: `scripts/lib/spec-plugin.mjs`
+**publishing policy**, not client behavior: `tooling/scripts/lib/spec-plugin.mjs`
 reports a missing or non-semver `version` as `plugin.version.missing` /
 `plugin.version.not-semver`, both warnings under `--spec-report` and both
 blocking under the default (`npm run validate`) mode. Artyx uses `version`
@@ -32,12 +32,12 @@ requirement is ours, not the specification's, and a plugin without a
 ## Two validator modes, one CI gate
 
 ```bash
-node scripts/validate.mjs                # publishing policy — what CI runs
-node scripts/validate.mjs --spec-report  # exactly what a conformant client does
+node tooling/scripts/validate.mjs                # publishing policy — what CI runs
+node tooling/scripts/validate.mjs --spec-report  # exactly what a conformant client does
 ```
 
 The two modes read the same findings and disagree only about which ones fail
-the run. `scripts/lib/report.mjs` tags every finding with an axis, `spec` or
+the run. `tooling/scripts/lib/report.mjs` tags every finding with an axis, `spec` or
 `artyx`, and every finding also carries a severity from the specification's
 own failure ladder (`fatal`, `component`, `entry`, `ignored`, `warn`).
 `--spec-report` fails only on a `spec`-axis `fatal` — the one severity that
@@ -78,7 +78,7 @@ Neither check runs under `--spec-report`; both are `artyx`-axis.
 
 ## Asset adapters live only in Artyx's namespace
 
-`assetAdapters` in extension `schemaVersion: 2` is another Artyx publishing and
+`assetAdapters` in extension `schemaVersion: 3` is another Artyx publishing and
 runtime contract, not an Agent Plugins component. A portable client ignores it
 without validation and can still load the package's skills or MCP servers.
 Artyx Desktop additionally registers the declared external process as a direct,

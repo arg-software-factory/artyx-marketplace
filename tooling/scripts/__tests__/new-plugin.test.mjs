@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 const run = promisify(execFile)
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
-const SCAFFOLDER = join(REPO_ROOT, 'scripts', 'new-plugin.mjs')
-const FIXTURE = 'scripts/__tests__/fixtures/rage-asset-adapter.json'
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
+const SCAFFOLDER = join(REPO_ROOT, 'tooling', 'scripts', 'new-plugin.mjs')
+const FIXTURE = 'tooling/scripts/__tests__/fixtures/rage-asset-adapter.json'
 
 function baseArgs() {
   return [

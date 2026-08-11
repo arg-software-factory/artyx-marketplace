@@ -32,7 +32,7 @@ let compiledMcpValidator = null
 
 async function loadMcpValidator(repoRoot) {
   if (compiledMcpValidator) return compiledMcpValidator
-  const schemaPath = join(repoRoot, 'schemas', SPEC_VERSION, 'mcp.schema.json')
+  const schemaPath = join(repoRoot, 'tooling', 'schemas', SPEC_VERSION, 'mcp.schema.json')
   const schema = JSON.parse(await readFile(schemaPath, 'utf8'))
   const ajv = new Ajv({ allErrors: true, strict: false })
   compiledMcpValidator = ajv.compile(schema)

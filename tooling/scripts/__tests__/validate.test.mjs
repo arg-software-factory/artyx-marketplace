@@ -20,8 +20,8 @@ import { promisify } from 'node:util'
 import { createHash } from 'node:crypto'
 
 const run = promisify(execFile)
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
-const VALIDATOR = join(REPO_ROOT, 'scripts', 'validate.mjs')
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..')
+const VALIDATOR = join(REPO_ROOT, 'tooling', 'scripts', 'validate.mjs')
 
 const PLUGIN_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json'
 const MCP_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/mcp.schema.json'

@@ -32,7 +32,7 @@ it as `artyx.overlay.default-drift`: **substitute every declared default
 into the overlay, and you must get `mcp.json` back, exactly.** If it does not
 match, the two files disagree about what "default" means, and a client that
 never reads the Artyx namespace behaves differently from Artyx for no stated
-reason. `scripts/new-plugin.mjs` generates this pair correctly for the two
+reason. `tooling/scripts/new-plugin.mjs` generates this pair correctly for the two
 patterns this repository actually uses — see "Worked examples" below.
 
 ## Layout
@@ -72,7 +72,7 @@ at the top level. And a non-object `extensions` is ignored, but a non-object
 | --- | --- | --- |
 | `$schema` | yes | Must be exactly `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`. Selects which rules apply. Never fetched — a client, and this repository's validator, always reads a local copy. |
 | `name` | yes | 1-64 characters: lowercase letters, digits, `.`, `-`. No leading, trailing, or doubled `-`, and no `..`. Must equal the `plugins/<name>` directory and the catalog entry. |
-| `version` | policy | The specification accepts any string, or none. Artyx's publishing policy requires semver (`X.Y.Z`) — see [docs/spec-conformance.md](docs/spec-conformance.md) for why. |
+| `version` | policy | The specification accepts any string, or none. Artyx's publishing policy requires semver (`X.Y.Z`) — see [tooling/docs/spec-conformance.md](tooling/docs/spec-conformance.md) for why. |
 | `description` | policy | Long-form prose for the storefront detail view. Optional in the specification; Artyx warns when it is missing. |
 | `author` | no | `{ name, email, url }`, all optional strings. |
 | `homepage` | no | The underlying tool's own site — not this repository. |
@@ -115,7 +115,7 @@ not fail the build. Use `streamable-http` for anything new.
 ## The `ai.artyx.desktop` extension
 
 Nothing in this section is an Agent Plugins rule. It is Artyx's own contract,
-defined in `schemas/artyx/extension.schema.json`, and every other client
+defined in `tooling/schemas/artyx/extension.schema.json`, and every other client
 ignores it.
 
 | Field | Required | Notes |
@@ -126,7 +126,7 @@ ignores it.
 | `requires` | no | Advisory runtime executables, e.g. `["npx"]` or `["uvx"]`. The desktop preflights these before it spawns a stdio server, so a missing runtime fails with a clear message instead of `ENOENT`. |
 | `userVars` | no | Declares every `${VAR}` the `mcp` overlay or an asset-adapter transport uses. See below. |
 | `mcp` | no | The per-server overlay patch described above. |
-| `assetAdapters` | v2 requires it | Code-free declarations of external loaders/exporters invoked directly by Desktop. See [docs/asset-adapters.md](docs/asset-adapters.md). |
+| `assetAdapters` | native-asset requires it | Code-free declarations of Protocol v2 loaders/exporters invoked directly by Desktop. See [tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md). |
 
 `interface`:
 
@@ -184,7 +184,7 @@ So:
 - `plugins/<name>/README.md` is for reviewers and contributors of *this*
   package. It is not shipped to users, so it is not a place to smuggle setup
   prose back in.
-- `node scripts/check-doc-links.mjs` fetches every `docsUrl` along with the
+- `node tooling/scripts/check-doc-links.mjs` fetches every `docsUrl` along with the
   markdown links, so a page that rots or silently relocates is reported.
 
 ## Authoring a skill
@@ -272,7 +272,7 @@ and `description` only, no `default`, and the portable `mcp.json` carries no
 "mcp": { "godot": { "env": { "GODOT_PATH": "${GODOT_PATH}" } } }
 ```
 
-`scripts/new-plugin.mjs` generates exactly these two overlay shapes — a
+`tooling/scripts/new-plugin.mjs` generates exactly these two overlay shapes — a
 `_PORT` var templated into a `streamable-http` url, or any var on a `stdio`
 transport templated into `env`. Anything else, it refuses to guess at and
 tells you why; wire it by hand following the tables above.
@@ -285,7 +285,7 @@ cd artyx-marketplace
 npm ci
 
 # Scaffold. This example is the stdio-plus-env shape (see "Worked examples").
-node scripts/new-plugin.mjs \
+node tooling/scripts/new-plugin.mjs \
   --name my-tool --display "My Tool" \
   --tagline "One line for the storefront card." \
   --category "Developer Tools" \
@@ -301,7 +301,7 @@ node scripts/new-plugin.mjs \
 
 npm run validate                    # Agent Plugins 1.0.0 + Artyx policy
 npm test                            # the validator's own test suite
-node scripts/check-doc-links.mjs    # every URL you wrote must resolve
+node tooling/scripts/check-doc-links.mjs    # every URL you wrote must resolve
 
 git checkout -b feat/my-tool-plugin
 git add plugins/my-tool .agents/plugins/marketplace.json
@@ -319,6 +319,6 @@ CI runs `npm run validate` and `npm test` on every pull request
 (`.github/workflows/validate.yml`). A weekly job separately checks the
 vendored schemas for drift and opens an issue if they move — it never blocks
 a PR, because an upstream edit has nothing to do with the change you are
-proposing. See [docs/spec-conformance.md](docs/spec-conformance.md) for the
+proposing. See [tooling/docs/spec-conformance.md](tooling/docs/spec-conformance.md) for the
 handful of places this repository is stricter than the specification, and
 why.

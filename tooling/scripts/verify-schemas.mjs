@@ -4,7 +4,7 @@
  * are byte-identical.
  *
  * A client must never fetch a schema while it loads a plugin, so the copies in
- * schemas/1.0.0/ are what validation actually uses. This script is the only
+ * tooling/schemas/1.0.0/ are what validation actually uses. This script is the only
  * place in the repository that touches the network, and it never runs as part
  * of validation.
  */
@@ -14,7 +14,7 @@ import { createHash } from 'node:crypto'
 import { join, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
 const VERSION = '1.0.0'
 
 const FILES = [
@@ -28,7 +28,7 @@ async function main() {
   let drifted = 0
 
   for (const file of FILES) {
-    const localPath = join(REPO_ROOT, 'schemas', VERSION, file.name)
+    const localPath = join(REPO_ROOT, 'tooling', 'schemas', VERSION, file.name)
     const local = await readFile(localPath, 'utf8')
 
     let upstream

@@ -10,12 +10,13 @@
     "node": ">=20"
   },
   "scripts": {
-    "validate": "node scripts/validate.mjs",
-    "validate:spec": "node scripts/validate.mjs --spec-report",
-    "new-plugin": "node scripts/new-plugin.mjs",
-    "schemas:verify": "node scripts/verify-schemas.mjs",
-    "links": "node scripts/check-doc-links.mjs",
-    "test": "node --test scripts/__tests__/*.test.mjs"
+    "validate": "node tooling/scripts/validate.mjs",
+    "validate:spec": "node tooling/scripts/validate.mjs --spec-report",
+    "new-plugin": "node tooling/scripts/new-plugin.mjs",
+    "schemas:verify": "node tooling/scripts/verify-schemas.mjs",
+    "links": "node tooling/scripts/check-doc-links.mjs",
+    "test": "node --test tooling/scripts/__tests__/*.test.mjs",
+    "check": "npm run validate && npm test && npm run links"
   },
   "devDependencies": {
     "ajv": "^8.17.1",

@@ -33,7 +33,9 @@ const compiled = new Map()
 
 async function loadValidator(repoRoot, name) {
   if (compiled.has(name)) return compiled.get(name)
-  const schema = JSON.parse(await readFile(join(repoRoot, 'schemas', 'artyx', name), 'utf8'))
+  const schema = JSON.parse(
+    await readFile(join(repoRoot, 'tooling', 'schemas', 'artyx', name), 'utf8')
+  )
   const validator = new Ajv({ allErrors: true, strict: false }).compile(schema)
   compiled.set(name, validator)
   return validator

@@ -3,11 +3,11 @@
  * Validate every package in this repository against Agent Plugins 1.0.0 and
  * against Artyx's own rules.
  *
- *   node scripts/validate.mjs                  # publishing policy (what CI runs)
- *   node scripts/validate.mjs --spec-report    # exactly what the standard says
- *   node scripts/validate.mjs --plugin blender # one package
- *   node scripts/validate.mjs --json           # machine-readable
- *   node scripts/validate.mjs --root ./tests/fixtures/x   # validate elsewhere
+ *   node tooling/scripts/validate.mjs                  # publishing policy (what CI runs)
+ *   node tooling/scripts/validate.mjs --spec-report    # exactly what the standard says
+ *   node tooling/scripts/validate.mjs --plugin blender # one package
+ *   node tooling/scripts/validate.mjs --json           # machine-readable
+ *   node tooling/scripts/validate.mjs --root ./tests/fixtures/x   # validate elsewhere
  *
  * Default mode is stricter than the specification, on purpose. A conformant
  * client tolerates an unknown top-level field and a skipped server; a curated
@@ -33,7 +33,7 @@ import {
 } from './lib/artyx-repo.mjs'
 
 const SELF_DIR = dirname(fileURLToPath(import.meta.url))
-const REPO_ROOT = resolve(SELF_DIR, '..')
+const REPO_ROOT = resolve(SELF_DIR, '..', '..')
 
 function parseArgs(argv) {
   const options = { json: false, mode: 'strict', plugin: null, root: REPO_ROOT }

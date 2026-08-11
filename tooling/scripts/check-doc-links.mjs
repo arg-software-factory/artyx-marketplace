@@ -29,8 +29,8 @@ async function findMarkdownFilesInDirectory(directory) {
 
 /**
  * A root is either a single markdown file (README.md, CONTRIBUTING.md) or a
- * directory walked recursively (plugins/, docs/). A missing root is not an
- * error — not every checkout has a docs/ directory yet.
+ * directory walked recursively (plugins/, tooling/docs/). A missing root is
+ * not an error — not every checkout has maintainer documentation yet.
  */
 async function findMarkdownFiles(rootPath) {
   let stats;
@@ -192,12 +192,12 @@ function printResults(checked, failures, redirects = []) {
 
 async function main() {
   const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
-  const repoRoot = path.resolve(scriptDirectory, '..');
+  const repoRoot = path.resolve(scriptDirectory, '..', '..');
   const roots = [
     path.join(repoRoot, 'plugins'),
     path.join(repoRoot, 'README.md'),
     path.join(repoRoot, 'CONTRIBUTING.md'),
-    path.join(repoRoot, 'docs'),
+    path.join(repoRoot, 'tooling', 'docs'),
   ];
   const [markdownUrls, manifestUrls] = await Promise.all([
     collectUrls(roots),

@@ -44,7 +44,7 @@ let compiledPluginValidator = null
 
 export async function loadPluginValidator(repoRoot) {
   if (compiledPluginValidator) return compiledPluginValidator
-  const schemaPath = join(repoRoot, 'schemas', SPEC_VERSION, 'plugin.schema.json')
+  const schemaPath = join(repoRoot, 'tooling', 'schemas', SPEC_VERSION, 'plugin.schema.json')
   const schema = JSON.parse(await readFile(schemaPath, 'utf8'))
   const ajv = new Ajv({ allErrors: true, strict: false })
   compiledPluginValidator = ajv.compile(schema)
