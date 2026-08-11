@@ -1,6 +1,6 @@
 name: Schema drift
 
-# Checks the vendored Agent Plugins schemas (schemas/1.0.0/) against the
+# Checks the vendored Agent Plugins schemas (tooling/schemas/1.0.0/) against the
 # canonical upstream copies. This never runs on a pull request and never
 # blocks one: an upstream edit has nothing to do with the change a
 # contributor is proposing, and the specification itself says a client must
@@ -54,12 +54,12 @@ jobs:
               labels: ['schema-drift'],
               body: [
                 'The weekly `schema-drift` workflow found that the vendored copy of the',
-                'Agent Plugins 1.0.0 schemas (`schemas/1.0.0/`) no longer matches the',
+                'Agent Plugins 1.0.0 schemas (`tooling/schemas/1.0.0/`) no longer matches the',
                 'canonical upstream files.',
                 '',
                 'Run `npm run schemas:verify` locally, review what changed, and update',
-                '`schemas/1.0.0/` and `schemas/1.0.0/UPSTREAM.md` together — see',
-                '`schemas/1.0.0/UPSTREAM.md` for the upgrade steps.',
+                '`tooling/schemas/1.0.0/` and `tooling/schemas/1.0.0/UPSTREAM.md` together — see',
+                '`tooling/schemas/1.0.0/UPSTREAM.md` for the upgrade steps.',
                 '',
                 `Failed run: ${runUrl}`
               ].join('\n')

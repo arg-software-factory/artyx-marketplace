@@ -1,19 +1,18 @@
-<!-- UMEM:BEGIN (managed by universal-memory; do not edit inside) -->
-## Project Memory (universal - Claude Code / Codex / Cursor)
+# Artyx Marketplace
 
-Shared persistent memory for this repo lives in `./memories/` (ASCII markdown).
-ALWAYS read `./memories/INDEX.md` first - it maps the guideline + history files.
+This repository is a curated, code-free catalog. Keep its public structure
+small and predictable:
 
-Quick map:
-- memories/coding.md        - coding guidelines + conventions (follow these)
-- memories/ui-ux.md         - UI / UX standards
-- memories/system-design.md - architecture and system design
-- memories/backend.md       - how the backend works
-- memories/decisions.md     - key decisions and the why
-- memories/LATEST.md        - what the previous session did
+- `.agents/` owns the marketplace index.
+- `plugins/` and `agents/` contain installable packages.
+- `tooling/` owns schemas, validation, scaffolding, tests, and maintainer docs.
+- `.github/` owns automation.
 
-Last session: 2026-07-17T1520 (claude) - Pure-client marketplace plugin cleanup
+Do not add adapter executables, game data, compiler binaries, build outputs, or
+session-specific agent memory. Conversational plugins may ship skills and MCP
+configuration. Native-asset plugins may additionally declare isolated external
+or signed official runtimes and Protocol v2 adapters, but runtime code remains
+in its engine repository.
 
-When you learn a durable convention or decision, write it to the matching
-memories/ file. This block is kept in sync automatically at session end.
-<!-- UMEM:END -->
+Run `npm run check` before committing. Also run `npm run schemas:verify` when
+changing vendored schema inputs.

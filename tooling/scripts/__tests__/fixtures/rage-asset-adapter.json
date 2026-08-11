@@ -1,0 +1,34 @@
+{
+  "runtime": {
+    "id": "rage-dotnet",
+    "delivery": "external",
+    "transport": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["${RAGE_ADAPTER_ASSEMBLY}", "--asset-adapter-stdio"],
+      "env": { "GTA_V_PATH": "${GTA_V_PATH}" }
+    }
+  },
+  "adapter": {
+    "id": "rage",
+    "protocol": "artyx.asset-adapter/2",
+    "runtime": "rage-dotnet",
+    "accepts": [
+      {
+        "extensions": ["ytd"],
+        "mediaTypes": ["application/x-rockstar-rage-texture-dictionary"],
+        "kinds": ["texture-collection"]
+      },
+      {
+        "extensions": ["ydr"],
+        "mediaTypes": ["application/x-rockstar-rage-drawable"],
+        "kinds": ["object3d"]
+      },
+      { "extensions": ["ydd", "yft"], "kinds": ["compound"] }
+    ],
+    "sourceKinds": ["local-file", "engine-package-entry"],
+    "methods": ["handshake", "probe", "import"],
+    "fidelity": ["targeted-patch", "semantic-rebuild", "preview-only"],
+    "profiles": []
+  }
+}

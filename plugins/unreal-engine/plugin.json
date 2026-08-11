@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "unreal-engine",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "description": "Operate a live Unreal Editor over MCP through Unreal Engine 5.8's native in-editor MCP server: spawn actors, build and compile Blueprints, compose levels, configure lighting, inspect Slate widgets, and run automation tests. Connects to the editor's local HTTP endpoint — no third-party server to install. The bundled skills lean into list-first, compile-then-spawn discipline because editor writes silently no-op more than any other DCC.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor",
@@ -10,7 +10,8 @@
   "keywords": ["game-engine", "editor", "blueprints", "unreal"],
   "extensions": {
     "ai.artyx.desktop": {
-      "schemaVersion": 1,
+      "schemaVersion": 3,
+      "pluginClass": "conversational",
       "interface": {
         "displayName": "Unreal Engine",
         "tagline": "Automate the Unreal Editor: actors, Blueprints, levels.",
@@ -26,9 +27,12 @@
       "compatibility": { "artyx": ">=0.7.91" },
       "userVars": {
         "UNREAL_MCP_PORT": {
+          "type": "string",
           "label": "Unreal MCP port",
           "description": "Port of Unreal's built-in MCP server. It defaults to 8000.",
-          "default": "8000"
+          "required": true,
+          "default": "8000",
+          "pattern": "^[0-9]{2,5}$"
         }
       },
       "mcp": {

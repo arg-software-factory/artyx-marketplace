@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "blender",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Drive a connected Blender session over the official Blender Lab MCP server: inspect blend files and objects, execute bpy code, query the bundled Python API docs, capture viewport screenshots, and verify every change. Artyx connects over HTTP to a locally running blender-mcp process that relays to the Blender MCP add-on.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://www.blender.org/lab/mcp-server/",
@@ -10,7 +10,8 @@
   "keywords": ["3d", "dcc", "animation", "blender"],
   "extensions": {
     "ai.artyx.desktop": {
-      "schemaVersion": 1,
+      "schemaVersion": 3,
+      "pluginClass": "conversational",
       "interface": {
         "displayName": "Blender",
         "tagline": "Build and animate 3D scenes in a live Blender session.",
@@ -25,9 +26,12 @@
       "compatibility": { "artyx": ">=0.7.91" },
       "userVars": {
         "BLENDER_MCP_PORT": {
+          "type": "string",
           "label": "Blender MCP port",
           "description": "The port blender-mcp was started on. It listens on 8000 unless you passed --port.",
-          "default": "8000"
+          "required": true,
+          "default": "8000",
+          "pattern": "^[0-9]{2,5}$"
         }
       },
       "mcp": {

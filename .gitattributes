@@ -1,0 +1,4 @@
+# Canonical Agent Plugins schemas are byte-for-byte vendored artifacts.
+# `schemas:verify` hashes the working tree, so Windows checkout must not
+# rewrite their LF line endings through core.autocrlf.
+/schemas/1.0.0/*.json text eol=lf

@@ -1,7 +1,0 @@
-# Decisions Log
-
-> Key technical decisions and the WHY. Append-only, newest at the bottom.
-
-- (date) decision - why
-- Marketplace main stays on current desktop MCP schema (stdio + http only); no per-platform .mcp.json overrides until a later wave
-- 2026-08-08: install instructions live upstream, referenced by `interface.docsUrl` (required, https). The `companion` block (title/summary/steps/prerequisites/downloadUrl) is deleted from the schema, all four plugins, the scaffolder and the desktop. Why: mirroring a vendor's procedure in the manifest coupled Artyx to it — a changed pip command meant a manifest edit, a merge and a re-poll, and until then the app printed wrong steps in its own voice — and it cannot scale to a community catalog nobody here can keep accurate. A URL updates itself: the vendor edits their page, the next poll carries it, no release. The desktop renders one "How to install" button that opens the URL in the system browser and ships no setup prose of its own. Plugin READMEs are for reviewers, not a back door for the same steps; `check-doc-links.mjs` now fetches every docsUrl so a rotted one is caught.

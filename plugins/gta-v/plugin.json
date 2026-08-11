@@ -1,0 +1,120 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gta-v",
+  "version": "0.3.0",
+  "description": "Connect an externally installed Artyx RAGE asset adapter to local Grand Theft Auto V files. The experimental integration discovers YTD texture dictionaries and YDR, YDD, or YFT model bundles, creates Artyx-compatible previews, applies targeted texture patches, authors validated vehicle-livery projections, and exports native bundles without treating GLB as a lossless source format.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/dexyfex/CodeWalker",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["3d", "gta-v", "rage", "textures", "modding"],
+  "extensions": {
+    "ai.artyx.desktop": {
+      "schemaVersion": 3,
+      "pluginClass": "native-asset",
+      "interface": {
+        "displayName": "GTA V RAGE Assets",
+        "tagline": "Import, retexture, author liveries, and export GTA V bundles.",
+        "category": "Creativity",
+        "docsUrl": "https://github.com/dexyfex/CodeWalker/blob/master/README.md",
+        "capabilities": ["Interactive", "Read", "Write"],
+        "brandColor": "#315C46",
+        "prompts": [
+          "Import a local GTA V YDR or YFT bundle, show its editable texture slots, and prepare a safe native retexture or vehicle-livery export."
+        ],
+        "experimental": true
+      },
+      "compatibility": {
+        "artyx": ">=0.7.91",
+        "platforms": ["win32"]
+      },
+      "requires": ["dotnet"],
+      "userVars": {
+        "RAGE_ADAPTER_ASSEMBLY": {
+          "type": "file",
+          "label": "RAGE adapter assembly",
+          "description": "Absolute path to the externally built Artyx.Rage.Sidecar.dll adapter assembly.",
+          "required": true,
+          "mustExist": true,
+          "extensions": ["dll"]
+        },
+        "GTA_V_PATH": {
+          "type": "directory",
+          "label": "GTA V installation",
+          "description": "Root directory of the local Grand Theft Auto V installation whose user-owned assets the adapter may read.",
+          "required": true,
+          "mustExist": true,
+          "contains": ["GTA5.exe", "update/update.rpf"]
+        }
+      },
+      "nativeRuntimes": [
+        {
+          "id": "rage-dotnet",
+          "delivery": "external",
+          "transport": {
+            "type": "stdio",
+            "command": "dotnet",
+            "args": ["${RAGE_ADAPTER_ASSEMBLY}", "--asset-adapter-stdio"],
+            "env": { "GTA_V_PATH": "${GTA_V_PATH}" }
+          }
+        }
+      ],
+      "assetAdapters": [
+        {
+          "id": "rage",
+          "protocol": "artyx.asset-adapter/2",
+          "runtime": "rage-dotnet",
+          "accepts": [
+            {
+              "extensions": ["ytd"],
+              "mediaTypes": ["application/x-rockstar-rage-texture-dictionary"],
+              "kinds": ["texture-collection"]
+            },
+            {
+              "extensions": ["ydr"],
+              "mediaTypes": ["application/x-rockstar-rage-drawable"],
+              "kinds": ["object3d"]
+            },
+            {
+              "extensions": ["ydd", "yft"],
+              "kinds": ["compound"]
+            }
+          ],
+          "sourceKinds": ["local-file", "engine-package-entry", "rpf-entry"],
+          "methods": [
+            "handshake",
+            "probe",
+            "browseSources",
+            "import",
+            "resolve",
+            "prepareMutation",
+            "compileNative",
+            "export",
+            "validate",
+            "commit",
+            "abandon",
+            "dispose",
+            "cancel"
+          ],
+          "fidelity": ["exact-passthrough", "targeted-patch", "semantic-rebuild", "preview-only"],
+          "profiles": [
+            {
+              "id": "gta5/texture-replacement-v1",
+              "semantic": "texture-replacement",
+              "fidelity": "targeted-patch",
+              "supportsCreate": false,
+              "supportsModify": true
+            },
+            {
+              "id": "gta5/vehicle-paint3-top-v1",
+              "semantic": "vehicle-livery",
+              "fidelity": "semantic-rebuild",
+              "supportsCreate": false,
+              "supportsModify": true
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
