@@ -28,7 +28,7 @@
       "requires": ["npx"],
       "userVars": {
         "GODOT_PATH": {
-          "type": "file",
+          "type": "string",
           "label": "Godot executable",
           "description": "Your Godot 4 binary, for example /Applications/Godot.app/Contents/MacOS/Godot on macOS or C:\\Program Files\\Godot\\Godot.exe on Windows. Leave it as \"godot\" to use the one on PATH; the server also searches the usual install folders.",
           "required": false,

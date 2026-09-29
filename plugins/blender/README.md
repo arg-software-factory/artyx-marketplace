@@ -16,10 +16,12 @@ them, and a copy only goes stale.
 Artyx  <= MCP over stdio =>  blender-mcp  <= TCP 127.0.0.1:9876 =>  MCP add-on in Blender
 ```
 
-- The client starts `blender-mcp` itself with `uvx`, pinned to the `v1.0.3`
-  tag of the Blender Lab repository (see `mcp.json`). The first start clones
-  and resolves it, which takes a few seconds; later starts are fast. It needs
-  `uv` and `git` on the machine.
+- The client starts `blender-mcp` itself with `uvx`, pinned to commit
+  `2cea8d566dde07fbac28a61d698909d69724e853` of the Blender Lab repository,
+  which is the `v1.0.3` tag (see `mcp.json`; JSON has no comments, so the tag
+  is recorded here). A commit cannot move the way a tag can. The first start
+  clones and resolves it, which takes a few seconds; later starts are fast. It
+  needs `uv` and `git` on the machine (`requires`).
 - The artist opens Blender 5.1 or later with the MCP add-on enabled. The
   add-on listens on port 9876 by default.
 - The only setting is that port, `BLENDER_MCP_PORT`. Artyx probes
