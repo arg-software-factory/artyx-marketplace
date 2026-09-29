@@ -14,6 +14,6 @@ Set frame range and cache type before baking. Any change to topology, modifier o
 
 ## Official sources
 
-- [Rigid Body](https://docs.blender.org/manual/en/4.5/physics/rigid_body/index.html)
-- [Cloth](https://docs.blender.org/manual/en/4.5/physics/cloth/index.html)
-- [Collision](https://docs.blender.org/manual/en/4.5/physics/collision.html)
+- [Rigid Body](https://docs.blender.org/manual/en/5.1/physics/rigid_body/index.html)
+- [Cloth](https://docs.blender.org/manual/en/5.1/physics/cloth/index.html)
+- [Collision](https://docs.blender.org/manual/en/5.1/physics/collision.html)

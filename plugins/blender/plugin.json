@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "blender",
-  "version": "3.0.0",
-  "description": "Drive a connected Blender session over the official Blender Lab MCP server: inspect blend files and objects, execute bpy code, query the bundled Python API docs, capture viewport screenshots, and verify every change. Artyx connects over HTTP to a locally running blender-mcp process that relays to the Blender MCP add-on.",
+  "version": "4.0.0",
+  "description": "Drive a live Blender 5.1+ session through the official Blender Lab MCP server: inspect blend files and objects, run bpy code, search the bundled Python API and manual, capture viewport screenshots, and verify every change. The client starts the server itself over stdio; the artist only opens Blender with the Lab MCP add-on enabled.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://www.blender.org/lab/mcp-server/",
   "repository": "https://github.com/arg-software-factory/artyx-marketplace",
@@ -24,19 +24,18 @@
         ]
       },
       "compatibility": { "artyx": ">=0.7.91" },
+      "requires": ["uvx", "git"],
       "userVars": {
         "BLENDER_MCP_PORT": {
-          "type": "string",
-          "label": "Blender MCP port",
-          "description": "The port blender-mcp was started on. It listens on 8000 unless you passed --port.",
+          "type": "port",
+          "label": "Blender port",
+          "description": "The port of the MCP add-on inside Blender (Preferences > Add-ons > MCP). It is 9876 unless you changed it.",
           "required": true,
-          "default": "8000",
-          "pattern": "^[0-9]{2,5}$"
+          "default": "9876",
+          "detect": [9876, 9877, 9878, 9879]
         }
       },
-      "mcp": {
-        "blender": { "url": "http://127.0.0.1:${BLENDER_MCP_PORT}/" }
-      }
+      "check": { "tool": "get_blendfile_summary_path_info" }
     }
   }
 }

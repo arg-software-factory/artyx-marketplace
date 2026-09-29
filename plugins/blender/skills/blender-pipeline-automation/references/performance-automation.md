@@ -16,4 +16,4 @@ Report Blender version, scene frame range, engine, output path, external files, 
 
 - [Python API overview](https://docs.blender.org/api/current/info_quickstart.html)
 - [Dependency graph API](https://docs.blender.org/api/current/bpy.types.Depsgraph.html)
-- [Scene statistics](https://docs.blender.org/manual/en/4.5/scene_layout/scene/properties.html)
+- [Scene statistics](https://docs.blender.org/manual/en/5.1/scene_layout/scene/properties.html)

@@ -16,4 +16,4 @@ Seed Python `random` generators and Geometry Nodes random inputs. Record seed an
 
 - [Geometry Nodes modifier API](https://docs.blender.org/api/current/bpy.types.NodesModifier.html)
 - [Node tree API](https://docs.blender.org/api/current/bpy.types.NodeTree.html)
-- [Object instancing](https://docs.blender.org/manual/en/4.5/scene_layout/object/properties/instancing/index.html)
+- [Object instancing](https://docs.blender.org/manual/en/5.1/scene_layout/object/properties/instancing/index.html)

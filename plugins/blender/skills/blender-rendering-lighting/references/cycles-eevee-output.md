@@ -14,6 +14,6 @@ Set output resolution, pixel aspect, frame range, file format, bit depth, color 
 
 ## Official sources
 
-- [Cycles rendering](https://docs.blender.org/manual/en/4.5/render/cycles/index.html)
-- [Eevee](https://docs.blender.org/manual/en/4.5/render/eevee/index.html)
-- [Output properties](https://docs.blender.org/manual/en/4.5/render/output/properties/index.html)
+- [Cycles rendering](https://docs.blender.org/manual/en/5.1/render/cycles/index.html)
+- [Eevee](https://docs.blender.org/manual/en/5.1/render/eevee/index.html)
+- [Output properties](https://docs.blender.org/manual/en/5.1/render/output/properties/index.html)

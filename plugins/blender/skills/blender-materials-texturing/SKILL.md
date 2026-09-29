@@ -1,6 +1,6 @@
 ---
 name: blender-materials-texturing
-description: Build Blender 4.5 production materials and textures. Use for Principled BSDF PBR authoring, UV and procedural mapping, texture import, normal/roughness/metallic handling, baking, shader debugging, and material validation in Cycles or Eevee.
+description: Build Blender 5.1+ production materials and textures. Use for Principled BSDF PBR authoring, UV and procedural mapping, texture import, normal/roughness/metallic handling, baking, shader debugging, and material validation in Cycles or Eevee.
 ---
 
 # Materials and texturing

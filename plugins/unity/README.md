@@ -1,8 +1,10 @@
 # Unity
 
 Connects Artyx to the **CoplayDev Unity MCP** bridge running inside a live
-Unity Editor. Artyx launches the Python server through `uvx`; the editor-side
-package is installed from Unity's own Package Manager.
+Unity Editor. Artyx launches the Python server (`mcpforunityserver`, pinned to
+10.2.0 in `mcp.json`) through `uvx`; the editor-side package is installed from
+Unity's own Package Manager. Keep the editor package on a matching 10.x
+release.
 
 **Install instructions: [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp#readme)**
 
@@ -11,7 +13,7 @@ That URL is `interface.docsUrl` in `plugin.json`, and it is what the desktop's
 manifest — the bridge's authors own them.
 
 This plugin needs no install-time input: `mcp.json` is literal, so there are no
-`userVars` and no overlay. `uvx` must be on PATH, which the desktop preflights
+`userVars`. `uvx` must be on PATH, which the desktop preflights
 via `requires`.
 
 ## Troubleshooting

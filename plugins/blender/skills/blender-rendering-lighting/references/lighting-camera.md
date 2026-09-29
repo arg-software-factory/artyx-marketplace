@@ -10,10 +10,10 @@ Area-light size controls softness; distance and inverse-square falloff determine
 
 ## Color
 
-Blender 4.5's default AgX view transform provides highlight rolloff. Set the view transform explicitly for a project and grade only after it is fixed. Keep scene-linear lighting/material values physically plausible; use the compositor or look for presentation changes. Verify display-referred output on the destination medium and preserve intended alpha.
+Blender 5.1's default AgX view transform provides highlight rolloff. Set the view transform explicitly for a project and grade only after it is fixed. Keep scene-linear lighting/material values physically plausible; use the compositor or look for presentation changes. Verify display-referred output on the destination medium and preserve intended alpha.
 
 ## Official sources
 
-- [Cameras](https://docs.blender.org/manual/en/4.5/render/cameras.html)
-- [Lights](https://docs.blender.org/manual/en/4.5/render/lights/index.html)
-- [Color management](https://docs.blender.org/manual/en/4.5/render/color_management.html)
+- [Cameras](https://docs.blender.org/manual/en/5.1/render/cameras.html)
+- [Lights](https://docs.blender.org/manual/en/5.1/render/lights/index.html)
+- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management/index.html)

@@ -5,8 +5,9 @@ description: Operate a Godot project through the published @coding-solo/godot-mc
 
 # Godot MCP bridge
 
-Artyx spawns `@coding-solo/godot-mcp` via `npx`. The server launches its own
-Godot executable from `GODOT_PATH`; it does not attach to an open editor. Treat
+Artyx spawns `@coding-solo/godot-mcp` 0.1.1 via `npx`. The server launches its
+own Godot executable (from `GODOT_PATH`, else PATH and the usual install
+folders); it does not attach to an open editor. Treat
 every path as explicit, edit one scene operation at a time, and ask the human to
 reload an open editor after disk changes.
 

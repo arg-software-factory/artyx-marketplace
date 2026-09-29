@@ -24,14 +24,16 @@ node-tree APIs. Operators are context-dependent: before `bpy.ops`, explicitly
 set active/selected objects or use `context.temp_override`. Never rely on UI
 mode, area, or the previous call's Python locals.
 
-Use `get_python_api_docs` when a socket name, property, or enum identifier may
-have changed between Blender versions.
+Use `get_python_api_docs` or `search_api_docs` when a socket name, property, or
+enum identifier may have changed between Blender versions, and
+`search_manual_docs` for tool behaviour.
 
 ## Transactions and recovery
 
-Split a job into inspect → create → configure → verify. The HTTP bridge has a
-finite timeout; a long `execute_blender_code` call can fail after partly
-mutating Blender. Name created resources predictably, re-inspect with
+Split a job into inspect → create → configure → verify. Each tool call is one
+TCP request to the add-on, which runs the code on Blender's main thread and
+answers when it finishes; a long `execute_blender_code` call can time out after
+partly mutating Blender. Name created resources predictably, re-inspect with
 `get_objects_summary` after an error, then continue from observed state rather
 than replaying blindly. For risky edits, duplicate the datablock or place
 generated objects in an `ARTYX_` collection first.
@@ -45,12 +47,13 @@ For offline blend files, prefer `*_for_cli` summary tools or
 
 ## Version-aware API
 
-Read `bpy.app.version_string` via `execute_blender_code` or blend-file
-summaries; Blender 4.5 is the reference target. Do not hard-code renamed
-sockets or engines. For example, test node inputs by name before assigning them
-and enumerate available enum identifiers when compatibility matters. Blender 5
-action layers differ from 4.x action F-curves; isolate version-specific code
-and verify the resulting keyframes.
+Read `bpy.app.version_string` via `execute_blender_code`. Blender 5.1 is the
+floor: the official MCP add-on does not run on older versions. Do not hard-code
+renamed sockets or engines. For example, test node inputs by name before
+assigning them and enumerate available enum identifiers when compatibility
+matters. Blender 5 actions are slotted and layered: reach F-curves through the
+action's layer, strip, and the channelbag of the object's slot, not through the
+removed 4.x `action.fcurves`. Verify the resulting keyframes.
 
 ## Verification payloads
 
@@ -66,4 +69,4 @@ proves state, not aesthetics: use `get_screenshot_of_area_as_image`,
 - [Blender Lab MCP server](https://www.blender.org/lab/mcp-server/)
 - [Blender Python API](https://docs.blender.org/api/current/index.html)
 - [Operators and context](https://docs.blender.org/api/current/bpy.ops.html)
-- [Blender Manual: Python API](https://docs.blender.org/manual/en/4.5/advanced/scripting/index.html)
+- [Blender Manual: Python API](https://docs.blender.org/manual/en/5.1/advanced/scripting/index.html)

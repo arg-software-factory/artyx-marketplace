@@ -4,7 +4,7 @@
 
 Use sRGB for authored color/albedo/emission images. Use Non-Color for normal, roughness, metallic, ambient occlusion, masks, height, and packed data maps. A normal map also needs the correct tangent-space orientation and a Normal Map node. Validate alpha mode and premultiplication on the final output path; alpha behavior differs between a material preview, compositor, and exported texture.
 
-Blender 4.5 uses AgX color management by default. Grade in the intended view transform; do not “correct” a texture to compensate for a wrong display transform. Check Base Color under neutral illumination before applying artistic lights.
+Blender 5.1 uses AgX color management by default. Grade in the intended view transform; do not “correct” a texture to compensate for a wrong display transform. Check Base Color under neutral illumination before applying artistic lights.
 
 ## Baking
 
@@ -14,6 +14,6 @@ Common failures: black bake means no active image, wrong engine, missing lights/
 
 ## Official sources
 
-- [Image Texture node](https://docs.blender.org/manual/en/4.5/render/shader_nodes/textures/image.html)
-- [Render baking](https://docs.blender.org/manual/en/4.5/render/cycles/baking.html)
-- [Color management](https://docs.blender.org/manual/en/4.5/render/color_management.html)
+- [Image Texture node](https://docs.blender.org/manual/en/5.1/render/shader_nodes/textures/image.html)
+- [Render baking](https://docs.blender.org/manual/en/5.1/render/cycles/baking.html)
+- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management/index.html)

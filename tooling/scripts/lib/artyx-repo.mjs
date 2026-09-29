@@ -15,6 +15,16 @@ import { AXIS } from './report.mjs'
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const MAX_LOGO_BYTES = 256 * 1024
+/**
+ * The only top-level entries a package may have: the spec's fixed locations,
+ * our namespace directory, and the free-form files the spec names. Anything
+ * else is either a client file outside its namespace (spec 8.2) or clutter.
+ */
+const TOP_LEVEL_ENTRIES = new Set(['plugin.json', 'mcp.json', 'skills', 'ai.artyx.desktop', 'README.md', 'CHANGELOG.md'])
+const TOP_LEVEL_PREFIXES = ['LICENSE']
+
+/** Client files live under the namespace directory (Agent Plugins 8.2). */
+const LOGO_PATH = 'ai.artyx.desktop/logo.png'
 const MAX_AGENT_BODY_BYTES = 12 * 1024
 
 /**
@@ -88,6 +98,23 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
   const officialPublisher = manifest?.author?.name === 'Artyx'
 
   for (const entry of entries) {
+    if (entry.rel.includes('/')) continue
+    if (TOP_LEVEL_ENTRIES.has(entry.rel)) continue
+    if (TOP_LEVEL_PREFIXES.some((prefix) => entry.rel.startsWith(prefix))) continue
+    // A root logo.png gets its own, more specific finding below.
+    if (entry.rel === 'logo.png') continue
+    // Bundled native runtimes declare their own artifact paths.
+    if ([...bundled.keys()].some((path) => path === entry.rel || path.startsWith(`${entry.rel}/`))) continue
+    report.fatal(
+      'plugin.entry.unexpected',
+      target,
+      entry.rel,
+      `Not an allowed top-level entry. A package holds ${[...TOP_LEVEL_ENTRIES].join(', ')} ` +
+        'and LICENSE*; client files go under ai.artyx.desktop/.'
+    )
+  }
+
+  for (const entry of entries) {
     if (entry.kind === 'symlink') {
       report.fatal(
         'plugin.symlink',
@@ -152,7 +179,17 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
     }
   }
 
-  const logoPath = join(pluginRoot, 'logo.png')
+  if (await lstat(join(pluginRoot, 'logo.png')).catch(() => null)) {
+    report.fatal(
+      'plugin.logo.location',
+      target,
+      'logo.png',
+      `The logo is an Artyx client file, so it lives at ${LOGO_PATH} (Agent Plugins 8.2: ` +
+        'client-specific files go under the directory named for the namespace).'
+    )
+  }
+
+  const logoPath = join(pluginRoot, ...LOGO_PATH.split('/'))
   let logoStats
   try {
     logoStats = await lstat(logoPath)
@@ -160,28 +197,28 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
     report.fatal(
       'plugin.logo.missing',
       target,
-      'logo.png',
-      'Every plugin needs a logo.png at its root. The path is a convention, not a manifest ' +
+      LOGO_PATH,
+      `Every plugin needs a logo at ${LOGO_PATH}. The path is a convention, not a manifest ` +
         'field, so there is nothing to keep in sync.'
     )
     return
   }
   if (!logoStats.isFile()) {
-    report.fatal('plugin.logo.kind', target, 'logo.png', 'logo.png must be a regular file.')
+    report.fatal('plugin.logo.kind', target, LOGO_PATH, 'The logo must be a regular file.')
     return
   }
   if (logoStats.size > MAX_LOGO_BYTES) {
     report.fatal(
       'plugin.logo.size',
       target,
-      'logo.png',
+      LOGO_PATH,
       `${logoStats.size} bytes exceeds the ${MAX_LOGO_BYTES} byte limit. The desktop inlines ` +
         'it as a data URI.'
     )
   }
   const head = (await readFile(logoPath)).subarray(0, PNG_MAGIC.length)
   if (!head.equals(PNG_MAGIC)) {
-    report.fatal('plugin.logo.format', target, 'logo.png', 'Not a PNG (magic bytes do not match).')
+    report.fatal('plugin.logo.format', target, LOGO_PATH, 'Not a PNG (magic bytes do not match).')
   }
 }
 

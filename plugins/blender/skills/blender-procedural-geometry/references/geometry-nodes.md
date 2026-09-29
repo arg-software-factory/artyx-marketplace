@@ -16,6 +16,6 @@ Use curves for paths, cables, roads, fences, and profile sweeps; manage spline r
 
 ## Official sources
 
-- [Geometry Nodes](https://docs.blender.org/manual/en/4.5/modeling/geometry_nodes/index.html)
-- [Fields](https://docs.blender.org/manual/en/4.5/modeling/geometry_nodes/fields.html)
-- [Instances](https://docs.blender.org/manual/en/4.5/modeling/geometry_nodes/instances.html)
+- [Geometry Nodes](https://docs.blender.org/manual/en/5.1/modeling/geometry_nodes/index.html)
+- [Fields](https://docs.blender.org/manual/en/5.1/modeling/geometry_nodes/fields.html)
+- [Instances](https://docs.blender.org/manual/en/5.1/modeling/geometry_nodes/instances.html)

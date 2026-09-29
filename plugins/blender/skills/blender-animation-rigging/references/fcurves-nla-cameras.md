@@ -14,6 +14,6 @@ Frame the shot before polishing motion. Lens choice changes perspective: moving 
 
 ## Official sources
 
-- [F-Curves](https://docs.blender.org/manual/en/4.5/editors/graph_editor/fcurves/index.html)
-- [NLA Editor](https://docs.blender.org/manual/en/4.5/editors/nla/index.html)
-- [Cameras](https://docs.blender.org/manual/en/4.5/render/cameras.html)
+- [F-Curves](https://docs.blender.org/manual/en/5.1/editors/graph_editor/fcurves/index.html)
+- [NLA Editor](https://docs.blender.org/manual/en/5.1/editors/nla/index.html)
+- [Cameras](https://docs.blender.org/manual/en/5.1/render/cameras.html)

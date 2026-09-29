@@ -12,6 +12,6 @@ An action is an animation data-block, not merely timeline keys. Give actions int
 
 ## Official sources
 
-- [Armatures](https://docs.blender.org/manual/en/4.5/animation/armatures/index.html)
-- [Skinning and weights](https://docs.blender.org/manual/en/4.5/animation/armatures/skinning/index.html)
-- [Constraints](https://docs.blender.org/manual/en/4.5/animation/constraints/index.html)
+- [Armatures](https://docs.blender.org/manual/en/5.1/animation/armatures/index.html)
+- [Skinning and weights](https://docs.blender.org/manual/en/5.1/animation/armatures/skinning/index.html)
+- [Constraints](https://docs.blender.org/manual/en/5.1/animation/constraints/index.html)

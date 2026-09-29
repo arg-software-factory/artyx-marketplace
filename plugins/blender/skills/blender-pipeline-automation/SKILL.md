@@ -1,6 +1,6 @@
 ---
 name: blender-pipeline-automation
-description: Prepare robust Blender 4.5 production assets and automate repeatable work. Use for collections and assets, linking/appending, import/export, glTF/FBX/USD handoff, bpy batch automation, dependency hygiene, scene budgets, and final delivery validation.
+description: Prepare robust Blender 5.1+ production assets and automate repeatable work. Use for collections and assets, linking/appending, import/export, glTF/FBX/USD handoff, bpy batch automation, dependency hygiene, scene budgets, and final delivery validation.
 ---
 
 # Pipeline, interchange, and automation

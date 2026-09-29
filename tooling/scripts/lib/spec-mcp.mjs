@@ -62,8 +62,9 @@ function checkUrl(url, { target, pointer, server, report }) {
       `${pointer}/url`,
       `Server "${server}": a client performs no expansion in "url", so ${placeholderNames(url)
         .map((n) => `\${${n}}`)
-        .join(', ')} would be sent literally. Put the literal default here and ` +
-        'the templated form in extensions["ai.artyx.desktop"].mcp.'
+        .join(', ')} would be sent literally. Write the literal default url here; ` +
+        'to let the user change its port, declare a matching "port" userVar whose default ' +
+        'equals that port.'
     )
     return
   }
@@ -146,7 +147,7 @@ function checkHeaders(headers, { target, pointer, server, report }) {
         target,
         `${pointer}/headers/${name}`,
         `Server "${server}": a client performs no expansion in header values, so this would ` +
-          'be sent literally. Move it to extensions["ai.artyx.desktop"].mcp.'
+          'be sent literally. Write the literal value; user settings are applied by the client, never templated.'
       )
     }
     if (SECRET_SHAPED_NAME.test(name)) {
@@ -155,7 +156,7 @@ function checkHeaders(headers, { target, pointer, server, report }) {
         target,
         `${pointer}/headers/${name}`,
         `Server "${server}": headers are visible package data and must never carry a ` +
-          'credential. Declare a userVar and put the header in the Artyx overlay instead.'
+          'credential. Leave authorization to the client; Agent Plugins has no credential field.'
       )
     }
   }
@@ -213,7 +214,8 @@ function checkExpandable(value, { target, pointer, server, report, field }) {
       `${pointer}/${field}`,
       `Server "${server}": \${${name}} is not a specification placeholder, so it stays ` +
         `literal. Only ${SPEC_PLACEHOLDERS.map((p) => `\${${p}}`).join(' and ')} expand. ` +
-        'A user-supplied value belongs in extensions["ai.artyx.desktop"].mcp.'
+        'For a user setting, put a literal default in this env value and declare a userVar ' +
+        'of the same name with that default; Artyx overrides the env value with the saved setting.'
     )
   }
 }
@@ -244,7 +246,7 @@ function checkStdioServer(server, name, ctx) {
         ctx.target,
         `${ctx.pointer}/env/${key}`,
         `Server "${name}": env values are visible package data and must never carry a ` +
-          'credential. Move it to the Artyx overlay with a declared userVar.'
+          'credential (Agent Plugins 9.2). Leave credentials to the client.'
       )
     }
     checkExpandable(value, { ...ctx, server: name, field: `env/${key}` })

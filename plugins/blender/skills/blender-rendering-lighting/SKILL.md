@@ -1,6 +1,6 @@
 ---
 name: blender-rendering-lighting
-description: Produce and optimize Blender 4.5 look development and final renders. Use for camera setup, lighting, color management, Cycles or Eevee selection, render sampling, denoising, compositing, output settings, and render-performance diagnosis.
+description: Produce and optimize Blender 5.1+ look development and final renders. Use for camera setup, lighting, color management, Cycles or Eevee selection, render sampling, denoising, compositing, output settings, and render-performance diagnosis.
 ---
 
 # Lighting and rendering

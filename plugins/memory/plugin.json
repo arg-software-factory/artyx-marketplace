@@ -1,0 +1,31 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "memory",
+  "version": "1.0.0",
+  "description": "Remembers your project across chats: characters, style decisions, naming rules, asset lists, and how they relate. Runs the official Model Context Protocol memory server locally; the knowledge graph is a file in the plugin's own data folder, kept across updates. No account, no cloud.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["memory", "knowledge-graph", "project", "style-guide"],
+  "extensions": {
+    "ai.artyx.desktop": {
+      "schemaVersion": 3,
+      "pluginClass": "conversational",
+      "interface": {
+        "displayName": "Memory",
+        "tagline": "Remembers your project: characters, style decisions, naming, across chats.",
+        "category": "Creativity",
+        "docsUrl": "https://github.com/modelcontextprotocol/servers/tree/main/src/memory",
+        "capabilities": ["Read", "Write"],
+        "brandColor": "#7C5CFF",
+        "prompts": [
+          "Remember that our hero is Kael: a desert scout, cel-shaded, teal and sand palette, and every asset of his is named KAEL_<part>."
+        ]
+      },
+      "compatibility": { "artyx": ">=0.7.91" },
+      "requires": ["npx"],
+      "check": { "tool": "read_graph" }
+    }
+  }
+}

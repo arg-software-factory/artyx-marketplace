@@ -26,6 +26,8 @@ URL up, and no Artyx release is involved.
 | [Unity](plugins/unity) | Developer Tools | Drive the Unity Editor: scenes, GameObjects, scripts, play-mode. |
 | [Unreal Engine](plugins/unreal-engine) | Developer Tools | Automate the Unreal Editor: actors, Blueprints, levels. |
 | [Godot](plugins/godot) | Developer Tools | Launch Godot, run projects, and read debug output over MCP. |
+| [Game-Ready Assets](plugins/game-ready-assets) | Creativity | Budgets, topology, UVs, textures, LODs and export for any engine. |
+| [Memory](plugins/memory) | Creativity | Remembers your project: characters, style decisions, naming, across chats. |
 | [GTA V RAGE Assets](plugins/gta-v) | Creativity | Import, retexture, author liveries, and export GTA V bundles. |
 | [GoldSrc Studio Models](plugins/goldsrc) | Creativity | Inspect, retexture, and compile GoldSrc MDL v10 assets. |
 
@@ -35,13 +37,20 @@ Every plugin here is an [Agent Plugins
 1.0.0](https://agent-plugins.org/) package: a `plugin.json` manifest, an
 optional `mcp.json`, and optional `skills/`. That format is not Artyx-specific
 — any client that implements the specification can install these plugins,
-because a plugin's portable files carry no Artyx-only data. Artyx's own
-storefront data (display name, tagline, install-time prompts) lives in one
-namespaced extension block, `extensions["ai.artyx.desktop"]`, which the
-specification says every other client must ignore.
+because each `mcp.json` works with its literal values and carries no
+Artyx-only data. Artyx's own storefront data (display name, tagline, typed
+settings, a connection check) lives in one namespaced extension block,
+`extensions["ai.artyx.desktop"]`, and its client files (the logo) live in the
+`ai.artyx.desktop/` directory. The specification says every other client must
+ignore both.
+
+The catalog carries three kinds of plugins: skills and MCP (Blender, Unity,
+Unreal Engine, Godot), skills only (Game-Ready Assets), and MCP only (Memory).
 
 Artyx extension `schemaVersion: 3` explicitly classifies packages as
-`conversational` or `native-asset`. Native runtimes, adapters, typed setup and
+`conversational` or `native-asset`. How a user setting reaches an MCP server
+is described in
+[tooling/docs/spec-conformance.md](tooling/docs/spec-conformance.md#mcp-configuration-lives-only-in-mcpjson). Native runtimes, adapters, typed setup and
 semantic authoring profiles are documented in
 [tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md).
 
