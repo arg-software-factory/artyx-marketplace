@@ -16,4 +16,4 @@ Common failures: black bake means no active image, wrong engine, missing lights/
 
 - [Image Texture node](https://docs.blender.org/manual/en/5.1/render/shader_nodes/textures/image.html)
 - [Render baking](https://docs.blender.org/manual/en/5.1/render/cycles/baking.html)
-- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management.html)
+- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management/index.html)

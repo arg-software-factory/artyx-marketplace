@@ -16,4 +16,4 @@ Blender 5.1's default AgX view transform provides highlight rolloff. Set the vie
 
 - [Cameras](https://docs.blender.org/manual/en/5.1/render/cameras.html)
 - [Lights](https://docs.blender.org/manual/en/5.1/render/lights/index.html)
-- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management.html)
+- [Color management](https://docs.blender.org/manual/en/5.1/render/color_management/index.html)
