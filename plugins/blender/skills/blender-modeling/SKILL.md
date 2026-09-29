@@ -1,6 +1,6 @@
 ---
 name: blender-modeling
-description: Create and repair production-ready Blender 4.5 meshes. Use for hard-surface or organic modeling, modifiers, topology, UVs, retopology, sculpting, normal control, and export-safe mesh validation.
+description: Create and repair production-ready Blender 5.1+ meshes. Use for hard-surface or organic modeling, modifiers, topology, UVs, retopology, sculpting, normal control, and export-safe mesh validation.
 ---
 
 # Modeling and mesh quality

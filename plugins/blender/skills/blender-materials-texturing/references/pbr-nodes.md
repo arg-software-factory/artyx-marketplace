@@ -16,6 +16,6 @@ Cycles is the reference for physically-based lookdev. Eevee is appropriate for f
 
 ## Official sources
 
-- [Principled BSDF](https://docs.blender.org/manual/en/4.5/render/shader_nodes/shader/principled.html)
-- [Shader nodes](https://docs.blender.org/manual/en/4.5/render/shader_nodes/index.html)
-- [Texture coordinates](https://docs.blender.org/manual/en/4.5/render/shader_nodes/input/texture_coordinate.html)
+- [Principled BSDF](https://docs.blender.org/manual/en/5.1/render/shader_nodes/shader/principled.html)
+- [Shader nodes](https://docs.blender.org/manual/en/5.1/render/shader_nodes/index.html)
+- [Texture coordinates](https://docs.blender.org/manual/en/5.1/render/shader_nodes/input/texture_coordinate.html)

@@ -5,8 +5,8 @@
 UE 5.8 introduces the experimental **Unreal MCP** plugin. Its internal plugin identifier is
 `ModelContextProtocol`; the Editor UI calls it Unreal MCP. Enable it in **Edit > Plugins**, accept
 the Toolset Registry dependency, and restart. In Editor Preferences > General > Model Context
-Protocol, enable Auto Start, or run `ModelContextProtocol.StartServer 8000`. Artyx connects via
-`127.0.0.1:${UNREAL_MCP_PORT}` (default port 8000); do not expose the endpoint
+Protocol, enable Auto Start, or run `ModelContextProtocol.StartServer 8000`. Artyx connects to
+`http://127.0.0.1:8000/mcp`, or the port set in the plugin settings; do not expose the endpoint
 remotely because the server has no authentication.
 
 The server executes calls serially on the editor game thread. Do not issue parallel mutations and do

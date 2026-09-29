@@ -14,6 +14,6 @@ Use Multires when retaining an editable subdivision hierarchy matters; use Dynto
 
 ## Official sources
 
-- [UV editing](https://docs.blender.org/manual/en/4.5/modeling/meshes/uv/index.html)
-- [Retopology](https://docs.blender.org/manual/en/4.5/modeling/meshes/retopology.html)
-- [Sculpting](https://docs.blender.org/manual/en/4.5/sculpt_paint/sculpting/index.html)
+- [UV editing](https://docs.blender.org/manual/en/5.1/modeling/meshes/uv/index.html)
+- [Retopology](https://docs.blender.org/manual/en/5.1/modeling/meshes/retopology.html)
+- [Sculpting](https://docs.blender.org/manual/en/5.1/sculpt_paint/sculpting/index.html)

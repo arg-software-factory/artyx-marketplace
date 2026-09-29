@@ -1,6 +1,6 @@
 ---
 name: blender-simulation-vfx
-description: Build stable Blender 4.5 simulations and effects. Use for rigid and soft bodies, cloth, fluid or smoke Mantaflow domains, particle and hair systems, collisions, caches, baking, renderable volumes, and simulation troubleshooting.
+description: Build stable Blender 5.1+ simulations and effects. Use for rigid and soft bodies, cloth, fluid or smoke Mantaflow domains, particle and hair systems, collisions, caches, baking, renderable volumes, and simulation troubleshooting.
 ---
 
 # Simulation and VFX

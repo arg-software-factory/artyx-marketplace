@@ -14,6 +14,6 @@ Volume step rate, density, anisotropy, light sampling, and noise dominate qualit
 
 ## Official sources
 
-- [Fluid](https://docs.blender.org/manual/en/4.5/physics/fluid/index.html)
-- [Hair](https://docs.blender.org/manual/en/4.5/physics/particles/hair/index.html)
-- [Volume objects](https://docs.blender.org/manual/en/4.5/modeling/volumes/index.html)
+- [Fluid](https://docs.blender.org/manual/en/5.1/physics/fluid/index.html)
+- [Hair](https://docs.blender.org/manual/en/5.1/physics/particles/hair/index.html)
+- [Volume objects](https://docs.blender.org/manual/en/5.1/modeling/volumes/index.html)

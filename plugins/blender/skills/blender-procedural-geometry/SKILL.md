@@ -1,6 +1,6 @@
 ---
 name: blender-procedural-geometry
-description: Create deterministic Blender 4.5 procedural assets and worlds. Use for Geometry Nodes, fields, instancing, scattering, curve-based construction, reusable node groups, procedural variation, bpy graph creation, and scalable scene generation.
+description: Create deterministic Blender 5.1+ procedural assets and worlds. Use for Geometry Nodes, fields, instancing, scattering, curve-based construction, reusable node groups, procedural variation, bpy graph creation, and scalable scene generation.
 ---
 
 # Procedural geometry

@@ -1,6 +1,6 @@
 ---
 name: blender-animation-rigging
-description: Build and diagnose Blender 4.5 character rigs, object animation, actions, NLA edits, constraints, drivers, cameras, and shot-ready timing. Use for deforming assets, reusable motion clips, cinematic blocking, retargeting, and animation validation.
+description: Build and diagnose Blender 5.1+ character rigs, object animation, actions, NLA edits, constraints, drivers, cameras, and shot-ready timing. Use for deforming assets, reusable motion clips, cinematic blocking, retargeting, and animation validation.
 ---
 
 # Animation, rigs, and shots

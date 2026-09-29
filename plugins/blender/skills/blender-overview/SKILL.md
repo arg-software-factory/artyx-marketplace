@@ -1,6 +1,6 @@
 ---
 name: blender-overview
-description: Route Blender 4.5 LTS work to the right expert workflow. Use first for multi-domain Blender tasks, production planning, or when selecting modeling, materials, Geometry Nodes, animation, rendering, simulation, pipeline, or live official MCP control guidance.
+description: Route Blender 5.1+ work to the right expert workflow. Use first for multi-domain Blender tasks, production planning, or when selecting modeling, materials, Geometry Nodes, animation, rendering, simulation, pipeline, or live official MCP control guidance.
 ---
 
 # Blender production map
@@ -27,4 +27,4 @@ Start by identifying the deliverable, the Blender version, render engine, target
 
 ## Source baseline
 
-This bundle targets Blender 4.5 LTS. Check the installed version before using version-sensitive nodes or `bpy` properties. Canonical documentation: [Manual 4.5](https://docs.blender.org/manual/en/4.5/) and [current Python API](https://docs.blender.org/api/current/).
+This bundle targets Blender 5.1 and later, the floor of the official Blender Lab MCP add-on. Check the installed version before using version-sensitive nodes or `bpy` properties. Canonical documentation: [Manual 5.1](https://docs.blender.org/manual/en/5.1/) and [current Python API](https://docs.blender.org/api/current/).

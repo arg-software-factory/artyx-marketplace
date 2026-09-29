@@ -12,6 +12,6 @@ glTF is strong for PBR-focused realtime interchange; FBX remains common for DCC/
 
 ## Official sources
 
-- [Asset Browser](https://docs.blender.org/manual/en/4.5/editors/asset_browser.html)
-- [Libraries and overrides](https://docs.blender.org/manual/en/4.5/files/linked_libraries/index.html)
-- [Import and export](https://docs.blender.org/manual/en/4.5/files/import_export/index.html)
+- [Asset Browser](https://docs.blender.org/manual/en/5.1/editors/asset_browser.html)
+- [Libraries and overrides](https://docs.blender.org/manual/en/5.1/files/linked_libraries/index.html)
+- [Import and export](https://docs.blender.org/manual/en/5.1/files/import_export/index.html)

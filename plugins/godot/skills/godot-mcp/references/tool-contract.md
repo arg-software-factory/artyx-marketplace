@@ -8,8 +8,8 @@ debug capture, UID maintenance, and mesh-library export. It is not a general
 editor RPC endpoint: it has no tool to write GDScript, attach scripts, inspect
 every Inspector property, or render pixels from the user's already-open editor.
 
-Requires **Node.js**, **npx on PATH**, and **GODOT_PATH** pointing at the Godot
-4 executable.
+Requires **Node.js** and **npx on PATH**. Godot 4 is found through `GODOT_PATH`,
+then PATH, then the usual install folders.
 
 ## Tool inventory
 
@@ -33,6 +33,6 @@ debug output as evidence. Do not claim a visual result from a successful write a
 
 ## Official sources
 
-- Published package: `@coding-solo/godot-mcp` on npm (`npx -y @coding-solo/godot-mcp`)
+- Published package: `@coding-solo/godot-mcp` on npm (`npx -y @coding-solo/godot-mcp@0.1.1`)
 - Upstream repository: https://github.com/Coding-Solo/godot-mcp
 - Godot command-line reference, 4.6: https://docs.godotengine.org/en/4.6/tutorials/editor/command_line_tutorial.html

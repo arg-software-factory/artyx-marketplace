@@ -16,6 +16,6 @@ Check face orientation, non-manifold geometry, loose elements, doubled vertices,
 
 ## Official sources
 
-- [Modeling introduction](https://docs.blender.org/manual/en/4.5/modeling/introduction.html)
-- [Modifiers](https://docs.blender.org/manual/en/4.5/modeling/modifiers/introduction.html)
-- [Mesh normals](https://docs.blender.org/manual/en/4.5/modeling/meshes/editing/mesh/normals.html)
+- [Modeling introduction](https://docs.blender.org/manual/en/5.1/modeling/introduction.html)
+- [Modifiers](https://docs.blender.org/manual/en/5.1/modeling/modifiers/introduction.html)
+- [Mesh normals](https://docs.blender.org/manual/en/5.1/modeling/meshes/editing/mesh/normals.html)
