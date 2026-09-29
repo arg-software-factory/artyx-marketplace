@@ -47,7 +47,8 @@ mobile targets still need these budgets.
   mobile renderer limits a skinned mesh section to 75 bones by default; split
   sections or trim the rig if you are over.
 - **Vertices, not triangles, cost memory:** every UV seam and hard edge splits
-  vertices. A 10k-triangle mesh can carry 15k+ vertices when seams are careless.
+  vertices. A closed 10k-triangle mesh has about 5k vertices; careless seams
+  and hard edges push it to about 8-10k or more.
 - **Overdraw:** alpha-tested foliage and particles cost fill rate, not triangles.
   Cut transparent area with tighter cards before you cut triangles.
 

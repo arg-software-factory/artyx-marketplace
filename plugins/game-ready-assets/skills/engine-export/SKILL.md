@@ -30,9 +30,12 @@ a known object (a 1 m cube and an arrow pointing to the asset's front).
 
 ## Unity (FBX)
 
-- Blender FBX export: Apply Scalings "FBX All", Forward "-Z", Up "Y", and
-  "Apply Transform" on, so objects arrive without a -90 degree X rotation.
-  Alternatively enable "Bake Axis Conversion" in Unity's model importer.
+- Blender FBX export: Apply Scalings "FBX All", Forward "-Z", Up "Y".
+- Static meshes: turn Blender's "Apply Transform" on so objects arrive without
+  a -90 degree X rotation. It is experimental and breaks armatures and
+  animation, so never use it on skinned meshes.
+- Skinned meshes: leave "Apply Transform" off and enable "Bake Axis
+  Conversion" in Unity's model importer instead.
 - LODs: `<Name>_LOD0`, `<Name>_LOD1`... in one file build a LOD Group.
 - Skinned: export deform bones only, "Add Leaf Bones" off; set Rig to Humanoid
   or Generic in the importer.
@@ -43,8 +46,9 @@ a known object (a 1 m cube and an arrow pointing to the asset's front).
 
 - Keep Blender at 1 unit = 1 m and export with Apply Scalings "FBX Units
   Scale"; the asset then imports at the right size with import scale 1.0.
-- Characters: enable "Force Front X Axis" if the mesh comes in facing the
-  wrong way. Name the armature object `Armature` (Unreal otherwise adds it as
+- Characters: do not use Blender's "Apply Transform" on skinned meshes;
+  Unreal's FBX importer converts the axes ("Convert Scene", on by default).
+  Enable "Force Front X Axis" if the mesh comes in facing the wrong way. Name the armature object `Armature` (Unreal otherwise adds it as
   an extra root bone), and turn "Add Leaf Bones" off.
 - Collision for static meshes, in the same file: `UCX_<Mesh>_01` (convex),
   `UBX_` (box), `USP_` (sphere), `UCP_` (capsule). Each hull must be convex.
@@ -67,8 +71,9 @@ a known object (a 1 m cube and an arrow pointing to the asset's front).
 
 - glTF keeps PBR materials best; FBX brings geometry, UVs, and skeletons but
   usually needs materials rebuilt.
-- Check scale on import (FBX from Unreal is in centimeters: import scale 0.01
-  or apply scale after import).
+- Blender's FBX importer applies the file's own unit scale, so an FBX saved in
+  centimeters usually arrives at the right size. Check it against a 1 m cube
+  and change the import scale only if it is off.
 
 ## Verify in the engine
 

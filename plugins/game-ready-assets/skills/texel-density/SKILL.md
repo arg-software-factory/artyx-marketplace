@@ -33,9 +33,10 @@ density (px/m) = texture_size_px * sqrt(uv_area_fraction / surface_area_m2)
 - `surface_area_m2`: real surface area of those faces, at final scale.
 
 Quick sizing: a surface of about `W x H` meters needs about
-`W * density` by `H * density` pixels of unique texture. A 2 m x 2 m crate at
-512 px/m needs about 1024 px per side, so a 1K texture if the UVs fill the square
-well.
+`W * density` by `H * density` pixels of unique texture. One 2 m x 2 m face at
+512 px/m needs 1024 x 1024 px. A whole 2 m crate has six such faces (24 m2), so
+unwrapped uniquely it needs about 2K or more; mirror or stack identical faces,
+or use a tiling material, to stay at 1K.
 
 In Blender, check with a checker texture of known size and measure one shell,
 or use a texel-density add-on. Scale all shells of an asset by the same factor

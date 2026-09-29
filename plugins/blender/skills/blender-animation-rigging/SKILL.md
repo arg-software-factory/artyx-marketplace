@@ -18,6 +18,8 @@ Load [actions-rigs.md](references/actions-rigs.md) for armatures, weights, const
 ## MCP verification
 
 Confirm armature hierarchy and action ranges via `get_object_detail_summary` or
-`execute_blender_code`. Scrub representative frames with
-`jump_to_view3d_object_by_name` and capture `render_viewport_to_path` or
-`get_screenshot_of_area_as_image` for pose/silhouette checks.
+`execute_blender_code`. To check a pose, set the frame with
+`execute_blender_code` (`bpy.context.scene.frame_set(n)`), then capture
+`get_screenshot_of_area_as_image` or `render_viewport_to_path`. Use
+`jump_to_view3d_object_by_name` only to frame the object in the viewport; it
+does not change the frame.

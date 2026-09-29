@@ -25,7 +25,7 @@ Treat the live tool list as the authority.
 **Live session, write**
 - `execute_blender_code` (`code`): run Python in the live Blender. The code must assign a dict to `result`.
 
-**Background Blender, on a file on disk** (these start `blender --background`; they need a `blender` executable on PATH or `BLENDER_PATH`)
+**Background Blender, on a file on disk.** These six tools start `blender --background`, so they need a `blender` executable on PATH or in the `BLENDER_PATH` environment variable of the server. The plugin does not set one, so on most machines (Blender on macOS and Windows is not on PATH) they fail. Prefer the live-session tools above; use these only when the artist asks for a file that is not open and one of them has already worked.
 - `execute_blender_code_for_cli` (`blend_file`, `code`)
 - `get_blendfile_summary_datablocks_for_cli`, `get_blendfile_summary_missing_files_for_cli`, `get_blendfile_summary_of_linked_libraries_for_cli`, `get_blendfile_summary_path_info_for_cli`, `get_blendfile_summary_usage_guess_for_cli` (each takes `blend_file`)
 
