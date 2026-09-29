@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "godot",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Drive the Godot engine over the published @coding-solo/godot-mcp server: launch its own headless Godot to open the editor, run projects in debug mode, inspect scene and project structure, edit scenes and nodes, and stream back runtime errors and debug output. It does not attach to an already-open editor — point it at your Godot 4 executable and iterate.",
   "author": { "name": "Artyx", "url": "https://artyx.ai" },
   "homepage": "https://github.com/Coding-Solo/godot-mcp",
@@ -29,15 +29,13 @@
       "userVars": {
         "GODOT_PATH": {
           "type": "file",
-          "label": "Godot executable path",
-          "description": "Full path to your Godot 4 binary. On macOS that is /Applications/Godot.app/Contents/MacOS/Godot; on Windows, something like C:\\Program Files\\Godot\\Godot.exe.",
-          "required": true,
-          "mustExist": true
+          "label": "Godot executable",
+          "description": "Your Godot 4 binary, for example /Applications/Godot.app/Contents/MacOS/Godot on macOS or C:\\Program Files\\Godot\\Godot.exe on Windows. Leave it as \"godot\" to use the one on PATH; the server also searches the usual install folders.",
+          "required": false,
+          "default": "godot"
         }
       },
-      "mcp": {
-        "godot": { "env": { "GODOT_PATH": "${GODOT_PATH}" } }
-      }
+      "check": { "tool": "get_godot_version" }
     }
   }
 }

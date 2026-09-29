@@ -4,7 +4,7 @@
     "unity": {
       "type": "stdio",
       "command": "uvx",
-      "args": ["--from", "mcpforunityserver", "mcp-for-unity", "--transport", "stdio"]
+      "args": ["--from", "mcpforunityserver==10.2.0", "mcp-for-unity", "--transport", "stdio"]
     }
   }
 }

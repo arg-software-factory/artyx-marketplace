@@ -121,7 +121,7 @@ async function validate(mutate, { mode = 'strict' } = {}) {
   const name = 'demo'
   const pluginDir = join(root, 'plugins', name)
   try {
-    const files = { plugin: basePlugin(name), mcp: baseMcp(), skill: baseSkill, extraFiles: {} }
+    const files = { plugin: basePlugin(name), mcp: baseMcp(), skill: baseSkill, logo: PNG, extraFiles: {} }
     mutate(files)
 
     await mkdir(join(pluginDir, 'skills', 'demo'), { recursive: true })
@@ -134,7 +134,10 @@ async function validate(mutate, { mode = 'strict' } = {}) {
     if (files.skill !== null) {
       await writeFile(join(pluginDir, 'skills', 'demo', 'SKILL.md'), files.skill)
     }
-    await writeFile(join(pluginDir, 'logo.png'), PNG)
+    if (files.logo !== null) {
+      await mkdir(join(pluginDir, 'ai.artyx.desktop'), { recursive: true })
+      await writeFile(join(pluginDir, 'ai.artyx.desktop', 'logo.png'), PNG)
+    }
     for (const [rel, content] of Object.entries(files.extraFiles)) {
       await mkdir(dirname(join(pluginDir, rel)), { recursive: true })
       await writeFile(join(pluginDir, rel), content)
@@ -663,27 +666,65 @@ test('a non-official publisher cannot bundle a native runtime', async () => {
 })
 
 // ---------------------------------------------------------------------------
-// The Artyx overlay.
+// User settings (D2). MCP configuration lives only in mcp.json; a userVar is
+// applied by exactly one rule, so each one must bind to something real.
 // ---------------------------------------------------------------------------
 
-test('an overlay naming a server that does not exist is fatal', async () => {
+function httpPlugin(files, url = 'http://127.0.0.1:8000/mcp') {
+  files.mcp.mcpServers.demo = { type: 'streamable-http', url }
+  return files.plugin.extensions['ai.artyx.desktop']
+}
+
+function portVar(overrides = {}) {
+  return userVar({ type: 'port', label: 'Port', description: 'The port.', default: '8000', ...overrides })
+}
+
+test('the MCP overlay in the extension is gone: mcp.json is the only MCP source', async () => {
   const result = await validate((f) => {
-    f.plugin.extensions['ai.artyx.desktop'].mcp = { typo: { env: { A: '${A}' } } }
+    f.plugin.extensions['ai.artyx.desktop'].mcp = { demo: { env: { A: 'a' } } }
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+})
+
+test('a stdio env var with the same literal default is a valid setting', async () => {
+  const result = await validate((f) => {
+    f.mcp.mcpServers.demo.env = { DEMO_HOME: '/opt/demo' }
     f.plugin.extensions['ai.artyx.desktop'].userVars = {
-      A: userVar({ label: 'A', description: 'A value.' })
+      DEMO_HOME: userVar({ type: 'directory', default: '/opt/demo', required: false })
     }
   })
-  assert.ok(codes(result).includes('artyx.overlay.unknown-server'))
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
 })
 
-test('an overlay placeholder with no declared userVar is fatal', async () => {
+test('a stdio port var bound through env is valid and may declare detect', async () => {
   const result = await validate((f) => {
-    f.plugin.extensions['ai.artyx.desktop'].mcp = { demo: { env: { TOKEN: '${MY_TOKEN}' } } }
+    f.mcp.mcpServers.demo.env = { DEMO_PORT: '9876' }
+    f.plugin.extensions['ai.artyx.desktop'].userVars = {
+      DEMO_PORT: portVar({ default: '9876', detect: [9876, 9877] })
+    }
   })
-  assert.ok(codes(result).includes('artyx.overlay.undeclared-var'))
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
 })
 
-test('a declared userVar nothing references is fatal', async () => {
+test('a setting whose default differs from the mcp.json literal is fatal', async () => {
+  const result = await validate((f) => {
+    f.mcp.mcpServers.demo.env = { DEMO_HOME: '/opt/demo' }
+    f.plugin.extensions['ai.artyx.desktop'].userVars = {
+      DEMO_HOME: userVar({ default: '/usr/local/demo' })
+    }
+  })
+  assert.ok(codes(result).includes('artyx.uservar.default-drift'))
+})
+
+test('an env setting without a default is fatal: install must be one click', async () => {
+  const result = await validate((f) => {
+    f.mcp.mcpServers.demo.env = { DEMO_HOME: '/opt/demo' }
+    f.plugin.extensions['ai.artyx.desktop'].userVars = { DEMO_HOME: userVar() }
+  })
+  assert.ok(codes(result).includes('artyx.uservar.default-missing'))
+})
+
+test('a declared userVar bound to nothing is fatal', async () => {
   const result = await validate((f) => {
     f.plugin.extensions['ai.artyx.desktop'].userVars = {
       UNUSED: userVar({ label: 'Unused', description: 'Never referenced.' })
@@ -692,29 +733,110 @@ test('a declared userVar nothing references is fatal', async () => {
   assert.ok(codes(result).includes('artyx.uservar.orphan'))
 })
 
-test('the portable file must equal the overlay with defaults applied', async () => {
+test('a non-port var never binds to a streamable-http server', async () => {
   const result = await validate((f) => {
-    f.mcp.mcpServers.demo = { type: 'streamable-http', url: 'http://127.0.0.1:9999/' }
-    const ext = f.plugin.extensions['ai.artyx.desktop']
-    ext.mcp = { demo: { url: 'http://127.0.0.1:${DEMO_PORT}/' } }
-    ext.userVars = {
-      DEMO_PORT: userVar({ label: 'Port', description: 'The port.', default: '8000' })
-    }
+    httpPlugin(f).userVars = { DEMO_HOST: userVar({ default: '127.0.0.1' }) }
   })
-  assert.ok(
-    codes(result).includes('artyx.overlay.default-drift'),
-    'a 9999 literal against an 8000 default must be caught'
-  )
+  assert.ok(codes(result).includes('artyx.uservar.orphan'))
 })
 
-test('a port userVar without a numeric default is fatal', async () => {
+test('a port var replaces the port of a streamable-http url', async () => {
   const result = await validate((f) => {
-    f.mcp.mcpServers.demo = { type: 'streamable-http', url: 'http://127.0.0.1:8000/' }
-    const ext = f.plugin.extensions['ai.artyx.desktop']
-    ext.mcp = { demo: { url: 'http://127.0.0.1:${DEMO_PORT}/' } }
-    ext.userVars = { DEMO_PORT: userVar({ label: 'Port', description: 'The port.' }) }
+    httpPlugin(f).userVars = { DEMO_PORT: portVar() }
+  })
+  assert.equal(result.ok, true, JSON.stringify(result.findings, null, 2))
+})
+
+test('a port var whose default is not the url port is fatal', async () => {
+  const result = await validate((f) => {
+    httpPlugin(f, 'http://127.0.0.1:9999/mcp').userVars = { DEMO_PORT: portVar() }
+  })
+  assert.ok(codes(result).includes('artyx.uservar.default-drift'))
+})
+
+test('a port var on a url without an explicit port is fatal', async () => {
+  const result = await validate((f) => {
+    httpPlugin(f, 'http://localhost/mcp').userVars = { DEMO_PORT: portVar() }
+  })
+  assert.ok(codes(result).includes('artyx.uservar.port-url'))
+})
+
+test('a port var needs a default', async () => {
+  const result = await validate((f) => {
+    const port = portVar()
+    delete port.default
+    httpPlugin(f).userVars = { DEMO_PORT: port }
+  })
+  assert.ok(codes(result).includes('artyx.extension.violation'))
+})
+
+test('a port default outside 1-65535 is fatal', async () => {
+  const result = await validate((f) => {
+    httpPlugin(f, 'http://127.0.0.1:70000/mcp').userVars = { DEMO_PORT: portVar({ default: '70000' }) }
   })
   assert.ok(codes(result).includes('artyx.uservar.port-default'))
+})
+
+test('detect is only for port vars, and holds at most 8 valid ports', async () => {
+  const onString = await validate((f) => {
+    f.mcp.mcpServers.demo.env = { DEMO_HOME: '/opt/demo' }
+    f.plugin.extensions['ai.artyx.desktop'].userVars = {
+      DEMO_HOME: userVar({ default: '/opt/demo', detect: [9876] })
+    }
+  })
+  assert.ok(codes(onString).includes('artyx.extension.violation'))
+
+  const tooMany = await validate((f) => {
+    httpPlugin(f).userVars = { DEMO_PORT: portVar({ detect: [1, 2, 3, 4, 5, 6, 7, 8, 9] }) }
+  })
+  assert.ok(codes(tooMany).includes('artyx.extension.violation'))
+
+  const outOfRange = await validate((f) => {
+    httpPlugin(f).userVars = { DEMO_PORT: portVar({ detect: [65536] }) }
+  })
+  assert.ok(codes(outOfRange).includes('artyx.extension.violation'))
+})
+
+test('a _PORT var must be declared with type port', async () => {
+  const result = await validate((f) => {
+    f.mcp.mcpServers.demo.env = { DEMO_PORT: '8000' }
+    f.plugin.extensions['ai.artyx.desktop'].userVars = { DEMO_PORT: userVar({ default: '8000' }) }
+  })
+  assert.ok(codes(result).includes('artyx.uservar.port-type'))
+})
+
+test('check names a tool to call after connecting', async () => {
+  const ok = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].check = { tool: 'get_status' }
+  })
+  assert.equal(ok.ok, true, JSON.stringify(ok.findings, null, 2))
+
+  const extra = await validate((f) => {
+    f.plugin.extensions['ai.artyx.desktop'].check = { tool: 'get_status', args: {} }
+  })
+  assert.ok(codes(extra).includes('artyx.extension.violation'))
+
+  const noServer = await validate((f) => {
+    f.mcp = null
+    f.plugin.extensions['ai.artyx.desktop'].check = { tool: 'get_status' }
+  })
+  assert.ok(codes(noServer).includes('artyx.check.no-server'))
+})
+
+// ---------------------------------------------------------------------------
+// The logo is a client file (Agent Plugins 8.2).
+// ---------------------------------------------------------------------------
+
+test('the logo lives under the namespace directory', async () => {
+  const missing = await validate((f) => {
+    f.logo = null
+  })
+  assert.ok(codes(missing).includes('plugin.logo.missing'))
+
+  const atRoot = await validate((f) => {
+    f.extraFiles['logo.png'] = PNG
+  })
+  assert.ok(codes(atRoot).includes('plugin.logo.location'))
 })
 
 // ---------------------------------------------------------------------------

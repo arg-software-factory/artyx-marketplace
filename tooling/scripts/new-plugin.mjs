@@ -13,20 +13,21 @@
  * shows, as a single "How to install" button, so a plugin without one leaves
  * the user with nowhere to go.
  *
- *   node tooling/scripts/new-plugin.mjs --name blender --display Blender \
- *     --tagline "Build and animate 3D scenes in a live Blender session." \
- *     --category Creativity --docs https://www.blender.org/lab/mcp-server/ \
+ *   node tooling/scripts/new-plugin.mjs --name unreal-engine --display "Unreal Engine" \
+ *     --tagline "Automate the Unreal Editor: actors, Blueprints, levels." \
+ *     --category "Developer Tools" \
+ *     --docs https://dev.epicgames.com/documentation/unreal-engine/unreal-mcp-in-unreal-editor \
  *     --transport streamable-http \
- *     --url http://127.0.0.1:8000/ --user-var BLENDER_MCP_PORT=8000 \
- *     --skill blender-mcp
+ *     --url http://127.0.0.1:8000/mcp --user-var UNREAL_MCP_PORT=8000 \
+ *     --skill unreal-engine-mcp
  *
  *   node tooling/scripts/new-plugin.mjs --name godot --display Godot \
  *     --tagline "Launch Godot, run projects, and read debug output." \
  *     --category "Developer Tools" \
  *     --docs https://github.com/Coding-Solo/godot-mcp#readme \
  *     --transport stdio \
- *     --command npx --arg -y --arg @coding-solo/godot-mcp \
- *     --user-var GODOT_PATH --skill godot-mcp
+ *     --command npx --arg -y --arg @coding-solo/godot-mcp@0.1.1 \
+ *     --user-var GODOT_PATH=godot --skill godot-mcp
  *
  *   node tooling/scripts/new-plugin.mjs --interactive
  *   node tooling/scripts/new-plugin.mjs --name foo ... --dry-run
@@ -34,26 +35,22 @@
  *   Asset adapter descriptors are JSON objects loaded with --asset-adapter.
  *   They remain declarations: no adapter executable is copied into the plugin.
  *
- * ## The two overlay patterns this script wires automatically
+ * ## The two settings this script wires automatically
  *
- * The portable mcp.json must be literal and working on its own — a client
- * expands no placeholder in "url", "command", or header values. Anything the
- * user configures lives in extensions["ai.artyx.desktop"].mcp instead, a
- * per-server patch. This script can only generate that patch correctly for
- * two shapes:
+ * The portable mcp.json is the only MCP configuration, and it must work with
+ * its literal values in any client. A user setting never templates a string;
+ * the desktop applies it by one of two rules, and this script scaffolds both:
  *
- * 1. A "_PORT"-suffixed user var whose default is literally the port in
- *    --url (streamable-http or sse). mcp.json keeps the literal port; the
- *    overlay templates it as "${VAR}" in the url.
- * 2. Any user var on a stdio transport. It scaffolds into the overlay's
- *    "env". mcp.json's own env gets the literal default when one is given
- *    (nothing to merge otherwise — see the godot plugin, whose GODOT_PATH
- *    has no default and so no entry in the portable env at all).
+ * 1. A "_PORT"-suffixed var on streamable-http, whose default is literally the
+ *    port in --url. It becomes a `port` var; the desktop swaps it into the url.
+ * 2. Any var on stdio, given as NAME=default. mcp.json declares it in the
+ *    server's env with that literal default; the desktop overrides the env
+ *    value with the saved setting. A var ending in _PORT becomes a `port` var.
  *
  * Anything else — a non-port var on an HTTP transport, more than one port
- * var, or a var with --transport none and no asset adapter — has no safe
- * automatic mapping, so the script refuses instead of writing something that
- * fails `artyx.overlay.default-drift` or `artyx.uservar.orphan`.
+ * var, a stdio var without a default, or a var with --transport none and no
+ * asset adapter — has no binding, so the script refuses instead of writing
+ * something that fails `artyx.uservar.orphan` or `artyx.uservar.default-missing`.
  */
 
 import { mkdir, writeFile, readFile, rm, lstat } from 'node:fs/promises'
@@ -305,7 +302,7 @@ function validateOptions(options) {
 }
 
 // ---------------------------------------------------------------------------
-// Overlay planning — the part of the task that must get artyx.overlay.*
+// Settings planning — the part of the task that must get artyx.uservar.*
 // right on the first run.
 // ---------------------------------------------------------------------------
 
@@ -323,14 +320,13 @@ function humanizeVarName(name) {
 }
 
 /**
- * @returns {{ userVars: object, overlayServer: object, portableEnv: object }}
+ * @returns {{ userVars: object, portableEnv: object }}
  */
-function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
+function planSettings({ transport, serverName, url, userVars: userVarSpecs }) {
   const userVars = {}
-  const overlayServer = {}
   const portableEnv = {}
 
-  if (userVarSpecs.length === 0) return { userVars, overlayServer, portableEnv }
+  if (userVarSpecs.length === 0) return { userVars, portableEnv }
 
   if (transport === 'none') {
     for (const spec of userVarSpecs) {
@@ -344,7 +340,7 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
         ...(spec.default ? { default: spec.default } : {})
       }
     }
-    return { userVars, overlayServer, portableEnv }
+    return { userVars, portableEnv }
   }
 
   if (transport === 'streamable-http') {
@@ -352,10 +348,8 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
     const others = userVarSpecs.filter((v) => !v.name.endsWith('_PORT'))
     if (others.length > 0) {
       throw new ScaffoldError(
-        `--user-var ${others.map((v) => v.name).join(', ')}: only a "_PORT"-suffixed var can be ` +
-          'auto-wired into a streamable-http overlay, because that is the one place this script ' +
-          'knows how to template the portable url. Scaffold without it and add ' +
-          'extensions["ai.artyx.desktop"].mcp by hand.'
+        `--user-var ${others.map((v) => v.name).join(', ')}: on streamable-http the only ` +
+          'setting a client can apply is the port of the url, through a "_PORT"-suffixed var.'
       )
     }
     if (portVars.length > 1) {
@@ -365,7 +359,7 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
       )
     }
     const [portVar] = portVars
-    if (!portVar.default || !/^\d{2,5}$/.test(portVar.default)) {
+    if (!isPort(portVar.default)) {
       throw new ScaffoldError(
         `--user-var ${portVar.name} ends in "_PORT" and needs a numeric default, e.g. ` +
           `--user-var ${portVar.name}=8000 (artyx.uservar.port-default).`
@@ -379,44 +373,48 @@ function planOverlay({ transport, serverName, url, userVars: userVarSpecs }) {
           'path), or change the default to match.'
       )
     }
-    overlayServer.url = url.replace(portRegex, `:\${${portVar.name}}`)
     userVars[portVar.name] = {
-      type: 'string',
+      type: 'port',
       label: humanizeVarName(portVar.name),
       description: `Port where the ${serverName} server is listening. Defaults to ${portVar.default}.`,
       required: true,
-      default: portVar.default,
-      pattern: '^[0-9]{2,5}$'
+      default: portVar.default
     }
-    return { userVars, overlayServer, portableEnv }
+    return { userVars, portableEnv }
   }
 
-  // transport === 'stdio': every declared var scaffolds into the overlay's
-  // env, per the godot plugin. A default becomes the portable file's literal
-  // value; without one, the portable env simply has no key for it.
-  const env = {}
+  // transport === 'stdio': every var is an env key of the server. mcp.json
+  // carries its literal default, so the package works in any client; the
+  // desktop overrides that value with the saved setting.
   for (const spec of userVarSpecs) {
-    if (spec.name.endsWith('_PORT') && spec.default && !/^\d{2,5}$/.test(spec.default)) {
+    if (spec.default === undefined || spec.default === '') {
       throw new ScaffoldError(
-        `--user-var ${spec.name} ends in "_PORT" and needs a numeric default (artyx.uservar.port-default).`
+        `--user-var ${spec.name} needs a default on stdio (--user-var ${spec.name}=<value>): ` +
+          'mcp.json must work with its literal values (artyx.uservar.default-missing).'
       )
     }
-    env[spec.name] = `\${${spec.name}}`
-    userVars[spec.name] = {
-      type: 'string',
-      label: humanizeVarName(spec.name),
-      description: spec.default
-        ? `Value for ${spec.name}, passed to the ${serverName} server as an environment ` +
-          `variable. Defaults to "${spec.default}".`
-        : `Value for ${spec.name}, passed to the ${serverName} server as an environment ` +
-          'variable. TODO: describe where this value comes from.',
-      required: true,
-      ...(spec.default ? { default: spec.default } : {})
+    const isPortVar = spec.name.endsWith('_PORT')
+    if (isPortVar && !isPort(spec.default)) {
+      throw new ScaffoldError(
+        `--user-var ${spec.name} ends in "_PORT" and needs a port 1-65535 as its default (artyx.uservar.port-default).`
+      )
     }
-    if (spec.default) portableEnv[spec.name] = spec.default
+    userVars[spec.name] = {
+      type: isPortVar ? 'port' : 'string',
+      label: humanizeVarName(spec.name),
+      description:
+        `Value for ${spec.name}, passed to the ${serverName} server as an environment ` +
+        `variable. Defaults to "${spec.default}".`,
+      required: true,
+      default: spec.default
+    }
+    portableEnv[spec.name] = spec.default
   }
-  overlayServer.env = env
-  return { userVars, overlayServer, portableEnv }
+  return { userVars, portableEnv }
+}
+
+function isPort(value) {
+  return typeof value === 'string' && /^[1-9][0-9]{0,4}$/.test(value) && Number(value) <= 65535
 }
 
 // ---------------------------------------------------------------------------
@@ -432,8 +430,6 @@ function buildPluginManifest({
   experimental,
   requires,
   userVars,
-  overlayServer,
-  serverName,
   assetAdapters,
   nativeRuntimes
 }) {
@@ -452,7 +448,6 @@ function buildPluginManifest({
   }
   if (requires.length > 0) extension.requires = requires
   if (Object.keys(userVars).length > 0) extension.userVars = userVars
-  if (Object.keys(overlayServer).length > 0) extension.mcp = { [serverName]: overlayServer }
   if (assetAdapters.length > 0) {
     extension.nativeRuntimes = nativeRuntimes
     extension.assetAdapters = assetAdapters
@@ -526,7 +521,7 @@ function buildPluginReadme({ display, transport, docs, hasAssetAdapters }) {
   lines.push(
     '## Before this plugin ships',
     '',
-    '- [ ] Add a real `logo.png` at the package root.',
+    '- [ ] Add a real `ai.artyx.desktop/logo.png` (small PNG).',
     '- [ ] Write the top-level `description` in `plugin.json`.',
     '- [ ] Write the skill body under `skills/` (replace every TODO).',
     '- [ ] Confirm `interface.docsUrl` really lands on the install instructions.',
@@ -620,7 +615,7 @@ function buildPlan(options, userVarSpecs, assetAdapters, nativeRuntimes) {
     if (RUNTIME_COMMANDS.has(token)) requires.add(token)
   }
 
-  const { userVars, overlayServer, portableEnv } = planOverlay({
+  const { userVars, portableEnv } = planSettings({
     transport: options.transport,
     serverName,
     url: options.url,
@@ -636,8 +631,6 @@ function buildPlan(options, userVarSpecs, assetAdapters, nativeRuntimes) {
     experimental: options.experimental,
     requires: [...requires],
     userVars,
-    overlayServer,
-    serverName,
     assetAdapters,
     nativeRuntimes
   })
@@ -716,7 +709,7 @@ async function writePlan(options, plan) {
 
 function printChecklist(options) {
   console.log(`\nWrote plugins/${options.name}/. This script cannot generate:\n`)
-  console.log('  - a real logo.png (256x256 or larger, <=256KB, at the package root)')
+  console.log('  - a real ai.artyx.desktop/logo.png (square PNG, a few KB, <=256KB)')
   console.log('  - the skill body/bodies under skills/ (every SKILL.md TODO)')
   console.log('  - plugin.json /description (the storefront detail-view prose)')
   console.log('  - this plugin\'s README.md prose')

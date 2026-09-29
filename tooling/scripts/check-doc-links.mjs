@@ -50,9 +50,9 @@ function normalizeUrl(value) {
 }
 
 function isSkippedUrl(value) {
-  // A "${VAR}" placeholder means this is example text showing the overlay
-  // pattern (see CONTRIBUTING.md), not a link — nothing this checker fetches
-  // resolves a template.
+  // A "${VAR}" placeholder means this is example text (for instance a
+  // ${PLUGIN_DATA} path or an asset-adapter transport), not a link — nothing
+  // this checker fetches resolves a template.
   if (value.includes('${')) return true;
   // A git clone endpoint is not a web page. Forges routinely answer a browser
   // GET on one with 403 or 404 while `git clone` against it works fine, so

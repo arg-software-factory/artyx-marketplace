@@ -51,7 +51,7 @@
               },
               "authentication": {
                 "enum": ["ON_INSTALL", "ON_USE"],
-                "description": "When the desktop asks for the plugin's userVars, including values consumed by MCP overlays or external asset-adapter transports."
+                "description": "When the desktop asks for the plugin's userVars: env values of its stdio MCP servers, the port of its streamable-http url, or values consumed by external asset-adapter transports."
               }
             }
           }

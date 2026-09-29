@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://artyx.ai/schemas/agent-plugins/ai.artyx.desktop/3.json",
   "title": "Artyx Desktop plugin extension v3",
-  "description": "Explicit conversational and native-asset plugin contract for Artyx Desktop.",
+  "description": "Artyx Desktop client data for an Agent Plugins 1.0.0 package. MCP configuration lives only in the portable mcp.json; this namespace carries presentation, preflight, typed user settings, a connection check, and native-asset declarations.",
   "type": "object",
   "required": ["schemaVersion", "pluginClass", "interface"],
   "additionalProperties": false,
@@ -13,7 +13,7 @@
     "compatibility": { "$ref": "#/$defs/compatibility" },
     "requires": { "$ref": "#/$defs/requires" },
     "userVars": { "$ref": "#/$defs/userVars" },
-    "mcp": { "$ref": "#/$defs/mcpOverlay" },
+    "check": { "$ref": "#/$defs/check" },
     "nativeRuntimes": { "$ref": "#/$defs/nativeRuntimes" },
     "assetAdapters": { "$ref": "#/$defs/assetAdapters" }
   },
@@ -66,7 +66,7 @@
       "required": ["type", "label", "description", "required"],
       "additionalProperties": false,
       "properties": {
-        "type": { "enum": ["directory", "file", "string", "secret", "boolean"] },
+        "type": { "enum": ["directory", "file", "string", "secret", "boolean", "port"] },
         "label": { "type": "string", "minLength": 1, "maxLength": 60 },
         "description": { "type": "string", "minLength": 1 },
         "required": { "type": "boolean" },
@@ -74,24 +74,28 @@
         "mustExist": { "type": "boolean" },
         "extensions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9+_-]*$" } },
         "contains": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^(?![A-Za-z]:)(?![/\\\\])(?!.*(?:^|[/\\\\])\\.\\.(?:[/\\\\]|$))[^\\u0000]+$" } },
-        "pattern": { "type": "string" }
-      }
-    },
-    "mcpOverlay": {
-      "type": "object",
-      "minProperties": 1,
-      "additionalProperties": {
-        "type": "object",
-        "minProperties": 1,
-        "additionalProperties": false,
+        "pattern": { "type": "string" },
+        "detect": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "type": "integer", "minimum": 1, "maximum": 65535 } }
+      },
+      "if": { "required": ["type"], "properties": { "type": { "const": "port" } } },
+      "then": {
+        "required": ["default"],
         "properties": {
-          "url": { "type": "string", "minLength": 1 },
-          "headers": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
-          "command": { "type": "string", "minLength": 1 },
-          "args": { "type": "array", "items": { "type": "string" } },
-          "env": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "string" } },
-          "cwd": { "type": "string", "minLength": 1 }
+          "default": { "type": "string", "pattern": "^[1-9][0-9]{0,4}$" },
+          "mustExist": false,
+          "extensions": false,
+          "contains": false,
+          "pattern": false
         }
+      },
+      "else": { "not": { "required": ["detect"] } }
+    },
+    "check": {
+      "type": "object",
+      "required": ["tool"],
+      "additionalProperties": false,
+      "properties": {
+        "tool": { "type": "string", "minLength": 1, "maxLength": 128 }
       }
     },
     "nativeRuntimes": {

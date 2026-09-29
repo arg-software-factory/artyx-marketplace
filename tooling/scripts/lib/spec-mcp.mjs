@@ -146,7 +146,7 @@ function checkHeaders(headers, { target, pointer, server, report }) {
         target,
         `${pointer}/headers/${name}`,
         `Server "${server}": a client performs no expansion in header values, so this would ` +
-          'be sent literally. Move it to extensions["ai.artyx.desktop"].mcp.'
+          'be sent literally. Write the literal value; user settings are applied by the client, never templated.'
       )
     }
     if (SECRET_SHAPED_NAME.test(name)) {
@@ -155,7 +155,7 @@ function checkHeaders(headers, { target, pointer, server, report }) {
         target,
         `${pointer}/headers/${name}`,
         `Server "${server}": headers are visible package data and must never carry a ` +
-          'credential. Declare a userVar and put the header in the Artyx overlay instead.'
+          'credential. Leave authorization to the client; Agent Plugins has no credential field.'
       )
     }
   }
@@ -244,7 +244,7 @@ function checkStdioServer(server, name, ctx) {
         ctx.target,
         `${ctx.pointer}/env/${key}`,
         `Server "${name}": env values are visible package data and must never carry a ` +
-          'credential. Move it to the Artyx overlay with a declared userVar.'
+          'credential (Agent Plugins 9.2). Leave credentials to the client.'
       )
     }
     checkExpandable(value, { ...ctx, server: name, field: `env/${key}` })

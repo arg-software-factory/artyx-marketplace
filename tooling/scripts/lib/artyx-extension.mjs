@@ -3,17 +3,22 @@
  *
  * Agent Plugins gives this namespace no meaning, so everything here is our own
  * contract. The structural half lives in tooling/schemas/artyx/extension.schema.json;
- * this file adds the rules that tie the overlay back to the portable mcp.json.
+ * this file adds the rules that tie a user setting back to something real.
  *
- * The overlay exists for one reason. The specification forbids expanding
- * placeholders in `url`, `command`, and header values, and forbids putting a
- * credential in `headers` or `env`. So the portable file ships literal,
- * working defaults, and anything the user configures lives here.
+ * MCP configuration lives only in the portable mcp.json (spec 7.2.1), and it
+ * must work, with its literal values, in any standard client. A user setting
+ * therefore never templates a string. It is applied by exactly one rule:
  *
- * The invariant that keeps the two honest: substituting every declared default
- * into the overlay must reproduce the portable file exactly. If it does not,
- * the two files disagree about what "default" means, and a client that ignores
- * our namespace behaves differently from Artyx for no stated reason.
+ * - stdio server: the saved value becomes the env var of the same name,
+ *   replacing the literal default that mcp.json declares for it.
+ * - streamable-http server: a `port` var replaces the port of the url.
+ *
+ * So every userVar must name an env key a stdio server declares, or be a
+ * `port` var on a plugin with a streamable-http url that carries that port.
+ * Anything else is a setting the desktop would ask for and then throw away.
+ *
+ * Native-asset plugins are the exception. Their external runtimes are not MCP
+ * and still take `${VAR}` placeholders in their own transport.
  */
 
 import { readFile } from 'node:fs/promises'
@@ -23,7 +28,6 @@ import Ajv from 'ajv/dist/2020.js'
 
 import { AXIS } from './report.mjs'
 
-const PLACEHOLDER = /\$\{([A-Z][A-Z0-9_]*)\}/g
 const ANY_PLACEHOLDER = /\$\{([^}]*)\}/g
 const HOST_VARS = new Set(['PLUGIN_ROOT', 'PLUGIN_DATA'])
 const RUNTIME_COMMANDS = new Set(['npx', 'uvx', 'bunx', 'pipx', 'dotnet'])
@@ -39,20 +43,6 @@ async function loadExtensionValidator(repoRoot) {
   return compiledExtensionValidator
 }
 
-function varsIn(value) {
-  return [...String(value).matchAll(PLACEHOLDER)].map((m) => m[1])
-}
-
-/** Walk every string an overlay server can carry, yielding [pointer, value]. */
-function* overlayStrings(server) {
-  if (typeof server.url === 'string') yield ['url', server.url]
-  if (typeof server.command === 'string') yield ['command', server.command]
-  if (typeof server.cwd === 'string') yield ['cwd', server.cwd]
-  for (const [index, arg] of (server.args ?? []).entries()) yield [`args/${index}`, arg]
-  for (const [key, value] of Object.entries(server.headers ?? {})) yield [`headers/${key}`, value]
-  for (const [key, value] of Object.entries(server.env ?? {})) yield [`env/${key}`, value]
-}
-
 /** Walk every process string an external native runtime can carry. */
 function* runtimeTransportStrings(runtime) {
   const transport = runtime.transport
@@ -60,37 +50,6 @@ function* runtimeTransportStrings(runtime) {
   if (typeof transport.cwd === 'string') yield ['cwd', transport.cwd]
   for (const [index, arg] of (transport.args ?? []).entries()) yield [`args/${index}`, arg]
   for (const [key, value] of Object.entries(transport.env ?? {})) yield [`env/${key}`, value]
-}
-
-/**
- * Apply an overlay onto a portable server entry.
- *
- * `env` and `headers` merge key by key so an overlay can add one header
- * without restating the rest. Every other field replaces wholesale. The
- * portable `type` always wins: the overlay may not change a server's
- * transport, or Artyx and a conformant client would silently do different
- * things with the same package.
- */
-export function mergeOverlay(portableServer, overlay) {
-  if (!overlay) return { ...portableServer }
-  const merged = { ...portableServer }
-  for (const [key, value] of Object.entries(overlay)) {
-    if (key === 'env' || key === 'headers') {
-      merged[key] = { ...(portableServer[key] ?? {}), ...value }
-    } else {
-      merged[key] = value
-    }
-  }
-  merged.type = portableServer.type
-  return merged
-}
-
-/** Substitute declared defaults. Names without a default are left alone. */
-function substituteDefaults(value, userVars) {
-  return String(value).replace(PLACEHOLDER, (match, name) => {
-    const spec = userVars?.[name]
-    return typeof spec?.default === 'string' ? spec.default : match
-  })
 }
 
 function describeError(error) {
@@ -137,65 +96,12 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
   }
 
   const userVars = extension.userVars ?? {}
-  const overlay = extension.mcp ?? {}
   const portableServers = mcp?.mcpServers ?? {}
   const referenced = new Set()
 
-  for (const [serverName, serverOverlay] of Object.entries(overlay)) {
-    const pointer = `plugin.json /extensions/ai.artyx.desktop/mcp/${serverName}`
-
-    // The overlay is a patch, never a new server. Without this, a typo in a
-    // server name would silently produce configuration that never applies.
-    const portable = portableServers[serverName]
-    if (!portable) {
-      report.fatal(
-        'artyx.overlay.unknown-server',
-        target,
-        pointer,
-        `No server named "${serverName}" in mcp.json. The overlay patches the portable ` +
-          `file; it cannot introduce a server. Known servers: ${
-            Object.keys(portableServers).join(', ') || 'none'
-          }.`
-      )
-      continue
-    }
-
-    for (const [field, value] of overlayStrings(serverOverlay)) {
-      for (const name of varsIn(value)) {
-        referenced.add(name)
-        if (!userVars[name]) {
-          report.fatal(
-            'artyx.overlay.undeclared-var',
-            target,
-            `${pointer}/${field}`,
-            `\${${name}} is not declared in userVars, so the desktop would never prompt for ` +
-              'it and the placeholder would reach the transport unresolved.'
-          )
-        }
-      }
-
-      // The portable file must be exactly what the overlay produces with every
-      // default applied. Only checked when all referenced names have one.
-      const names = varsIn(value)
-      if (names.length === 0) continue
-      if (!names.every((n) => typeof userVars[n]?.default === 'string')) continue
-
-      const resolved = substituteDefaults(value, userVars)
-      const portableValue = field.includes('/')
-        ? portable[field.split('/')[0]]?.[field.split('/').slice(1).join('/')]
-        : portable[field]
-
-      if (portableValue !== undefined && resolved !== portableValue) {
-        report.fatal(
-          'artyx.overlay.default-drift',
-          target,
-          `${pointer}/${field}`,
-          `With defaults applied the overlay yields "${resolved}" but mcp.json says ` +
-            `"${portableValue}". The portable file must be exactly the default case, or a ` +
-            'client that ignores our namespace behaves differently for no stated reason.'
-        )
-      }
-    }
+  if (extension.pluginClass === 'conversational') {
+    checkUserVarBindings({ target, userVars, portableServers, referenced, report })
+    checkConnectionCheck({ target, extension, portableServers, report })
   }
 
   const runtimeIds = new Set()
@@ -327,22 +233,36 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
   }
 
   for (const [name, spec] of Object.entries(userVars)) {
+    const pointer = `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`
     if (!referenced.has(name)) {
       report.fatal(
         'artyx.uservar.orphan',
         target,
-        `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`,
-        `Declared but never used in the MCP overlay or an asset-adapter transport. The ` +
-          'desktop would prompt the user for a value it then throws away.'
+        pointer,
+        extension.pluginClass === 'native-asset'
+          ? 'Declared but never used in an asset-adapter transport. The desktop would prompt ' +
+              'the user for a value it then throws away.'
+          : 'Declared but bound to nothing. A userVar must be an env key that a stdio server ' +
+              'in mcp.json declares, or a "port" var on a plugin with a streamable-http server. ' +
+              'The desktop would prompt the user for a value it then throws away.'
       )
     }
-    if (name.endsWith('_PORT') && !/^\d{2,5}$/.test(spec.default ?? '')) {
+    if (spec.type === 'port' && !isPort(spec.default)) {
       report.fatal(
         'artyx.uservar.port-default',
         target,
-        `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`,
-        'A port variable needs a numeric "default" so the install dialog is pre-filled and ' +
-          'the default transport configuration is deterministic.'
+        `${pointer}/default`,
+        'A port var needs a "default" between 1 and 65535, so install is one click and the ' +
+          'portable configuration stays the default case.'
+      )
+    }
+    if (spec.type !== 'port' && name.endsWith('_PORT')) {
+      report.fatal(
+        'artyx.uservar.port-type',
+        target,
+        `${pointer}/type`,
+        `"${name}" is a port. Declare it with "type": "port" so the desktop validates the ` +
+          'range and can probe for it.'
       )
     }
   }
@@ -351,9 +271,8 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
   // runner being on PATH, and the desktop preflights `requires` before spawn.
   const requires = new Set(extension.requires ?? [])
   for (const [serverName, portable] of Object.entries(portableServers)) {
-    const merged = mergeOverlay(portable, overlay[serverName])
-    if (merged.type !== 'stdio' || typeof merged.command !== 'string') continue
-    const command = merged.command.split('/').pop()
+    if (portable?.type !== 'stdio' || typeof portable.command !== 'string') continue
+    const command = portable.command.split('/').pop()
     if (RUNTIME_COMMANDS.has(command) && !requires.has(command)) {
       report.warn(
         'artyx.requires.missing',
@@ -381,4 +300,102 @@ export async function validateArtyxExtension({ repoRoot, target, extension, mcp,
   }
 
   return { assetAdapterCount: extension.assetAdapters?.length ?? 0 }
+}
+
+function isPort(value) {
+  if (typeof value !== 'string' || !/^[1-9][0-9]{0,4}$/.test(value)) return false
+  return Number(value) <= 65535
+}
+
+/** The explicit port of a url, or null when it has none or cannot be parsed. */
+function urlPort(url) {
+  try {
+    const parsed = new URL(url)
+    return parsed.port === '' ? null : parsed.port
+  } catch {
+    return null
+  }
+}
+
+/**
+ * D2: a saved value is applied by exactly one rule, so each var must match one.
+ * The default must also equal the literal the portable file already carries;
+ * otherwise a client that ignores our namespace runs a different configuration
+ * from the one Artyx calls "default".
+ */
+function checkUserVarBindings({ target, userVars, portableServers, referenced, report }) {
+  const stdio = Object.entries(portableServers).filter(([, server]) => server?.type === 'stdio')
+  const http = Object.entries(portableServers).filter(
+    ([, server]) => server?.type === 'streamable-http'
+  )
+
+  for (const [name, spec] of Object.entries(userVars)) {
+    const pointer = `plugin.json /extensions/ai.artyx.desktop/userVars/${name}`
+    const envBindings = stdio.filter(([, server]) =>
+      Object.prototype.hasOwnProperty.call(server.env ?? {}, name)
+    )
+
+    if (envBindings.length > 0) {
+      referenced.add(name)
+      for (const [serverName, server] of envBindings) {
+        const literal = server.env[name]
+        if (spec.default !== undefined && String(spec.default) !== literal) {
+          report.fatal(
+            'artyx.uservar.default-drift',
+            target,
+            `${pointer}/default`,
+            `The default is "${spec.default}" but mcp.json sets ${name}="${literal}" for ` +
+              `server "${serverName}". They must be equal: the portable file is the default case.`
+          )
+        }
+      }
+      if (spec.default === undefined) {
+        report.fatal(
+          'artyx.uservar.default-missing',
+          target,
+          `${pointer}/default`,
+          `mcp.json declares ${name}; repeat its literal value as "default" so install is one ` +
+            'click and the settings form shows what is in effect.'
+        )
+      }
+      continue
+    }
+
+    if (spec.type === 'port' && http.length > 0) {
+      referenced.add(name)
+      for (const [serverName, server] of http) {
+        const port = urlPort(server.url)
+        if (port === null) {
+          report.fatal(
+            'artyx.uservar.port-url',
+            target,
+            `${pointer}`,
+            `Server "${serverName}" has no explicit port in its url, so there is nothing for ` +
+              `${name} to replace. Write the port into mcp.json.`
+          )
+        } else if (spec.default !== undefined && String(spec.default) !== port) {
+          report.fatal(
+            'artyx.uservar.default-drift',
+            target,
+            `${pointer}/default`,
+            `The default is "${spec.default}" but the url of server "${serverName}" uses port ` +
+              `${port}. They must be equal: the portable file is the default case.`
+          )
+        }
+      }
+      continue
+    }
+  }
+}
+
+function checkConnectionCheck({ target, extension, portableServers, report }) {
+  if (!extension.check) return
+  if (Object.keys(portableServers).length === 0) {
+    report.fatal(
+      'artyx.check.no-server',
+      target,
+      'plugin.json /extensions/ai.artyx.desktop/check',
+      '"check" names a tool to call after connecting, but this plugin has no MCP server.'
+    )
+  }
 }

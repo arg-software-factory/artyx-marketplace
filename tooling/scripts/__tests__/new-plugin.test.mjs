@@ -52,3 +52,51 @@ test('transport none still rejects orphan userVars without an adapter', async ()
     }
   )
 })
+
+function conversationalArgs(transport, ...extra) {
+  return [
+    SCAFFOLDER,
+    '--name', 'settings-scaffold-test',
+    '--display', 'Settings Test',
+    '--tagline', 'Exercise the settings scaffolder.',
+    '--category', 'Developer Tools',
+    '--docs', 'https://example.com/settings-docs',
+    '--transport', transport,
+    ...extra,
+    '--dry-run'
+  ]
+}
+
+test('a stdio setting becomes an mcp.json env literal, never an overlay', async () => {
+  const { stdout } = await run(process.execPath, conversationalArgs(
+    'stdio', '--command', 'uvx', '--arg', 'demo-mcp==1.0.0', '--user-var', 'DEMO_PORT=9876'
+  ), { cwd: REPO_ROOT })
+
+  assert.match(stdout, /"type": "port"/)
+  assert.match(stdout, /"env": \{\s*"DEMO_PORT": "9876"\s*\}/)
+  assert.doesNotMatch(stdout, /"mcp": \{/)
+  assert.doesNotMatch(stdout, /\$\{DEMO_PORT\}/)
+})
+
+test('a stdio setting without a default is refused', async () => {
+  await assert.rejects(
+    run(process.execPath, conversationalArgs('stdio', '--command', 'npx', '--user-var', 'DEMO_HOME'), {
+      cwd: REPO_ROOT
+    }),
+    (error) => {
+      assert.equal(error.code, 2)
+      assert.match(error.stderr, /needs a default on stdio/)
+      return true
+    }
+  )
+})
+
+test('an http port setting is a port var over the literal url', async () => {
+  const { stdout } = await run(process.execPath, conversationalArgs(
+    'streamable-http', '--url', 'http://127.0.0.1:8000/mcp', '--user-var', 'DEMO_PORT=8000'
+  ), { cwd: REPO_ROOT })
+
+  assert.match(stdout, /"type": "port"/)
+  assert.match(stdout, /"url": "http:\/\/127\.0\.0\.1:8000\/mcp"/)
+  assert.doesNotMatch(stdout, /\$\{DEMO_PORT\}/)
+})
