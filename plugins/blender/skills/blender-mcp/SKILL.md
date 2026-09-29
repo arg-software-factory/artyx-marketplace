@@ -59,7 +59,7 @@ When a property, socket, or enum name is uncertain, check `get_python_api_docs` 
 
 - `Cannot connect to Blender at localhost:<port>`: Blender is closed, the MCP add-on is off or not started, or it listens on another port. In Blender: Preferences > Add-ons > MCP (Auto Start on), and Preferences > System > **Allow Online Access** on. The port in Artyx must match the add-on's port.
 - The add-on needs Blender 5.1 or later.
-- Screenshots cut off on macOS: update the add-on to 1.0.3 or later from the Blender Lab extensions repository.
+- A screenshot tool fails with `Invalid response from Blender … Unterminated string`: the add-on is older than 1.0.3. Retry once with `size_limit_in_bytes: 200000`; if that fails too, tell the artist to update the MCP add-on to 1.0.3 or later (Preferences > Get Extensions) and stop. Never take the screenshot through `execute_blender_code`, and never read or patch the add-on.
 
 Load [live-session.md](references/live-session.md) for data-API patterns,
 context safety, idempotence, timeouts, and recovery. Pair this skill with the
