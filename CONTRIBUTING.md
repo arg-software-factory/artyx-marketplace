@@ -26,6 +26,13 @@ by exactly one rule:
 - **streamable-http server:** a var of `type: "port"` replaces the port of the
   server's `url`. The var's `default` must equal the port written in the url.
 
+Settings are **non-secret by design**. Their defaults are committed in
+`mcp.json` and `plugin.json`, and a saved value only replaces a port or a
+plain env value. Credentials (API tokens, passwords, OAuth) are out of scope
+for now: Agent Plugins 1.0.0 has no portable credential field, so a plugin
+that needs an account cannot ship here yet. Do not use the `secret` type to
+smuggle one into an env value.
+
 Nothing else is substituted. The validator rejects a var that matches neither
 rule (`artyx.uservar.orphan`) and a default that disagrees with `mcp.json`
 (`artyx.uservar.default-drift`), because then a client that never reads our
@@ -255,7 +262,8 @@ the add-on port is a literal env value, and the setting overrides it:
 // mcp.json — literal, working in any client
 "blender": {
   "type": "stdio", "command": "uvx",
-  "args": ["--from", "git+https://projects.blender.org/lab/blender_mcp.git@v1.0.3#subdirectory=mcp", "blender-mcp"],
+  // the commit of tag v1.0.3, so the server cannot change under a published version
+  "args": ["--from", "git+https://projects.blender.org/lab/blender_mcp.git@2cea8d566dde07fbac28a61d698909d69724e853#subdirectory=mcp", "blender-mcp"],
   "env": { "BLENDER_MCP_PORT": "9876" }
 }
 

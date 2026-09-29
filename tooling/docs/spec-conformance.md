@@ -96,6 +96,12 @@ layer on top, and each is applied by exactly one rule:
   server's `url`, whose literal port must equal the var's `default`
   (`artyx.uservar.port-url`, `artyx.uservar.default-drift`).
 
+Settings are non-secret by design: their defaults are committed package data,
+and a saved value only replaces a port or a plain env value. Credentials are
+out of scope for now, because the specification has no portable credential
+field (9.2 forbids secrets in `env` and `headers`); a plugin that needs an
+account does not ship here until that changes.
+
 A var that matches neither rule is `artyx.uservar.orphan`. A `port` var holds
 an integer 1-65535 as a string and may list up to 8 `detect` candidates the
 desktop probes by TCP connect. `check: { "tool": "<name>" }` names a read-only
