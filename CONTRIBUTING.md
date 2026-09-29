@@ -6,48 +6,50 @@ is.
 
 ## The rule that surprises people
 
-A plugin ships two files that look similar but serve different readers.
-`mcp.json` is the **portable** file. Any Agent Plugins 1.0.0 client reads it,
-and the specification requires it to be literal and working on its own — a
-client expands no `${VAR}` in `url`, `command`, or a header value, and it
-never accepts a secret in `headers` or `env`.
+`mcp.json` is the **only** MCP configuration a plugin has, and it is
+portable: any Agent Plugins 1.0.0 client reads it and runs it as written. A
+client expands no `${VAR}` in `url`, `command`, or a header value (only
+`${PLUGIN_ROOT}` and `${PLUGIN_DATA}`, and only in `args`, `env` values, and
+`cwd`), and it never accepts a secret in `headers` or `env`.
 
-So `mcp.json` can only ever hold a working default: a real loopback URL, a
-real port, a command with no user input baked in. Anything the user
-configures at install time — a port, a file path, a token — and anything
-secret, in this marketplace, both live somewhere else: the Artyx-only
-extension block, `extensions["ai.artyx.desktop"].mcp`. Every client but
-Artyx ignores that whole namespace, so this is where Artyx-specific behavior
-belongs.
+So `mcp.json` always holds a **working default**: a pinned server version, a
+real loopback URL with a real port, a literal env value. There is no second
+copy of the configuration anywhere, and no patch over it.
 
-That `mcp` object is a **patch**, not a second server list. Every key in it
-must name a server that already exists in `mcp.json` — it edits that server,
-it cannot invent one. `env` and `headers` merge key by key onto the portable
-server's own `env`/`headers`; every other field replaces the portable
-server's value outright. The portable `type` always wins: the overlay cannot
-change a server's transport.
+What the user may change is declared in the Artyx-only extension,
+`extensions["ai.artyx.desktop"].userVars`, and Artyx applies each saved value
+by exactly one rule:
 
-One more invariant ties the two files together, and the validator enforces
-it as `artyx.overlay.default-drift`: **substitute every declared default
-into the overlay, and you must get `mcp.json` back, exactly.** If it does not
-match, the two files disagree about what "default" means, and a client that
-never reads the Artyx namespace behaves differently from Artyx for no stated
-reason. `tooling/scripts/new-plugin.mjs` generates this pair correctly for the two
-patterns this repository actually uses — see "Worked examples" below.
+- **stdio server:** the value becomes the environment variable of the same
+  name, replacing the literal default `mcp.json` declares for it. The var's
+  `default` must equal that literal.
+- **streamable-http server:** a var of `type: "port"` replaces the port of the
+  server's `url`. The var's `default` must equal the port written in the url.
+
+Nothing else is substituted. The validator rejects a var that matches neither
+rule (`artyx.uservar.orphan`) and a default that disagrees with `mcp.json`
+(`artyx.uservar.default-drift`), because then a client that never reads our
+namespace would run something different from what Artyx calls "default".
+`tooling/scripts/new-plugin.mjs` generates both shapes correctly — see "Worked
+examples" below.
 
 ## Layout
 
 ```
 plugins/<name>/
-  plugin.json     required  — the manifest
-  mcp.json        optional  — present only if the plugin connects to MCP
-  logo.png        required  — Artyx convention, not a spec field
-  skills/         optional
+  plugin.json          required  — the manifest
+  mcp.json             optional  — present only if the plugin connects to MCP
+  skills/              optional
     <slug>/
       SKILL.md
-      references/   optional, loaded only when a skill points at it
-  README.md       recommended — human setup notes
+      references/      optional, loaded only when a skill points at it
+  ai.artyx.desktop/    Artyx client files (Agent Plugins 8.2)
+    logo.png           required  — Artyx convention, not a spec field
+  README.md            recommended — notes for reviewers
 ```
+
+A plugin can be skills and MCP (`blender`), skills only
+(`game-ready-assets`), or MCP only (`memory`).
 
 `<name>` is the plugin's identifier. It must equal the directory name, the
 `name` field inside `plugin.json`, and the `name` this plugin uses in
@@ -120,13 +122,14 @@ ignores it.
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `schemaVersion` | yes | `1` for the frozen storefront/MCP contract; `2` when the package declares external `assetAdapters`. Versions this object only — independent of plugin semver, Agent Plugins, and the adapter protocol. |
+| `schemaVersion` | yes | `3`. Versions this object only, independent of plugin semver, Agent Plugins, and the adapter protocol. |
+| `pluginClass` | yes | `"conversational"` (skills and MCP) or `"native-asset"` (asset adapters; see [tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md)). |
 | `interface` | yes | Storefront presentation. See below. |
 | `compatibility` | no | `{ artyx, platforms }`. `artyx` is a `">=X.Y.Z"` floor — the desktop compares one floor and nothing else, so only that form is accepted. `platforms` is a subset of `["darwin", "win32", "linux"]`; absent means all three. |
-| `requires` | no | Advisory runtime executables, e.g. `["npx"]` or `["uvx"]`. The desktop preflights these before it spawns a stdio server, so a missing runtime fails with a clear message instead of `ENOENT`. |
-| `userVars` | no | Declares every `${VAR}` the `mcp` overlay or an asset-adapter transport uses. See below. |
-| `mcp` | no | The per-server overlay patch described above. |
-| `assetAdapters` | native-asset requires it | Code-free declarations of Protocol v2 loaders/exporters invoked directly by Desktop. See [tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md). |
+| `requires` | no | Runtime executables, e.g. `["npx"]` or `["uvx"]`. The desktop checks these before it spawns a stdio server, so a missing runtime fails with a clear message instead of `ENOENT`. |
+| `userVars` | no | The settings a user may change. Each binds to `mcp.json` by one of the two rules above (or, for native-asset plugins, to a `${VAR}` in an adapter transport). See below. |
+| `check` | no | `{ "tool": "<name>" }`: a read-only tool, taking no arguments, that "Test connection" calls after `tools/list`. Use it when a server connects to its application lazily (Blender's does). |
+| `nativeRuntimes`, `assetAdapters` | native-asset requires both | Code-free declarations of Protocol v2 loaders/exporters invoked directly by Desktop. See [tooling/docs/asset-adapters.md](tooling/docs/asset-adapters.md). |
 
 `interface`:
 
@@ -142,16 +145,18 @@ ignores it.
 | `experimental` | no | Marks the integration unproven. Absent means false. |
 
 `userVars.<NAME>` — `NAME` must match `^[A-Z][A-Z0-9_]*$` and must not be
-`PLUGIN_ROOT` or `PLUGIN_DATA`. Every declared name must appear in the `mcp`
-overlay or an asset-adapter transport, and every user placeholder used by
-either surface must be declared here — the lists must match in both directions.
+`PLUGIN_ROOT` or `PLUGIN_DATA`.
 
 | Field | Required | Notes |
 | --- | --- | --- |
-| `label` | yes | Field label in the install dialog. |
+| `type` | yes | `directory`, `file`, `string`, `secret`, `boolean`, or `port`. A `port` is an integer 1-65535 kept as a string; a var named `*_PORT` must use it. `secret` renders a password input and keeps the value out of logs. |
+| `label` | yes | Field label, 60 characters at most. |
 | `description` | yes | Helper text under the field. Say where the value comes from, not what the field is called. |
-| `default` | policy | Pre-fills the field. Required, and must be 2-5 digits, when `NAME` ends in `_PORT`. |
-| `secret` | no | Renders a password input and keeps the value out of every log and error. Absent means false — declare it explicitly; the desktop no longer guesses from the name. |
+| `required` | yes | Whether install needs a value. With a `default`, install is still one click. |
+| `default` | policy | Required for every var bound to `mcp.json`, and equal to the literal there. |
+| `detect` | no | `port` only: up to 8 candidate ports (1-65535). The desktop tries the saved value, then the default, then these, by TCP connect on `127.0.0.1`, and pre-fills the first one that answers. |
+| `mustExist`, `extensions`, `contains` | no | Checks on `file` and `directory` values. |
+| `pattern` | no | A regular expression a `string` value must match. |
 
 ## Install instructions live upstream
 
@@ -174,13 +179,15 @@ the page, and the next poll picks up whatever they changed.
 So:
 
 - Point `docsUrl` at the **vendor's or server author's** page, not at
-  anything in this repository and not at an Artyx page.
+  anything in this repository and not at an Artyx page. The one exception is
+  a skills-only plugin with nothing to install, which points at this
+  repository's README.
 - Pick the page a user landing cold can actually follow — a README anchor
   (`#readme`, `#installation`) beats a repository root.
 - Do not restate the steps in `description`, in `tagline`, or in a
   `userVars` description. A `userVars` description says where a value comes
-  from ("the port blender-mcp was started on"), never what to type to get
-  there.
+  from ("the port of the MCP add-on inside Blender"), never what to type to
+  get there.
 - `plugins/<name>/README.md` is for reviewers and contributors of *this*
   package. It is not shipped to users, so it is not a place to smuggle setup
   prose back in.
@@ -226,56 +233,55 @@ the shape.
 2. **No secret in the portable file.** `mcp.json` is committed, plain text,
    and world-readable. A name that looks like a credential is rejected in
    `headers` or `env`, whether or not it actually holds one — the check is on
-   the name because that is all a reviewer or a script can see. Declare a
-   `userVar`, mark it `secret: true`, and reference it from the
-   `extensions["ai.artyx.desktop"].mcp` overlay instead.
-3. **`logo.png` is required** at the package root: a real PNG (checked by
-   magic bytes), a regular file, 256KB or smaller — the desktop inlines it as
-   a data URI. This is an Artyx convention, not a manifest field, so there is
-   nothing to keep in sync with it.
+   the name because that is all a reviewer or a script can see. Agent Plugins
+   has no portable credential field; a server that needs an account token
+   cannot ship here until it can take the token through its own sign-in.
+3. **The logo lives at `ai.artyx.desktop/logo.png`**: a real PNG (checked by
+   magic bytes), a regular file, 256KB or smaller (keep new ones to a few KB) —
+   the desktop inlines it as a data URI. It is a client file, so it goes in the
+   namespace directory; a `logo.png` at the package root is rejected.
 4. **No symlink**, and no `.mcp.json` (dot-prefixed) or `.artyx-plugin/`.
    Both are the pre-1.0.0 layout; a 1.0.0 client never looks for them.
 
 ## Worked examples
 
-Three plugins in this repository cover the shapes you will need. Read the
-plugin, not just the excerpt below — the excerpt only shows the one
-mechanism it is here to illustrate.
+Four plugins in this repository cover the shapes you will need. Read the
+plugin, not just the excerpt below.
 
-**`plugins/blender`** — the templated-port case. One `_PORT` user var whose
-default is the literal port already in `mcp.json`'s `url`:
-
-```jsonc
-// mcp.json — literal, working on its own
-{ "blender": { "type": "streamable-http", "url": "http://127.0.0.1:8000/" } }
-
-// plugin.json extension — the same server, port templated
-"mcp": { "blender": { "url": "http://127.0.0.1:${BLENDER_MCP_PORT}/" } }
-```
-
-Substitute the declared default, `"8000"`, into `${BLENDER_MCP_PORT}` and you
-get the portable `url` back exactly — that is the invariant
-`artyx.overlay.default-drift` checks. `unreal-engine` is the same pattern on
-a different port and path.
-
-**`plugins/unity`** — the zero-config case. `mcp.json` needs no user input at
-all (`uvx` with a fixed set of `args`), so the extension declares no
-`userVars` and no `mcp` overlay. Not every plugin needs one.
-
-**`plugins/godot`** — the stdio-plus-env case. `GODOT_PATH` has no sensible
-default — it is a per-machine install path — so it is declared with `label`
-and `description` only, no `default`, and the portable `mcp.json` carries no
-`env` key at all. The overlay adds the whole thing:
+**`plugins/blender`** — stdio with one port setting. The server is pinned,
+the add-on port is a literal env value, and the setting overrides it:
 
 ```jsonc
-// plugin.json extension
-"mcp": { "godot": { "env": { "GODOT_PATH": "${GODOT_PATH}" } } }
+// mcp.json — literal, working in any client
+"blender": {
+  "type": "stdio", "command": "uvx",
+  "args": ["--from", "git+https://projects.blender.org/lab/blender_mcp.git@v1.0.3#subdirectory=mcp", "blender-mcp"],
+  "env": { "BLENDER_MCP_PORT": "9876" }
+}
+
+// plugin.json extension — the setting, bound by name to that env key
+"userVars": { "BLENDER_MCP_PORT": { "type": "port", "default": "9876", "detect": [9876, 9877, 9878, 9879], … } },
+"check": { "tool": "get_blendfile_summary_path_info" }
 ```
 
-`tooling/scripts/new-plugin.mjs` generates exactly these two overlay shapes — a
-`_PORT` var templated into a `streamable-http` url, or any var on a `stdio`
-transport templated into `env`. Anything else, it refuses to guess at and
-tells you why; wire it by hand following the tables above.
+**`plugins/unreal-engine`** — streamable-http with a port setting. `mcp.json`
+says `"url": "http://127.0.0.1:8000/mcp"`; `UNREAL_MCP_PORT` is a `port` var
+with `default: "8000"`, and Artyx swaps a saved value into the url's port.
+
+**`plugins/unity`** — the zero-config case. `mcp.json` needs no user input
+(`uvx` with a pinned package), so the extension declares no `userVars`.
+
+**`plugins/memory`** — `${PLUGIN_DATA}` in `env`: the server stores its file in
+the client-managed data folder, which survives updates.
+
+```jsonc
+"env": { "MEMORY_FILE_PATH": "${PLUGIN_DATA}/memory.jsonl" }
+```
+
+`tooling/scripts/new-plugin.mjs` generates the two setting shapes — a `_PORT`
+var over a `streamable-http` url, or `NAME=default` vars on a `stdio` server
+(written into `mcp.json` `env`). Anything else it refuses to guess at and
+tells you why.
 
 ## From clone to PR
 
@@ -290,12 +296,12 @@ node tooling/scripts/new-plugin.mjs \
   --tagline "One line for the storefront card." \
   --category "Developer Tools" \
   --docs "https://my-tool.example.com/docs/mcp#installation" \
-  --transport stdio --command npx --arg -y --arg my-tool-mcp \
-  --user-var MY_TOOL_PATH \
+  --transport stdio --command npx --arg -y --arg my-tool-mcp@1.2.3 \
+  --user-var MY_TOOL_PATH=my-tool \
   --skill my-tool-mcp
 
 # The scaffolder prints a checklist, then runs the validator for you. Work
-# through what it cannot generate: plugins/my-tool/logo.png, the skill body
+# through what it cannot generate: plugins/my-tool/ai.artyx.desktop/logo.png, the skill body
 # in skills/my-tool-mcp/SKILL.md, plugin.json's top-level "description",
 # and README.md.
 
@@ -303,10 +309,10 @@ npm run validate                    # Agent Plugins 1.0.0 + Artyx policy
 npm test                            # the validator's own test suite
 node tooling/scripts/check-doc-links.mjs    # every URL you wrote must resolve
 
-git checkout -b feat/my-tool-plugin
+git checkout -b feature/my-tool-plugin
 git add plugins/my-tool .agents/plugins/marketplace.json
 git commit -m "[FEAT] add my-tool plugin"
-git push -u origin feat/my-tool-plugin
+git push -u origin feature/my-tool-plugin
 gh pr create --title "[FEAT] add my-tool plugin" --body "$(cat <<'EOF'
 ## What changed
 ## Why

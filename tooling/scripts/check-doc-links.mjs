@@ -58,7 +58,8 @@ function isSkippedUrl(value) {
   // GET on one with 403 or 404 while `git clone` against it works fine, so
   // fetching it here reports a broken link that is not broken. These appear
   // inside install commands, never as documentation hyperlinks.
-  if (value.startsWith('git+') || value.endsWith('.git')) return true;
+  // A pinned ref (`repo.git@v1.0.3`, as uv and pip write it) is the same endpoint.
+  if (value.startsWith('git+') || /\.git(@[^/]*)?$/u.test(value)) return true;
   try {
     const { hostname } = new URL(value);
     if (hostname === 'localhost' || hostname === '127.0.0.1') return true;

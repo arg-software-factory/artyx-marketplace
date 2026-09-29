@@ -54,12 +54,12 @@ part of. So a finding a conformant client tolerates can still fail CI here,
 as publishing policy, and the text output says so explicitly whenever that
 happens.
 
-## Two fields the standard has never heard of
+## Two Artyx requirements the standard leaves open
 
-`extensions["ai.artyx.desktop"]` and `logo.png` are both required by this
-repository's validator (`artyx.extension.missing`, `plugin.logo.missing`,
-both `artyx`-axis, both fatal under the default mode) and both entirely
-absent from the specification.
+`extensions["ai.artyx.desktop"]` and `ai.artyx.desktop/logo.png` are both
+required by this repository's validator (`artyx.extension.missing`,
+`plugin.logo.missing`, both `artyx`-axis, both fatal under the default mode).
+The specification defines where they live, but not that they must exist.
 
 - **`extensions["ai.artyx.desktop"]`** carries the storefront name, tagline,
   category, and everything else the Artyx desktop needs to present and
@@ -69,12 +69,46 @@ absent from the specification.
   namespace is spec-valid and installable by some other conformant client;
   it just cannot appear in *this* storefront, because Artyx would have
   nothing to show the user.
-- **`logo.png`** at the package root is a path convention this repository
-  invented, not a manifest field of any kind — there is no `icon` or
-  `logo` key in `plugin.json` to point at it. Artyx inlines it as a data URI
-  for the storefront card.
+- **`ai.artyx.desktop/logo.png`** is a client-specific file, so it lives in the
+  top-level directory named for our namespace (specification 8.2). It is a
+  path convention, not a manifest field: there is no `icon` or `logo` key in
+  `plugin.json`. Artyx inlines it as a data URI for the storefront card. A
+  `logo.png` at the package root is rejected (`plugin.logo.location`).
 
 Neither check runs under `--spec-report`; both are `artyx`-axis.
+
+## MCP configuration lives only in `mcp.json`
+
+The specification forbids MCP configuration in `plugin.json` (7.2.1) and any
+placeholder other than `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` (9.2). This
+repository follows both to the letter, including inside our own namespace:
+there is no `mcp` overlay and no `${VAR}` in any `url`, `command`, or header.
+Every `mcp.json` works, with its literal values, in any conformant client.
+
+User settings (`extensions["ai.artyx.desktop"].userVars`) are the one Artyx
+layer on top, and each is applied by exactly one rule:
+
+- **stdio server:** the saved value becomes the environment variable of the
+  same name, replacing the literal default `mcp.json` declares for it. The
+  validator requires the env key in `mcp.json` and a matching `default`
+  (`artyx.uservar.default-missing`, `artyx.uservar.default-drift`).
+- **streamable-http server:** a var of `type: "port"` replaces the port of the
+  server's `url`, whose literal port must equal the var's `default`
+  (`artyx.uservar.port-url`, `artyx.uservar.default-drift`).
+
+A var that matches neither rule is `artyx.uservar.orphan`. A `port` var holds
+an integer 1-65535 as a string and may list up to 8 `detect` candidates the
+desktop probes by TCP connect. `check: { "tool": "<name>" }` names a read-only
+tool that "Test connection" calls after `tools/list`, because some servers
+(Blender's) connect to their application lazily. Native-asset runtimes are not
+MCP and keep their own `${VAR}` placeholders; see
+[asset-adapters.md](asset-adapters.md).
+
+The extension keeps `schemaVersion: 3`. The changes are additive for every
+reader: Artyx Desktop v1 soft-parses this namespace and only reads
+`nativeRuntimes`/`assetAdapters` when `schemaVersion` is exactly 3, so a bump
+would have forced the GTA V and GoldSrc packages, which v1 still installs, onto
+a second version.
 
 ## Asset adapters live only in Artyx's namespace
 
@@ -100,10 +134,9 @@ and the difference is worth stating plainly.
   vendor's API token in an `Authorization` header. The specification forbids a
   credential in `headers` outright — headers are visible package data,
   committed in plain text, and a token there would leak to everyone who reads
-  the repository. There is no overlay escape hatch. The
-  `extensions["ai.artyx.desktop"].mcp` patch holds a user-supplied value behind
-  a declared `userVar`, but the specification's text is explicit that a
-  credential must never appear in `mcp.json` at all, patched or not.
+  the repository. There is no overlay escape hatch: the specification's text
+  is explicit that a credential must never appear in `mcp.json`, and
+  authorization is left to the client.
 - **`roblox-studio`** launched its server through an absolute, per-platform
   command: a `.bat` under `%LOCALAPPDATA%` on Windows, a different absolute
   path elsewhere, and no base command at either. The `stdio` variant accepts a

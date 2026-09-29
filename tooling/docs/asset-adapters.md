@@ -71,9 +71,11 @@ always staged outside the game or source project.
 
 ## Configuration
 
-`userVars` are typed as `directory`, `file`, `string`, `secret` or `boolean`.
-`mustExist`, extension filters and patterns let Desktop validate setup before a
-runtime is spawned. `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` are host variables and
+`userVars` are typed as `directory`, `file`, `string`, `secret` or `boolean`
+(`port` exists for MCP settings). Unlike MCP settings, which bind to `mcp.json`
+by name, an adapter's vars are `${VAR}` placeholders in its own transport, and
+every one must be declared. `mustExist`, extension filters and patterns let
+Desktop validate setup before a runtime is spawned. `${PLUGIN_ROOT}` and `${PLUGIN_DATA}` are host variables and
 cannot be used as the executable command.
 
 ## Scaffolding
