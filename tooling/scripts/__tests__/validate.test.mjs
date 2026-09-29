@@ -843,6 +843,25 @@ test('the logo lives under the namespace directory', async () => {
 // Repository rules.
 // ---------------------------------------------------------------------------
 
+test('only allow-listed top-level entries may ship', async () => {
+  const allowed = await validate((f) => {
+    f.extraFiles['README.md'] = '# Demo\n'
+    f.extraFiles['LICENSE.txt'] = 'MIT\n'
+    f.extraFiles['CHANGELOG.md'] = '# Changelog\n'
+  })
+  assert.equal(allowed.ok, true, JSON.stringify(allowed.findings, null, 2))
+
+  for (const rel of ['notes.txt', 'assets/icon.svg', 'com.example.client/config.json']) {
+    const result = await validate((f) => {
+      f.extraFiles[rel] = 'x'
+    })
+    const finding = result.findings.find((x) => x.code === 'plugin.entry.unexpected')
+    assert.ok(finding, `${rel} must be rejected`)
+    assert.equal(finding.pointer, rel.split('/')[0])
+    assert.equal(finding.severity, 'fatal')
+  }
+})
+
 test('bundled executable code is rejected', async () => {
   const result = await validate((f) => {
     f.extraFiles['server/launcher.mjs'] = 'export default 1\n'

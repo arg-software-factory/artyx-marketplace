@@ -15,6 +15,14 @@ import { AXIS } from './report.mjs'
 
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const MAX_LOGO_BYTES = 256 * 1024
+/**
+ * The only top-level entries a package may have: the spec's fixed locations,
+ * our namespace directory, and the free-form files the spec names. Anything
+ * else is either a client file outside its namespace (spec 8.2) or clutter.
+ */
+const TOP_LEVEL_ENTRIES = new Set(['plugin.json', 'mcp.json', 'skills', 'ai.artyx.desktop', 'README.md', 'CHANGELOG.md'])
+const TOP_LEVEL_PREFIXES = ['LICENSE']
+
 /** Client files live under the namespace directory (Agent Plugins 8.2). */
 const LOGO_PATH = 'ai.artyx.desktop/logo.png'
 const MAX_AGENT_BODY_BYTES = 12 * 1024
@@ -88,6 +96,23 @@ export async function validatePluginAssets({ target, pluginRoot, report: reportR
     }
   }
   const officialPublisher = manifest?.author?.name === 'Artyx'
+
+  for (const entry of entries) {
+    if (entry.rel.includes('/')) continue
+    if (TOP_LEVEL_ENTRIES.has(entry.rel)) continue
+    if (TOP_LEVEL_PREFIXES.some((prefix) => entry.rel.startsWith(prefix))) continue
+    // A root logo.png gets its own, more specific finding below.
+    if (entry.rel === 'logo.png') continue
+    // Bundled native runtimes declare their own artifact paths.
+    if ([...bundled.keys()].some((path) => path === entry.rel || path.startsWith(`${entry.rel}/`))) continue
+    report.fatal(
+      'plugin.entry.unexpected',
+      target,
+      entry.rel,
+      `Not an allowed top-level entry. A package holds ${[...TOP_LEVEL_ENTRIES].join(', ')} ` +
+        'and LICENSE*; client files go under ai.artyx.desktop/.'
+    )
+  }
 
   for (const entry of entries) {
     if (entry.kind === 'symlink') {
