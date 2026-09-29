@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "game-ready-assets",
+  "version": "1.0.0",
+  "description": "Production rules for turning a model into a game-ready asset: triangle, material, and bone budgets per platform with LOD chains; clean topology, normals, and UVs; texel density and texture sizes; PBR texture naming, channel packing, and compression; and export settings for Unity, Unreal Engine, Godot, and Blender. Skills only: nothing to install or connect.",
+  "author": { "name": "Artyx", "url": "https://artyx.ai" },
+  "homepage": "https://github.com/arg-software-factory/artyx-marketplace",
+  "repository": "https://github.com/arg-software-factory/artyx-marketplace",
+  "license": "MIT",
+  "keywords": ["3d", "game-art", "optimization", "pbr", "lod", "uv"],
+  "extensions": {
+    "ai.artyx.desktop": {
+      "schemaVersion": 3,
+      "pluginClass": "conversational",
+      "interface": {
+        "displayName": "Game-Ready Assets",
+        "tagline": "Budgets, topology, UVs, textures, LODs and export for any engine.",
+        "category": "Creativity",
+        "docsUrl": "https://github.com/arg-software-factory/artyx-marketplace#readme",
+        "capabilities": ["Read"],
+        "brandColor": "#1B8A63",
+        "prompts": [
+          "Is this character mesh ready for a Quest game? Check its triangle budget, UVs, and textures and tell me what to fix."
+        ]
+      },
+      "compatibility": { "artyx": ">=0.7.91" }
+    }
+  }
+}
