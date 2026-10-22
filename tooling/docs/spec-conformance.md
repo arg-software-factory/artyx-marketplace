@@ -155,9 +155,10 @@ and the difference is worth stating plainly.
 
 - **`photoshop`** was a plain stdio server, `npx -y photoshop-mcp`, with no
   placeholder, no credential, and nothing a conformant `mcp.json` cannot say.
-  It would migrate in three lines. It was cut because the catalog was narrowed
-  to the 3D and game-engine tools that match what Artyx is for. If that
-  judgement changes, it comes back unchanged — no format work is needed.
+  It would migrate in three lines. It was cut for scope: the catalog currently
+  ships 3D and game-engine tools, and Photoshop is not in that set. If it
+  returns, it comes back unchanged — no format work is needed. Whether it
+  returns is an open owner decision.
 
 `git log` for `[FEAT] rebuild the marketplace on Agent Plugins 1.0.0` has the
 full migration record.
